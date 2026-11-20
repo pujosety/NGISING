@@ -54,6 +54,7 @@ export function toPublicUser(record: StoredUserRecord): UserAccount {
     email: record.email,
     displayName: record.displayName,
     department: record.department,
+    role: record.role || 'employee',
     isAnonymous: record.isAnonymous,
     createdAt: record.createdAt,
   };

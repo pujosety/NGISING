@@ -1,11 +1,13 @@
 export type NeedType = 'pup' | 'cepat';
 export type StallStatus = 'available' | 'occupied' | 'maintenance';
+export type UserRole = 'admin' | 'employee';
 
 export interface UserAccount {
   id: string;
   email: string;
   displayName: string;
   department: string;
+  role: UserRole;
   isAnonymous: boolean;
   createdAt: number;
 }

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   CLAIM_WINDOW_MS,
+  clearQueue,
   computeOfficeStats,
   computePersonalStats,
   estimateWaitMinutes,
@@ -9,9 +10,13 @@ import {
   joinQueue,
   leaveQueue,
   occupyStall,
+  prioritizeQueueEntry,
   promoteNextEligible,
   releaseStall,
+  removeHistoryEntry,
+  removeQueueEntry,
   toggleStallMaintenance,
+  updateToiletInfo,
   validateRegistrationInput,
 } from './queueLogic.ts';
 import type { OfficeState } from './types.ts';
@@ -40,27 +45,23 @@ function makeSingleToiletState(now = 1_700_000_000_000): OfficeState {
   };
 }
 
-test('formatDuration and validateRegistrationInput enforce valid inputs', () => {
+test('formatDuration and validateRegistrationInput enforce valid inputs without requiring division or email', () => {
   assert.equal(formatDuration(65_000), '01:05');
   assert.equal(
     validateRegistrationInput({
       displayName: 'A',
-      email: 'bad',
-      department: 'Engineering',
       password: '123',
     }).valid,
     false
   );
   const ok = validateRegistrationInput({
-    displayName: ' Siti Rahma ',
-    email: 'SITI@kantor.id ',
-    department: 'Design',
+    displayName: ' Rina Wijaya ',
     password: 'password123',
   });
   assert.equal(ok.valid, true);
   if (ok.valid) {
-    assert.equal(ok.email, 'siti@kantor.id');
-    assert.equal(ok.name, 'Siti Rahma');
+    assert.equal(ok.name, 'Rina Wijaya');
+    assert.equal(ok.department, '');
   }
 });
 
@@ -248,4 +249,72 @@ test('computePersonalStats and computeOfficeStats isolate user metrics cleanly',
   const officeStats = computeOfficeStats(history, morning + 4_000_000);
   assert.equal(officeStats.totalToday, 3);
   assert.equal(officeStats.leaderboard.length, 2);
+});
+
+test('admin queue prioritization, removal, clearing, and toilet update work cleanly', () => {
+  const now = 1_700_000_000_000;
+  const base = makeSingleToiletState(now);
+  const q1 = joinQueue(
+    base,
+    { userId: 'u1', displayName: 'Satu', department: 'Ops', isAnonymous: false, need: 'pup' },
+    now + 100
+  );
+  assert.equal(q1.ok, true);
+  if (!q1.ok) return;
+  const q2 = joinQueue(
+    q1.state,
+    { userId: 'u2', displayName: 'Dua', department: 'Design', isAnonymous: false, need: 'cepat' },
+    now + 200
+  );
+  assert.equal(q2.ok, true);
+  if (!q2.ok) return;
+
+  const secondId = q2.state.queue[1].id;
+  const prio = prioritizeQueueEntry(q2.state, secondId, now + 300);
+  assert.equal(prio.ok, true);
+  if (!prio.ok) return;
+  assert.equal(prio.state.queue[0].userId, 'u2');
+
+  const rem = removeQueueEntry(prio.state, prio.state.queue[0].id, now + 400);
+  assert.equal(rem.ok, true);
+  if (!rem.ok) return;
+  assert.equal(rem.state.queue.length, 1);
+
+  const cleared = clearQueue(rem.state, now + 500);
+  assert.equal(cleared.queue.length, 0);
+
+  const renamed = updateToiletInfo(
+    cleared,
+    { name: 'Toilet Utama Lantai 2', location: 'Dekat Pantry' },
+    now + 600
+  );
+  assert.equal(renamed.ok, true);
+  if (renamed.ok) {
+    assert.equal(renamed.state.toilet.name, 'Toilet Utama Lantai 2');
+    assert.equal(renamed.state.toilet.location, 'Dekat Pantry');
+  }
+
+  const withHistory = {
+    ...cleared,
+    history: [
+      {
+        id: 'hist-x',
+        stallId: 'toilet-utama',
+        stallName: 'Toilet Kantor',
+        userId: 'u1',
+        displayName: 'Satu',
+        department: '',
+        isAnonymous: false,
+        need: 'pup' as const,
+        startedAt: now - 10_000,
+        endedAt: now,
+        durationMs: 10_000,
+      },
+    ],
+  };
+  const removedHist = removeHistoryEntry(withHistory, 'hist-x', now + 700);
+  assert.equal(removedHist.ok, true);
+  if (removedHist.ok) {
+    assert.equal(removedHist.state.history.length, 0);
+  }
 });

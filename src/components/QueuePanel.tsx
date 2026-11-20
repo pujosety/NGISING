@@ -189,7 +189,11 @@ export function QueuePanel({
                           : getPublicDisplayName(entry.displayName, entry.isAnonymous, entry.userId)}
                       </p>
                       <p className="truncate text-xs text-slate-500">
-                        {entry.department} <span aria-hidden="true">·</span>{' '}
+                        {entry.department ? (
+                          <>
+                            {entry.department} <span aria-hidden="true">·</span>{' '}
+                          </>
+                        ) : null}
                         {entry.need === 'pup' ? 'Pup' : 'Cepat'}
                       </p>
                     </div>

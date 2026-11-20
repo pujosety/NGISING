@@ -1,5 +1,6 @@
 import { AlertCircle, EyeOff, Wifi, WifiOff } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { AdminPanelView } from './components/AdminPanelView.tsx';
 import { AuthScreen } from './components/AuthScreen.tsx';
 import { HistoryView } from './components/HistoryView.tsx';
 import { QueuePanel } from './components/QueuePanel.tsx';
@@ -19,7 +20,8 @@ const TAB_TITLES: Record<WorkspaceTab, string> = {
   dashboard: 'Dashboard Saya',
   history: 'Riwayat & Log',
   stats: 'Statistik',
-  account: 'Akun & Toilet',
+  account: 'Akun Saya',
+  admin: 'Admin Panel',
 };
 
 function formatTimeOnly(timestamp: number): string {
@@ -34,6 +36,7 @@ export default function App() {
     state,
     user,
     demoAccounts,
+    adminUsers,
     loading,
     authLoading,
     connected,
@@ -51,12 +54,32 @@ export default function App() {
     release,
     joinQueue,
     leaveQueue,
-    toggleMaintenance,
-    resetDemo,
+    fetchAdminUsers,
+    adminUpdateToilet,
+    adminToggleMaintenance,
+    adminForceRelease,
+    adminPrioritizeQueue,
+    adminRemoveQueue,
+    adminClearQueue,
+    adminDeleteHistory,
+    adminUpdateUserRole,
+    adminResetUserPassword,
+    adminDeleteUser,
+    adminResetDemo,
   } = useOfficeQueue();
 
   const [activeTab, setActiveTab] = useState<WorkspaceTab>('dashboard');
   const [selectedNeed, setSelectedNeed] = useState<NeedType>('pup');
+
+  const isAdmin = user?.role === 'admin';
+  const safeActiveTab: WorkspaceTab =
+    activeTab === 'admin' && !isAdmin ? 'dashboard' : activeTab;
+
+  useEffect(() => {
+    if (isAdmin && safeActiveTab === 'admin') {
+      void fetchAdminUsers();
+    }
+  }, [isAdmin, safeActiveTab, fetchAdminUsers]);
 
   const personalStats = useMemo(() => {
     if (!state || !user) return null;
@@ -121,7 +144,7 @@ export default function App() {
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900">
       <Sidebar
-        activeTab={activeTab}
+        activeTab={safeActiveTab}
         onSelectTab={setActiveTab}
         user={user}
         soundEnabled={soundEnabled}
@@ -146,7 +169,7 @@ export default function App() {
               /
             </span>
             <h1 className="font-display font-semibold text-slate-900 truncate">
-              {TAB_TITLES[activeTab]}
+              {TAB_TITLES[safeActiveTab]}
             </h1>
           </div>
 
@@ -199,7 +222,7 @@ export default function App() {
 
           {!toilet ? (
             <div className="h-64 animate-pulse rounded-xl border border-slate-200 bg-white" />
-          ) : activeTab === 'dashboard' ? (
+          ) : safeActiveTab === 'dashboard' ? (
             <div className="space-y-6">
               {/* Personal Welcome Header */}
               <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -208,7 +231,7 @@ export default function App() {
                     Dashboard {user.displayName}
                   </h2>
                   <p className="mt-0.5 text-sm text-slate-500">
-                    {user.department}
+                    {isAdmin ? 'Admin Kantor' : user.department || 'Karyawan Kantor'}
                     {user.isAnonymous ? (
                       <span className="inline-flex items-center gap-1 ml-1.5">
                         <span aria-hidden="true">·</span>
@@ -260,6 +283,7 @@ export default function App() {
                   <StallCard
                     toilet={toilet}
                     currentUserId={user.id}
+                    isAdmin={isAdmin}
                     selectedNeed={selectedNeed}
                     onSelectNeed={setSelectedNeed}
                     now={now}
@@ -358,19 +382,37 @@ export default function App() {
                 )}
               </section>
             </div>
-          ) : activeTab === 'history' ? (
+          ) : safeActiveTab === 'history' ? (
             <HistoryView history={history} currentUserId={user.id} />
-          ) : activeTab === 'stats' ? (
+          ) : safeActiveTab === 'stats' ? (
             <StatsView history={history} user={user} now={now} />
+          ) : safeActiveTab === 'admin' && isAdmin && state ? (
+            <AdminPanelView
+              key={`${toilet.id}-${toilet.name}-${toilet.location}`}
+              officeState={state}
+              currentUserId={user.id}
+              users={adminUsers}
+              now={now}
+              busy={busy}
+              onUpdateToilet={adminUpdateToilet}
+              onToggleMaintenance={adminToggleMaintenance}
+              onForceRelease={adminForceRelease}
+              onPrioritizeQueue={adminPrioritizeQueue}
+              onRemoveQueue={adminRemoveQueue}
+              onClearQueue={adminClearQueue}
+              onUpdateUserRole={adminUpdateUserRole}
+              onResetUserPassword={adminResetUserPassword}
+              onDeleteUser={adminDeleteUser}
+              onDeleteHistory={adminDeleteHistory}
+              onResetDemo={adminResetDemo}
+            />
           ) : (
             <SettingsView
               key={`${user.id}-${user.displayName}-${user.department}-${user.isAnonymous}`}
               user={user}
-              toilet={toilet}
               busy={busy}
               onUpdateProfile={updateProfile}
-              onToggleMaintenance={toggleMaintenance}
-              onResetDemo={resetDemo}
+              onOpenAdminPanel={isAdmin ? () => setActiveTab('admin') : undefined}
               onLogout={logout}
             />
           )}

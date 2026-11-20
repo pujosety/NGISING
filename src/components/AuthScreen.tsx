@@ -1,4 +1,4 @@
-import { AlertCircle, CheckCircle2, Clock, EyeOff, Lock, LogIn, UserPlus, Wrench } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Clock, Lock, LogIn, UserPlus, Wrench } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import type { DemoAccountInfo } from '../hooks/useOfficeQueue.ts';
 import { formatDuration, getPublicDisplayName } from '../shared/queueLogic.ts';
@@ -11,26 +11,12 @@ interface AuthScreenProps {
   errorMessage: string | null;
   now: number;
   onClearError: () => void;
-  onLogin: (email: string, password: string) => Promise<boolean>;
+  onLogin: (identifier: string, password: string) => Promise<boolean>;
   onRegister: (params: {
     displayName: string;
-    email: string;
-    department: string;
     password: string;
-    isAnonymous: boolean;
   }) => Promise<boolean>;
 }
-
-const DEPARTMENTS = [
-  'Engineering',
-  'Product',
-  'Design',
-  'Operations',
-  'Marketing',
-  'People & HR',
-  'Finance',
-  'Umum',
-];
 
 export function AuthScreen({
   officeState,
@@ -43,11 +29,9 @@ export function AuthScreen({
   onRegister,
 }: AuthScreenProps) {
   const [mode, setMode] = useState<'login' | 'register'>('login');
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [department, setDepartment] = useState('Engineering');
-  const [isAnonymous, setIsAnonymous] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
   const toilet = officeState?.toilet ?? null;
@@ -62,20 +46,16 @@ export function AuthScreen({
     onClearError();
 
     if (mode === 'login') {
-      if (!email.trim() || !password) {
-        setLocalError('Email dan password wajib diisi.');
+      if (!identifier.trim() || !password) {
+        setLocalError('Nama dan password wajib diisi.');
         return;
       }
-      await onLogin(email.trim(), password);
+      await onLogin(identifier.trim(), password);
       return;
     }
 
     if (displayName.trim().length < 2) {
       setLocalError('Nama karyawan minimal 2 karakter.');
-      return;
-    }
-    if (!email.trim().includes('@')) {
-      setLocalError('Masukkan alamat email yang valid.');
       return;
     }
     if (password.length < 4) {
@@ -84,10 +64,7 @@ export function AuthScreen({
     }
     await onRegister({
       displayName: displayName.trim(),
-      email: email.trim(),
-      department,
       password,
-      isAnonymous,
     });
   };
 
@@ -162,7 +139,11 @@ export function AuthScreen({
                         )}
                       </p>
                       <p className="text-xs text-slate-500">
-                        {toilet.occupant.department} <span aria-hidden="true">·</span>{' '}
+                        {toilet.occupant.department ? (
+                          <>
+                            {toilet.occupant.department} <span aria-hidden="true">·</span>{' '}
+                          </>
+                        ) : null}
                         {toilet.occupant.need === 'pup' ? 'Pup' : 'Cepat'}
                       </p>
                     </div>
@@ -229,55 +210,35 @@ export function AuthScreen({
           </div>
 
           <form onSubmit={handleSubmit} className="mt-5 space-y-4">
-            {mode === 'register' && (
-              <>
-                <div>
-                  <label htmlFor="auth-name" className="block text-xs font-medium text-slate-700">
-                    Nama Karyawan
-                  </label>
-                  <input
-                    id="auth-name"
-                    type="text"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="Contoh: Rina Wijaya"
-                    className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="auth-dept" className="block text-xs font-medium text-slate-700">
-                    Divisi / Tim
-                  </label>
-                  <select
-                    id="auth-dept"
-                    value={department}
-                    onChange={(e) => setDepartment(e.target.value)}
-                    className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
-                  >
-                    {DEPARTMENTS.map((dept) => (
-                      <option key={dept} value={dept}>
-                        {dept}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </>
+            {mode === 'register' ? (
+              <div>
+                <label htmlFor="auth-name" className="block text-xs font-medium text-slate-700">
+                  Nama
+                </label>
+                <input
+                  id="auth-name"
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="Contoh: Rina Wijaya"
+                  className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                />
+              </div>
+            ) : (
+              <div>
+                <label htmlFor="auth-identifier" className="block text-xs font-medium text-slate-700">
+                  Nama atau Email
+                </label>
+                <input
+                  id="auth-identifier"
+                  type="text"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  placeholder="Contoh: Siti Rahma"
+                  className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                />
+              </div>
             )}
-
-            <div>
-              <label htmlFor="auth-email" className="block text-xs font-medium text-slate-700">
-                Email Kantor
-              </label>
-              <input
-                id="auth-email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="nama@kantor.id"
-                className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
-              />
-            </div>
 
             <div>
               <label htmlFor="auth-password" className="block text-xs font-medium text-slate-700">
@@ -298,24 +259,6 @@ export function AuthScreen({
                 />
               </div>
             </div>
-
-            {mode === 'register' && (
-              <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <input
-                  type="checkbox"
-                  checked={isAnonymous}
-                  onChange={(e) => setIsAnonymous(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-600"
-                />
-                <span className="text-xs text-slate-600">
-                  <span className="flex items-center gap-1 font-semibold text-slate-900">
-                    <EyeOff className="h-3.5 w-3.5 text-slate-500" aria-hidden="true" />
-                    Aktifkan Mode Samaran di Papan Publik
-                  </span>
-                  Nama aslimu tetap tercatat di dashboard pribadimu, tapi tampil sebagai kode samaran untuk karyawan lain.
-                </span>
-              </label>
-            )}
 
             {activeError && (
               <p role="alert" className="flex items-center gap-2 text-xs font-medium text-red-600">
@@ -346,7 +289,7 @@ export function AuthScreen({
           {demoAccounts.length > 0 && (
             <div className="mt-6 border-t border-slate-100 pt-5">
               <p className="text-xs font-medium text-slate-500">
-                Masuk cepat menggunakan akun karyawan demo (password: <code className="font-mono text-slate-700">ngising123</code>):
+                Masuk cepat menggunakan akun demo (password: <code className="font-mono text-slate-700">ngising123</code>):
               </p>
               <div className="mt-2.5 grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {demoAccounts.map((acc) => (
@@ -354,14 +297,20 @@ export function AuthScreen({
                     key={acc.id}
                     type="button"
                     disabled={authLoading}
-                    onClick={() => onLogin(acc.email, 'ngising123')}
-                    className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-left hover:bg-slate-100 transition-colors"
+                    onClick={() => onLogin(acc.displayName, 'ngising123')}
+                    className={`flex items-center justify-between rounded-lg border px-3 py-2 text-left transition-colors ${
+                      acc.role === 'admin'
+                        ? 'border-teal-200 bg-teal-50/60 hover:bg-teal-50'
+                        : 'border-slate-200 bg-slate-50 hover:bg-slate-100'
+                    }`}
                   >
                     <div className="min-w-0">
                       <p className="truncate text-xs font-semibold text-slate-900">
                         {acc.displayName}
                       </p>
-                      <p className="truncate text-[11px] text-slate-500">{acc.department}</p>
+                      <p className="truncate text-[11px] text-slate-500">
+                        {acc.role === 'admin' ? 'Admin Panel' : acc.department || 'Karyawan'}
+                      </p>
                     </div>
                     <span className="text-[11px] font-semibold text-teal-700 shrink-0 ml-2">
                       Masuk

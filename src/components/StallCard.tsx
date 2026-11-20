@@ -17,6 +17,7 @@ import type { NeedType, Stall } from '../shared/types.ts';
 interface StallCardProps {
   toilet: Stall;
   currentUserId: string;
+  isAdmin: boolean;
   selectedNeed: NeedType;
   onSelectNeed: (need: NeedType) => void;
   now: number;
@@ -30,6 +31,7 @@ interface StallCardProps {
 export function StallCard({
   toilet,
   currentUserId,
+  isAdmin,
   selectedNeed,
   onSelectNeed,
   now,
@@ -121,7 +123,11 @@ export function StallCard({
                     )}
               </p>
               <p className="mt-0.5 text-xs text-slate-500">
-                {toilet.occupant.department} <span aria-hidden="true">·</span>{' '}
+                {toilet.occupant.department ? (
+                  <>
+                    {toilet.occupant.department} <span aria-hidden="true">·</span>{' '}
+                  </>
+                ) : null}
                 {toilet.occupant.need === 'pup' ? 'Keperluan Pup' : 'Keperluan Cepat (BAK)'}
               </p>
             </div>
@@ -150,7 +156,11 @@ export function StallCard({
                     )}
               </p>
               <p className="mt-0.5 text-xs text-slate-500">
-                {toilet.reservedFor.department} <span aria-hidden="true">·</span>{' '}
+                {toilet.reservedFor.department ? (
+                  <>
+                    {toilet.reservedFor.department} <span aria-hidden="true">·</span>{' '}
+                  </>
+                ) : null}
                 {toilet.reservedFor.need === 'pup' ? 'Pup' : 'Cepat'}
               </p>
             </div>
@@ -257,36 +267,42 @@ export function StallCard({
               </button>
             )}
 
-            {!confirmForce ? (
-              <button
-                type="button"
-                onClick={() => setConfirmForce(true)}
-                className="w-full py-1 text-center text-xs font-medium text-slate-500 hover:text-slate-800 transition-colors"
-              >
-                Penghuni lupa klik keluar? Tandai toilet kosong
-              </button>
-            ) : (
-              <div className="flex items-center justify-between gap-2 pt-1">
+            {isAdmin ? (
+              !confirmForce ? (
                 <button
                   type="button"
-                  disabled={busy}
-                  onClick={() => {
-                    setConfirmForce(false);
-                    onRelease(true);
-                  }}
-                  className="flex-1 min-h-[38px] rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700 transition-colors"
+                  onClick={() => setConfirmForce(true)}
+                  className="w-full py-1 text-center text-xs font-medium text-slate-500 hover:text-slate-800 transition-colors"
                 >
-                  Konfirmasi Kosongkan
+                  Paksa Kosongkan (Admin)
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setConfirmForce(false)}
-                  className="min-h-[38px] rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-                >
-                  Batal
-                </button>
-              </div>
-            )}
+              ) : (
+                <div className="flex items-center justify-between gap-2 pt-1">
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => {
+                      setConfirmForce(false);
+                      onRelease(true);
+                    }}
+                    className="flex-1 min-h-[38px] rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700 transition-colors"
+                  >
+                    Konfirmasi Kosongkan
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmForce(false)}
+                    className="min-h-[38px] rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                  >
+                    Batal
+                  </button>
+                </div>
+              )
+            ) : isOvertime ? (
+              <p className="py-1 text-center text-xs text-slate-500">
+                Melebihi 15 menit — Admin dapat mengosongkan bila penghuni lupa keluar.
+              </p>
+            ) : null}
           </div>
         ) : isReservedForMe ? (
           <button

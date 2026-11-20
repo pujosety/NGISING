@@ -3,13 +3,14 @@ import {
   History,
   LayoutDashboard,
   LogOut,
+  ShieldCheck,
   UserCog,
   Volume2,
   VolumeX,
 } from 'lucide-react';
 import type { UserAccount } from '../shared/types.ts';
 
-export type WorkspaceTab = 'dashboard' | 'history' | 'stats' | 'account';
+export type WorkspaceTab = 'dashboard' | 'history' | 'stats' | 'account' | 'admin';
 
 interface SidebarProps {
   activeTab: WorkspaceTab;
@@ -21,7 +22,7 @@ interface SidebarProps {
   queueCount: number;
 }
 
-const NAV_ITEMS: Array<{
+const BASE_NAV_ITEMS: Array<{
   id: WorkspaceTab;
   label: string;
   shortLabel: string;
@@ -30,7 +31,7 @@ const NAV_ITEMS: Array<{
   { id: 'dashboard', label: 'Dashboard Saya', shortLabel: 'Dashboard', icon: LayoutDashboard },
   { id: 'history', label: 'Riwayat & Log', shortLabel: 'Riwayat', icon: History },
   { id: 'stats', label: 'Statistik', shortLabel: 'Statistik', icon: BarChart3 },
-  { id: 'account', label: 'Akun & Toilet', shortLabel: 'Akun', icon: UserCog },
+  { id: 'account', label: 'Akun Saya', shortLabel: 'Akun', icon: UserCog },
 ];
 
 export function Sidebar({
@@ -42,6 +43,14 @@ export function Sidebar({
   onLogout,
   queueCount,
 }: SidebarProps) {
+  const navItems =
+    user.role === 'admin'
+      ? [
+          ...BASE_NAV_ITEMS,
+          { id: 'admin' as const, label: 'Admin Panel', shortLabel: 'Admin', icon: ShieldCheck },
+        ]
+      : BASE_NAV_ITEMS;
+
   return (
     <>
       <aside className="hidden lg:flex lg:w-60 lg:shrink-0 lg:flex-col lg:border-r lg:border-slate-200 lg:bg-white">
@@ -52,7 +61,7 @@ export function Sidebar({
         </div>
 
         <nav aria-label="Navigasi utama" className="flex-1 space-y-1 px-3 py-4">
-          {NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             return (
@@ -108,7 +117,7 @@ export function Sidebar({
               {user.displayName}
             </p>
             <p className="truncate text-xs text-slate-500">
-              {user.department}
+              {user.role === 'admin' ? 'Admin Kantor' : user.department || 'Karyawan'}
               {user.isAnonymous ? ' · Mode Samaran' : ''}
             </p>
             <button
@@ -128,7 +137,7 @@ export function Sidebar({
         aria-label="Navigasi mobile"
         className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-around border-t border-slate-200 bg-white/95 backdrop-blur-sm px-2 py-1.5 lg:hidden"
       >
-        {NAV_ITEMS.map((item) => {
+        {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
           return (

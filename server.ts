@@ -14,16 +14,21 @@ import {
 } from './src/server/auth.ts';
 import { createSeedState, createSeedUsers } from './src/server/seedData.ts';
 import {
+  clearQueue,
   joinQueue,
   leaveQueue,
   occupyStall,
+  prioritizeQueueEntry,
   promoteNextEligible,
   releaseStall,
+  removeHistoryEntry,
+  removeQueueEntry,
   toggleStallMaintenance,
+  updateToiletInfo,
   validateEmployeeInput,
   validateRegistrationInput,
 } from './src/shared/queueLogic.ts';
-import type { NeedType, OfficeState, StoredUserRecord } from './src/shared/types.ts';
+import type { NeedType, OfficeState, StoredUserRecord, UserRole } from './src/shared/types.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -63,7 +68,25 @@ function loadOrCreateDatabase(): PersistedDatabase {
         Array.isArray(parsed.office.queue) &&
         Array.isArray(parsed.office.history)
       ) {
+        let mutated = false;
+        parsed.users = parsed.users.map((u) => {
+          if (!u.role) {
+            mutated = true;
+            return { ...u, role: u.id === 'emp-admin' ? 'admin' : 'employee' };
+          }
+          return u;
+        });
+        if (!parsed.users.some((u) => u.role === 'admin')) {
+          const seedAdmin = createSeedUsers(Date.now()).find((u) => u.role === 'admin');
+          if (seedAdmin) {
+            parsed.users.unshift(seedAdmin);
+            mutated = true;
+          }
+        }
         parsed.office = promoteNextEligible(parsed.office, Date.now());
+        if (mutated) {
+          persistDatabase(parsed);
+        }
         return parsed;
       }
     }
@@ -109,6 +132,14 @@ function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunctio
     return;
   }
   req.authUser = user;
+  next();
+}
+
+function requireAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction): void {
+  if (!req.authUser || req.authUser.role !== 'admin') {
+    res.status(403).json({ error: 'Akses khusus Admin Kantor.' });
+    return;
+  }
   next();
 }
 
@@ -179,14 +210,15 @@ async function startServer(): Promise<void> {
     }
   }, 5000);
 
-  // Public demo accounts directory (names/emails only, never passwords)
+  // Public demo accounts directory (names/roles only, never passwords)
   app.get('/api/auth/demo-accounts', (_req, res) => {
     res.json({
-      accounts: db.users.slice(0, 4).map((u) => ({
+      accounts: db.users.slice(0, 5).map((u) => ({
         id: u.id,
         email: u.email,
         displayName: u.displayName,
         department: u.department,
+        role: u.role || 'employee',
       })),
     });
   });
@@ -201,27 +233,49 @@ async function startServer(): Promise<void> {
     };
     const check = validateRegistrationInput({
       displayName: String(body.displayName ?? ''),
-      email: String(body.email ?? ''),
-      department: String(body.department ?? 'Umum'),
       password: String(body.password ?? ''),
+      email: body.email !== undefined ? String(body.email) : undefined,
+      department: body.department !== undefined ? String(body.department) : '',
     });
     if (!check.valid) {
       res.status(400).json({ error: check.error });
       return;
     }
-    const existing = db.users.find((u) => u.email.toLowerCase() === check.email);
-    if (existing) {
-      res.status(400).json({ error: 'Email tersebut sudah terdaftar. Silakan masuk.' });
+
+    const nameTaken = db.users.some(
+      (u) => u.displayName.toLowerCase() === check.name.toLowerCase()
+    );
+    if (nameTaken) {
+      res.status(400).json({
+        error: 'Nama tersebut sudah terdaftar. Gunakan nama lain atau masuk ke akunmu.',
+      });
       return;
+    }
+
+    let resolvedEmail = check.email;
+    if (resolvedEmail) {
+      const emailTaken = db.users.some((u) => u.email.toLowerCase() === resolvedEmail);
+      if (emailTaken) {
+        res.status(400).json({ error: 'Email tersebut sudah terdaftar. Silakan masuk.' });
+        return;
+      }
+    } else {
+      const baseSlug =
+        check.name
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '.')
+          .replace(/^\.+|\.+$/g, '') || 'user';
+      resolvedEmail = `${baseSlug}.${crypto.randomBytes(2).toString('hex')}@ngising.local`;
     }
 
     const { hash, salt } = hashPassword(check.password);
     const now = Date.now();
     const newUser: StoredUserRecord = {
       id: `emp-${now}-${crypto.randomBytes(3).toString('hex')}`,
-      email: check.email,
+      email: resolvedEmail,
       displayName: check.name,
       department: check.department,
+      role: 'employee',
       isAnonymous: Boolean(body.isAnonymous),
       createdAt: now,
       passwordHash: hash,
@@ -238,18 +292,31 @@ async function startServer(): Promise<void> {
   });
 
   app.post('/api/auth/login', (req, res) => {
-    const body = req.body as { email?: string; password?: string };
-    const email = String(body.email ?? '').trim().toLowerCase();
+    const body = req.body as {
+      identifier?: string;
+      email?: string;
+      displayName?: string;
+      password?: string;
+    };
+    const identifier = String(
+      body.identifier ?? body.email ?? body.displayName ?? ''
+    )
+      .trim()
+      .toLowerCase();
     const password = String(body.password ?? '');
 
-    if (!email || !password) {
-      res.status(400).json({ error: 'Email dan password wajib diisi.' });
+    if (!identifier || !password) {
+      res.status(400).json({ error: 'Nama dan password wajib diisi.' });
       return;
     }
 
-    const user = db.users.find((u) => u.email.toLowerCase() === email);
+    const user = db.users.find(
+      (u) =>
+        u.displayName.toLowerCase() === identifier ||
+        u.email.toLowerCase() === identifier
+    );
     if (!user || !verifyPassword(password, user.passwordHash, user.passwordSalt)) {
-      res.status(401).json({ error: 'Email atau password tidak sesuai.' });
+      res.status(401).json({ error: 'Nama atau password tidak sesuai.' });
       return;
     }
 
@@ -348,11 +415,12 @@ async function startServer(): Promise<void> {
   app.post('/api/release', requireAuth, (req: AuthenticatedRequest, res) => {
     const user = req.authUser!;
     const body = req.body as { force?: boolean };
+    const allowForce = Boolean(body.force) && user.role === 'admin';
     const result = releaseStall(
       db.office,
       {
         userId: user.id,
-        force: Boolean(body.force),
+        force: allowForce,
       },
       Date.now()
     );
@@ -397,7 +465,130 @@ async function startServer(): Promise<void> {
     res.json(getPublicState());
   });
 
-  app.post('/api/toilet/maintenance', requireAuth, (_req, res) => {
+  // --- Admin Panel Endpoints (Strictly Admin Role) ---
+
+  const buildAdminUsersPayload = () =>
+    db.users.map((u) => ({
+      ...toPublicUser(u),
+      sessionCount: db.office.history.filter((h) => h.userId === u.id).length,
+    }));
+
+  app.get('/api/admin/users', requireAuth, requireAdmin, (_req, res) => {
+    res.json({ users: buildAdminUsersPayload() });
+  });
+
+  app.patch('/api/admin/users/:id/role', requireAuth, requireAdmin, (req: AuthenticatedRequest, res) => {
+    const targetId = req.params.id;
+    const body = req.body as { role?: UserRole };
+    const nextRole: UserRole = body.role === 'admin' ? 'admin' : 'employee';
+
+    if (targetId === req.authUser!.id && nextRole !== 'admin') {
+      res.status(400).json({ error: 'Tidak dapat menurunkan peran akun admin yang sedang kamu pakai.' });
+      return;
+    }
+
+    const target = db.users.find((u) => u.id === targetId);
+    if (!target) {
+      res.status(404).json({ error: 'Akun karyawan tidak ditemukan.' });
+      return;
+    }
+
+    const adminCount = db.users.filter((u) => u.role === 'admin').length;
+    if (target.role === 'admin' && nextRole !== 'admin' && adminCount <= 1) {
+      res.status(400).json({ error: 'Minimal harus ada satu akun Admin aktif.' });
+      return;
+    }
+
+    target.role = nextRole;
+    persistDatabase(db);
+    res.json({ users: buildAdminUsersPayload() });
+  });
+
+  app.post(
+    '/api/admin/users/:id/reset-password',
+    requireAuth,
+    requireAdmin,
+    (req: AuthenticatedRequest, res) => {
+      const targetId = req.params.id;
+      const body = req.body as { password?: string };
+      const nextPassword = String(body.password ?? 'ngising123');
+      if (nextPassword.length < 4) {
+        res.status(400).json({ error: 'Password baru minimal 4 karakter.' });
+        return;
+      }
+
+      const target = db.users.find((u) => u.id === targetId);
+      if (!target) {
+        res.status(404).json({ error: 'Akun karyawan tidak ditemukan.' });
+        return;
+      }
+
+      const { hash, salt } = hashPassword(nextPassword);
+      target.passwordHash = hash;
+      target.passwordSalt = salt;
+      persistDatabase(db);
+      res.json({
+        ok: true,
+        message: `Password untuk ${target.displayName} direset menjadi "${nextPassword}".`,
+      });
+    }
+  );
+
+  app.delete('/api/admin/users/:id', requireAuth, requireAdmin, (req: AuthenticatedRequest, res) => {
+    const targetId = req.params.id;
+    if (targetId === req.authUser!.id) {
+      res.status(400).json({ error: 'Tidak dapat menghapus akunmu sendiri saat sedang masuk.' });
+      return;
+    }
+
+    const target = db.users.find((u) => u.id === targetId);
+    if (!target) {
+      res.status(404).json({ error: 'Akun karyawan tidak ditemukan.' });
+      return;
+    }
+
+    const adminCount = db.users.filter((u) => u.role === 'admin').length;
+    if (target.role === 'admin' && adminCount <= 1) {
+      res.status(400).json({ error: 'Minimal harus ada satu akun Admin aktif.' });
+      return;
+    }
+
+    const now = Date.now();
+    let nextOffice = db.office;
+    if (nextOffice.toilet.occupant?.userId === targetId) {
+      const released = releaseStall(nextOffice, { userId: targetId, force: true }, now);
+      if (released.ok) nextOffice = released.state;
+    }
+    const queueItem = nextOffice.queue.find((q) => q.userId === targetId);
+    if (queueItem) {
+      const removed = removeQueueEntry(nextOffice, queueItem.id, now);
+      if (removed.ok) nextOffice = removed.state;
+    }
+
+    db.users = db.users.filter((u) => u.id !== targetId);
+    commitOfficeState(nextOffice);
+    res.json({ users: buildAdminUsersPayload(), state: getPublicState() });
+  });
+
+  app.patch('/api/admin/toilet', requireAuth, requireAdmin, (req, res) => {
+    const body = req.body as { name?: string; location?: string };
+    const result = updateToiletInfo(
+      db.office,
+      {
+        name: String(body.name ?? db.office.toilet.name),
+        location: String(body.location ?? db.office.toilet.location),
+      },
+      Date.now()
+    );
+    if (!result.ok) {
+      res.status(400).json({ error: result.error });
+      return;
+    }
+    commitOfficeState(result.state);
+    res.json(getPublicState());
+  });
+
+  app.post('/api/admin/toilet/maintenance', requireAuth, requireAdmin, (_req, res) => {
     const result = toggleStallMaintenance(db.office, Date.now());
     if (!result.ok) {
       res.status(400).json({ error: result.error });
@@ -407,14 +598,62 @@ async function startServer(): Promise<void> {
     res.json(getPublicState());
   });
 
-  app.post('/api/reset-demo', (_req, res) => {
+  app.post('/api/admin/toilet/force-release', requireAuth, requireAdmin, (req: AuthenticatedRequest, res) => {
+    const result = releaseStall(
+      db.office,
+      { userId: req.authUser!.id, force: true },
+      Date.now()
+    );
+    if (!result.ok) {
+      res.status(400).json({ error: result.error });
+      return;
+    }
+    commitOfficeState(result.state);
+    res.json(getPublicState());
+  });
+
+  app.post('/api/admin/queue/:id/prioritize', requireAuth, requireAdmin, (req, res) => {
+    const result = prioritizeQueueEntry(db.office, req.params.id, Date.now());
+    if (!result.ok) {
+      res.status(400).json({ error: result.error });
+      return;
+    }
+    commitOfficeState(result.state);
+    res.json(getPublicState());
+  });
+
+  app.delete('/api/admin/queue/:id', requireAuth, requireAdmin, (req, res) => {
+    const result = removeQueueEntry(db.office, req.params.id, Date.now());
+    if (!result.ok) {
+      res.status(400).json({ error: result.error });
+      return;
+    }
+    commitOfficeState(result.state);
+    res.json(getPublicState());
+  });
+
+  app.post('/api/admin/queue/clear', requireAuth, requireAdmin, (_req, res) => {
+    commitOfficeState(clearQueue(db.office, Date.now()));
+    res.json(getPublicState());
+  });
+
+  app.delete('/api/admin/history/:id', requireAuth, requireAdmin, (req, res) => {
+    const result = removeHistoryEntry(db.office, req.params.id, Date.now());
+    if (!result.ok) {
+      res.status(400).json({ error: result.error });
+      return;
+    }
+    commitOfficeState(result.state);
+    res.json(getPublicState());
+  });
+
+  app.post('/api/admin/reset-demo', requireAuth, requireAdmin, (_req, res) => {
     const now = Date.now();
-    // Preserve any newly registered users while restoring seed accounts and fresh 1-toilet state
     const seedUsers = createSeedUsers(now);
     const seedIds = new Set(seedUsers.map((u) => u.id));
     db.users = [...seedUsers, ...db.users.filter((u) => !seedIds.has(u.id))];
     commitOfficeState(createSeedState(now));
-    res.json(getPublicState());
+    res.json({ users: buildAdminUsersPayload(), state: getPublicState() });
   });
 
   const isProd = process.env.NODE_ENV === 'production';

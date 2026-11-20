@@ -50,7 +50,7 @@ export function getPublicDisplayName(
 
 export function validateEmployeeInput(
   displayName: string,
-  department: string
+  department = ''
 ): { valid: true; name: string; department: string } | { valid: false; error: string } {
   const trimmedName = displayName.trim();
   if (trimmedName.length < 2) {
@@ -65,7 +65,7 @@ export function validateEmployeeInput(
       error: 'Nama karyawan maksimal 40 karakter.',
     };
   }
-  const trimmedDept = department.trim() || 'Umum';
+  const trimmedDept = department.trim();
   return {
     valid: true,
     name: trimmedName,
@@ -75,27 +75,24 @@ export function validateEmployeeInput(
 
 export function validateRegistrationInput(params: {
   displayName: string;
-  email: string;
-  department: string;
   password: string;
+  email?: string;
+  department?: string;
 }):
   | { valid: true; name: string; email: string; department: string; password: string }
   | { valid: false; error: string } {
-  const nameCheck = validateEmployeeInput(params.displayName, params.department);
+  const nameCheck = validateEmployeeInput(params.displayName, params.department ?? '');
   if (!nameCheck.valid) {
     return nameCheck;
-  }
-  const email = params.email.trim().toLowerCase();
-  if (!email.includes('@') || email.length < 5) {
-    return { valid: false, error: 'Masukkan alamat email kantor yang valid.' };
   }
   if (params.password.length < 4) {
     return { valid: false, error: 'Password minimal 4 karakter.' };
   }
+  const rawEmail = (params.email ?? '').trim().toLowerCase();
   return {
     valid: true,
     name: nameCheck.name,
-    email,
+    email: rawEmail,
     department: nameCheck.department,
     password: params.password,
   };
@@ -394,6 +391,126 @@ export function toggleStallMaintenance(
       },
       now
     ),
+  };
+}
+
+export function updateToiletInfo(
+  state: OfficeState,
+  params: { name: string; location: string },
+  now: number
+): { ok: true; state: OfficeState } | { ok: false; error: string } {
+  const name = params.name.trim();
+  const location = params.location.trim();
+  if (name.length < 2) {
+    return { ok: false, error: 'Nama toilet minimal 2 karakter.' };
+  }
+  if (location.length < 2) {
+    return { ok: false, error: 'Lokasi toilet minimal 2 karakter.' };
+  }
+  return {
+    ok: true,
+    state: {
+      ...state,
+      toilet: {
+        ...state.toilet,
+        name: name.slice(0, 40),
+        location: location.slice(0, 40),
+      },
+      serverNow: now,
+    },
+  };
+}
+
+export function prioritizeQueueEntry(
+  state: OfficeState,
+  queueId: string,
+  now: number
+): { ok: true; state: OfficeState } | { ok: false; error: string } {
+  const idx = state.queue.findIndex((q) => q.id === queueId);
+  if (idx === -1) {
+    return { ok: false, error: 'Data antrean tidak ditemukan.' };
+  }
+  const target = state.queue[idx];
+  if (target.status === 'called') {
+    return { ok: true, state };
+  }
+
+  const waitingOnly = state.queue.filter((q) => q.id !== queueId);
+  const calledIdx = waitingOnly.findIndex((q) => q.status === 'called');
+  const nextQueue =
+    calledIdx !== -1
+      ? [waitingOnly[0], target, ...waitingOnly.slice(1)]
+      : [target, ...waitingOnly];
+
+  return {
+    ok: true,
+    state: promoteNextEligible(
+      {
+        ...state,
+        queue: nextQueue,
+        serverNow: now,
+      },
+      now
+    ),
+  };
+}
+
+export function removeQueueEntry(
+  state: OfficeState,
+  queueId: string,
+  now: number
+): { ok: true; state: OfficeState } | { ok: false; error: string } {
+  const target = state.queue.find((q) => q.id === queueId);
+  if (!target) {
+    return { ok: false, error: 'Data antrean tidak ditemukan.' };
+  }
+  const nextToilet =
+    state.toilet.reservedFor?.queueId === queueId
+      ? { ...state.toilet, reservedFor: null }
+      : state.toilet;
+
+  return {
+    ok: true,
+    state: promoteNextEligible(
+      {
+        ...state,
+        toilet: nextToilet,
+        queue: state.queue.filter((q) => q.id !== queueId),
+        serverNow: now,
+      },
+      now
+    ),
+  };
+}
+
+export function clearQueue(state: OfficeState, now: number): OfficeState {
+  return {
+    ...state,
+    toilet: {
+      ...state.toilet,
+      reservedFor: null,
+    },
+    queue: [],
+    serverNow: now,
+  };
+}
+
+export function removeHistoryEntry(
+  state: OfficeState,
+  historyId: string,
+  now: number
+): { ok: true; state: OfficeState } | { ok: false; error: string } {
+  const exists = state.history.some((h) => h.id === historyId);
+  if (!exists) {
+    return { ok: false, error: 'Catatan riwayat tidak ditemukan.' };
+  }
+  return {
+    ok: true,
+    state: {
+      ...state,
+      history: state.history.filter((h) => h.id !== historyId),
+      serverNow: now,
+    },
   };
 }
 

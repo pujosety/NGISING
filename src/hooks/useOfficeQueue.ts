@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { NeedType, OfficeState, UserAccount } from '../shared/types.ts';
+import type { NeedType, OfficeState, UserAccount, UserRole } from '../shared/types.ts';
 
 const TOKEN_STORAGE_KEY = 'ngising_auth_token_v1';
 const SOUND_STORAGE_KEY = 'ngising_sound_v1';
@@ -9,6 +9,11 @@ export interface DemoAccountInfo {
   email: string;
   displayName: string;
   department: string;
+  role: UserRole;
+}
+
+export interface AdminUserSummary extends UserAccount {
+  sessionCount: number;
 }
 
 function playTurnAlertSound(): void {
@@ -61,6 +66,7 @@ export function useOfficeQueue() {
   const [user, setUser] = useState<UserAccount | null>(null);
   const [token, setToken] = useState<string | null>(() => readStoredToken());
   const [demoAccounts, setDemoAccounts] = useState<DemoAccountInfo[]>([]);
+  const [adminUsers, setAdminUsers] = useState<AdminUserSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(false);
   const [connected, setConnected] = useState(false);
@@ -136,7 +142,7 @@ export function useOfficeQueue() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              email: 'siti@kantor.id',
+              identifier: 'siti@kantor.id',
               password: 'ngising123',
             }),
           });
@@ -235,14 +241,14 @@ export function useOfficeQueue() {
     wasCalledRef.current = isCalledNow;
   }, [state, user, soundEnabled]);
 
-  const login = useCallback(async (email: string, password: string): Promise<boolean> => {
+  const login = useCallback(async (identifier: string, password: string): Promise<boolean> => {
     setAuthLoading(true);
     setErrorMessage(null);
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ identifier, password }),
       });
       const data = (await res.json()) as { token?: string; user?: UserAccount; error?: string };
       if (!res.ok || !data.token || !data.user) {
@@ -264,10 +270,8 @@ export function useOfficeQueue() {
   const register = useCallback(
     async (params: {
       displayName: string;
-      email: string;
-      department: string;
       password: string;
-      isAnonymous: boolean;
+      isAnonymous?: boolean;
     }): Promise<boolean> => {
       setAuthLoading(true);
       setErrorMessage(null);
@@ -285,7 +289,6 @@ export function useOfficeQueue() {
         saveStoredToken(data.token);
         setToken(data.token);
         setUser(data.user);
-        setDemoAccounts((prev) => prev);
         return true;
       } catch {
         setErrorMessage('Koneksi gagal. Periksa jaringanmu.');
@@ -301,6 +304,7 @@ export function useOfficeQueue() {
     saveStoredToken(null);
     setToken(null);
     setUser(null);
+    setAdminUsers([]);
     setErrorMessage(null);
   }, []);
 
@@ -340,19 +344,24 @@ export function useOfficeQueue() {
   );
 
   const mutate = useCallback(
-    async (url: string, body?: unknown, requireSession = true): Promise<boolean> => {
-      if (requireSession && !token) {
+    async (
+      url: string,
+      body?: unknown,
+      method: 'POST' | 'PATCH' | 'DELETE' = 'POST'
+    ): Promise<boolean> => {
+      if (!token) {
         setErrorMessage('Silakan masuk ke akun Ngising terlebih dahulu.');
         return false;
       }
       setBusy(true);
       setErrorMessage(null);
       try {
-        const headers: Record<string, string> = {};
+        const headers: Record<string, string> = {
+          Authorization: `Bearer ${token}`,
+        };
         if (body !== undefined) headers['Content-Type'] = 'application/json';
-        if (token) headers.Authorization = `Bearer ${token}`;
         const res = await fetch(url, {
-          method: 'POST',
+          method,
           headers,
           body: body !== undefined ? JSON.stringify(body) : undefined,
         });
@@ -378,10 +387,7 @@ export function useOfficeQueue() {
     [applyServerState, token]
   );
 
-  const occupy = useCallback(
-    (need: NeedType) => mutate('/api/occupy', { need }),
-    [mutate]
-  );
+  const occupy = useCallback((need: NeedType) => mutate('/api/occupy', { need }), [mutate]);
 
   const release = useCallback(
     (force = false) => mutate('/api/release', { force }),
@@ -395,20 +401,198 @@ export function useOfficeQueue() {
 
   const leaveQueue = useCallback(() => mutate('/api/queue/leave', {}), [mutate]);
 
-  const toggleMaintenance = useCallback(
-    () => mutate('/api/toilet/maintenance', {}),
+  // --- Admin Panel Actions ---
+
+  const fetchAdminUsers = useCallback(async (): Promise<void> => {
+    if (!token || user?.role !== 'admin') return;
+    try {
+      const res = await fetch('/api/admin/users', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as { users?: AdminUserSummary[] };
+      if (data.users) {
+        setAdminUsers(data.users);
+      }
+    } catch {
+      // ignore transient error
+    }
+  }, [token, user?.role]);
+
+  const adminUpdateToilet = useCallback(
+    (name: string, location: string) =>
+      mutate('/api/admin/toilet', { name, location }, 'PATCH'),
     [mutate]
   );
 
-  const resetDemo = useCallback(
-    () => mutate('/api/reset-demo', {}, false),
+  const adminToggleMaintenance = useCallback(
+    () => mutate('/api/admin/toilet/maintenance', {}),
     [mutate]
   );
+
+  const adminForceRelease = useCallback(
+    () => mutate('/api/admin/toilet/force-release', {}),
+    [mutate]
+  );
+
+  const adminPrioritizeQueue = useCallback(
+    (queueId: string) => mutate(`/api/admin/queue/${encodeURIComponent(queueId)}/prioritize`, {}),
+    [mutate]
+  );
+
+  const adminRemoveQueue = useCallback(
+    (queueId: string) => mutate(`/api/admin/queue/${encodeURIComponent(queueId)}`, undefined, 'DELETE'),
+    [mutate]
+  );
+
+  const adminClearQueue = useCallback(
+    () => mutate('/api/admin/queue/clear', {}),
+    [mutate]
+  );
+
+  const adminDeleteHistory = useCallback(
+    async (historyId: string): Promise<boolean> => {
+      const ok = await mutate(
+        `/api/admin/history/${encodeURIComponent(historyId)}`,
+        undefined,
+        'DELETE'
+      );
+      if (ok) void fetchAdminUsers();
+      return ok;
+    },
+    [mutate, fetchAdminUsers]
+  );
+
+  const adminUpdateUserRole = useCallback(
+    async (userId: string, role: UserRole): Promise<boolean> => {
+      if (!token) return false;
+      setBusy(true);
+      setErrorMessage(null);
+      try {
+        const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}/role`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ role }),
+        });
+        const data = (await res.json()) as { users?: AdminUserSummary[]; error?: string };
+        if (!res.ok) {
+          setErrorMessage(data.error || 'Gagal memperbarui peran akun.');
+          return false;
+        }
+        if (data.users) setAdminUsers(data.users);
+        return true;
+      } catch {
+        setErrorMessage('Koneksi ke server terputus.');
+        return false;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [token]
+  );
+
+  const adminResetUserPassword = useCallback(
+    async (userId: string, password = 'ngising123'): Promise<string | null> => {
+      if (!token) return null;
+      setBusy(true);
+      setErrorMessage(null);
+      try {
+        const res = await fetch(
+          `/api/admin/users/${encodeURIComponent(userId)}/reset-password`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ password }),
+          }
+        );
+        const data = (await res.json()) as { message?: string; error?: string };
+        if (!res.ok) {
+          setErrorMessage(data.error || 'Gagal mereset password.');
+          return null;
+        }
+        return data.message || 'Password berhasil direset.';
+      } catch {
+        setErrorMessage('Koneksi ke server terputus.');
+        return null;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [token]
+  );
+
+  const adminDeleteUser = useCallback(
+    async (userId: string): Promise<boolean> => {
+      if (!token) return false;
+      setBusy(true);
+      setErrorMessage(null);
+      try {
+        const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = (await res.json()) as {
+          users?: AdminUserSummary[];
+          state?: OfficeState;
+          error?: string;
+        };
+        if (!res.ok) {
+          setErrorMessage(data.error || 'Gagal menghapus akun.');
+          return false;
+        }
+        if (data.users) setAdminUsers(data.users);
+        if (data.state) applyServerState(data.state);
+        return true;
+      } catch {
+        setErrorMessage('Koneksi ke server terputus.');
+        return false;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [token, applyServerState]
+  );
+
+  const adminResetDemo = useCallback(async (): Promise<boolean> => {
+    if (!token) return false;
+    setBusy(true);
+    setErrorMessage(null);
+    try {
+      const res = await fetch('/api/admin/reset-demo', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = (await res.json()) as {
+        users?: AdminUserSummary[];
+        state?: OfficeState;
+        error?: string;
+      };
+      if (!res.ok) {
+        setErrorMessage(data.error || 'Gagal mereset data demo.');
+        return false;
+      }
+      if (data.users) setAdminUsers(data.users);
+      if (data.state) applyServerState(data.state);
+      return true;
+    } catch {
+      setErrorMessage('Koneksi ke server terputus.');
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }, [token, applyServerState]);
 
   return {
     state,
     user,
     demoAccounts,
+    adminUsers,
     loading,
     authLoading,
     connected,
@@ -426,7 +610,17 @@ export function useOfficeQueue() {
     release,
     joinQueue,
     leaveQueue,
-    toggleMaintenance,
-    resetDemo,
+    fetchAdminUsers,
+    adminUpdateToilet,
+    adminToggleMaintenance,
+    adminForceRelease,
+    adminPrioritizeQueue,
+    adminRemoveQueue,
+    adminClearQueue,
+    adminDeleteHistory,
+    adminUpdateUserRole,
+    adminResetUserPassword,
+    adminDeleteUser,
+    adminResetDemo,
   };
 }

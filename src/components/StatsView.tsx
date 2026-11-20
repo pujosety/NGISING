@@ -233,7 +233,9 @@ export function StatsView({ history, user, now }: StatsViewProps) {
                         <p className="font-semibold text-slate-900">
                           {row.userId === user.id ? `${user.displayName} (Kamu)` : row.displayName}
                         </p>
-                        <p className="text-xs text-slate-500">{row.department}</p>
+                        {row.department ? (
+                          <p className="text-xs text-slate-500">{row.department}</p>
+                        ) : null}
                       </td>
                       <td className="px-5 py-3 text-right font-mono text-xs tabular-nums text-slate-700">
                         {row.totalSessions}

@@ -7,6 +7,7 @@ export function createSeedUsers(now = Date.now()): StoredUserRecord[] {
     email: string,
     displayName: string,
     department: string,
+    role: 'admin' | 'employee',
     isAnonymous = false
   ): StoredUserRecord => {
     const { hash, salt } = hashPassword('ngising123');
@@ -15,6 +16,7 @@ export function createSeedUsers(now = Date.now()): StoredUserRecord[] {
       email,
       displayName,
       department,
+      role,
       isAnonymous,
       createdAt: now - 86_400_000,
       passwordHash: hash,
@@ -23,10 +25,11 @@ export function createSeedUsers(now = Date.now()): StoredUserRecord[] {
   };
 
   return [
-    makeUser('emp-siti', 'siti@kantor.id', 'Siti Rahma', 'Design', false),
-    makeUser('emp-dimas', 'dimas@kantor.id', 'Dimas Pratama', 'Engineering', false),
-    makeUser('emp-bagus', 'bagus@kantor.id', 'Bagus Saputra', 'Product', false),
-    makeUser('emp-eko', 'eko@kantor.id', 'Eko Nugroho', 'Operations', false),
+    makeUser('emp-admin', 'admin@kantor.id', 'Admin Kantor', 'Operasional', 'admin', false),
+    makeUser('emp-siti', 'siti@kantor.id', 'Siti Rahma', 'Design', 'employee', false),
+    makeUser('emp-dimas', 'dimas@kantor.id', 'Dimas Pratama', 'Engineering', 'employee', false),
+    makeUser('emp-bagus', 'bagus@kantor.id', 'Bagus Saputra', 'Product', 'employee', false),
+    makeUser('emp-eko', 'eko@kantor.id', 'Eko Nugroho', 'Operations', 'employee', false),
   ];
 }
 
