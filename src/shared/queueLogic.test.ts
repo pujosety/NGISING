@@ -2,21 +2,26 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   CLAIM_WINDOW_MS,
+  DAILY_SESSION_LIMIT,
   clearQueue,
   computeOfficeStats,
   computePersonalStats,
+  computeWeeklyLeaderboard,
   estimateWaitMinutes,
   formatDuration,
+  getDailyQuota,
   joinQueue,
   leaveQueue,
   occupyStall,
   prioritizeQueueEntry,
   promoteNextEligible,
   releaseStall,
+  removeGuestbookEntry,
   removeHistoryEntry,
   removeQueueEntry,
   toggleStallMaintenance,
   updateToiletInfo,
+  validateGuestbookInput,
   validateRegistrationInput,
 } from './queueLogic.ts';
 import type { OfficeState } from './types.ts';
@@ -40,6 +45,7 @@ function makeSingleToiletState(now = 1_700_000_000_000): OfficeState {
     },
     queue: [],
     history: [],
+    guestbook: [],
     onlineCount: 2,
     serverNow: now,
   };
@@ -317,4 +323,230 @@ test('admin queue prioritization, removal, clearing, and toilet update work clea
   if (removedHist.ok) {
     assert.equal(removedHist.state.history.length, 0);
   }
+});
+
+test('guestbook validation and guest queue/toilet flow work without account login', () => {
+  assert.equal(validateGuestbookInput({ guestName: 'A', origin: 'PT Maju' }).valid, false);
+  assert.equal(validateGuestbookInput({ guestName: 'Budi', origin: '' }).valid, false);
+  const validGuest = validateGuestbookInput({
+    guestName: ' Budi Santoso ',
+    origin: ' PT Maju Jaya · Klien ',
+  });
+  assert.equal(validGuest.valid, true);
+  if (!validGuest.valid) return;
+
+  const now = 1_700_000_000_000;
+  const base = makeSingleToiletState(now);
+  base.guestbook = [
+    {
+      id: 'gb-1',
+      guestId: 'guest-1',
+      guestName: validGuest.guestName,
+      origin: validGuest.origin,
+      visitedAt: now,
+    },
+  ];
+
+  const queued = joinQueue(
+    base,
+    {
+      userId: 'guest-1',
+      displayName: validGuest.guestName,
+      department: `Tamu · ${validGuest.origin}`,
+      isAnonymous: false,
+      isGuest: true,
+      need: 'cepat',
+    },
+    now + 100
+  );
+  assert.equal(queued.ok, true);
+  if (!queued.ok) return;
+  assert.equal(queued.state.queue[0].isGuest, true);
+
+  const removedGb = removeGuestbookEntry(queued.state, 'gb-1', now + 200);
+  assert.equal(removedGb.ok, true);
+  if (removedGb.ok) {
+    assert.equal(removedGb.state.guestbook.length, 0);
+  }
+});
+
+test('daily ngising quota enforces max 10x per day across occupy and queue', () => {
+  const now = new Date(2026, 10, 19, 14, 0, 0).getTime();
+  const base = makeSingleToiletState(now);
+  // Free the stall first
+  const freed = releaseStall(base, { userId: 'emp-dimas' }, now - 60_000);
+  assert.equal(freed.ok, true);
+  if (!freed.ok) return;
+
+  // Give Siti 9 sessions today + 2 sessions yesterday (yesterday must NOT count toward today)
+  const historyToday = Array.from({ length: 9 }, (_, i) => ({
+    id: `today-${i}`,
+    stallId: 'toilet-utama',
+    stallName: 'Toilet Kantor',
+    userId: 'emp-siti',
+    displayName: 'Siti Rahma',
+    department: 'Design',
+    isAnonymous: false,
+    need: 'pup' as const,
+    startedAt: now - (i + 1) * 180_000,
+    endedAt: now - (i + 1) * 180_000 + 60_000,
+    durationMs: 60_000,
+  }));
+  const historyYesterday = Array.from({ length: 2 }, (_, i) => ({
+    id: `yday-${i}`,
+    stallId: 'toilet-utama',
+    stallName: 'Toilet Kantor',
+    userId: 'emp-siti',
+    displayName: 'Siti Rahma',
+    department: 'Design',
+    isAnonymous: false,
+    need: 'pup' as const,
+    startedAt: now - 86_400_000 - i * 60_000,
+    endedAt: now - 86_400_000 - i * 60_000 + 30_000,
+    durationMs: 30_000,
+  }));
+
+  const stateWithNine = {
+    ...freed.state,
+    history: [...historyToday, ...historyYesterday],
+  };
+
+  assert.equal(DAILY_SESSION_LIMIT, 10);
+  const quotaBefore = getDailyQuota(stateWithNine, 'emp-siti', now);
+  assert.equal(quotaBefore.used, 9);
+  assert.equal(quotaBefore.remaining, 1);
+
+  // 10th session succeeds
+  const tenthOccupy = occupyStall(
+    stateWithNine,
+    {
+      userId: 'emp-siti',
+      displayName: 'Siti Rahma',
+      department: 'Design',
+      isAnonymous: false,
+      need: 'pup',
+    },
+    now
+  );
+  assert.equal(tenthOccupy.ok, true);
+  if (!tenthOccupy.ok) return;
+
+  const tenthRelease = releaseStall(tenthOccupy.state, { userId: 'emp-siti' }, now + 30_000);
+  assert.equal(tenthRelease.ok, true);
+  if (!tenthRelease.ok) return;
+
+  const quotaAfter = getDailyQuota(tenthRelease.state, 'emp-siti', now + 31_000);
+  assert.equal(quotaAfter.used, 10);
+  assert.equal(quotaAfter.remaining, 0);
+
+  // 11th attempt (occupy and joinQueue) must be blocked
+  const eleventhOccupy = occupyStall(
+    tenthRelease.state,
+    {
+      userId: 'emp-siti',
+      displayName: 'Siti Rahma',
+      department: 'Design',
+      isAnonymous: false,
+      need: 'cepat',
+    },
+    now + 32_000
+  );
+  assert.equal(eleventhOccupy.ok, false);
+
+  const eleventhQueue = joinQueue(
+    tenthRelease.state,
+    {
+      userId: 'emp-siti',
+      displayName: 'Siti Rahma',
+      department: 'Design',
+      isAnonymous: false,
+      need: 'pup',
+    },
+    now + 32_000
+  );
+  assert.equal(eleventhQueue.ok, false);
+});
+
+test('computeWeeklyLeaderboard aggregates last 7 days by session count and excludes older records', () => {
+  const now = new Date(2026, 10, 19, 14, 0, 0).getTime();
+  const day = 86_400_000;
+  const history = [
+    // Dimas: 3 sessions within last 7 days
+    {
+      id: 'w1',
+      stallId: 'toilet-utama',
+      stallName: 'Toilet Kantor',
+      userId: 'emp-dimas',
+      displayName: 'Dimas Pratama',
+      department: 'Engineering',
+      isAnonymous: false,
+      need: 'pup' as const,
+      startedAt: now - 10_000,
+      endedAt: now,
+      durationMs: 300_000,
+    },
+    {
+      id: 'w2',
+      stallId: 'toilet-utama',
+      stallName: 'Toilet Kantor',
+      userId: 'emp-dimas',
+      displayName: 'Dimas Pratama',
+      department: 'Engineering',
+      isAnonymous: false,
+      need: 'pup' as const,
+      startedAt: now - 2 * day,
+      endedAt: now - 2 * day + 240_000,
+      durationMs: 240_000,
+    },
+    {
+      id: 'w3',
+      stallId: 'toilet-utama',
+      stallName: 'Toilet Kantor',
+      userId: 'emp-dimas',
+      displayName: 'Dimas Pratama',
+      department: 'Engineering',
+      isAnonymous: false,
+      need: 'cepat' as const,
+      startedAt: now - 4 * day,
+      endedAt: now - 4 * day + 120_000,
+      durationMs: 120_000,
+    },
+    // Siti: 1 session within 7 days, plus 5 sessions 12 days ago (excluded)
+    {
+      id: 'w4',
+      stallId: 'toilet-utama',
+      stallName: 'Toilet Kantor',
+      userId: 'emp-siti',
+      displayName: 'Siti Rahma',
+      department: 'Design',
+      isAnonymous: false,
+      need: 'pup' as const,
+      startedAt: now - 1 * day,
+      endedAt: now - 1 * day + 600_000,
+      durationMs: 600_000,
+    },
+    ...Array.from({ length: 5 }, (_, i) => ({
+      id: `old-${i}`,
+      stallId: 'toilet-utama',
+      stallName: 'Toilet Kantor',
+      userId: 'emp-siti',
+      displayName: 'Siti Rahma',
+      department: 'Design',
+      isAnonymous: false,
+      need: 'pup' as const,
+      startedAt: now - 12 * day - i * 60_000,
+      endedAt: now - 12 * day - i * 60_000 + 180_000,
+      durationMs: 180_000,
+    })),
+  ];
+
+  const weekly = computeWeeklyLeaderboard(history, now);
+  assert.equal(weekly.totalSessions, 4);
+  assert.equal(weekly.entries[0].userId, 'emp-dimas');
+  assert.equal(weekly.entries[0].totalSessions, 3);
+  assert.equal(weekly.entries[1].userId, 'emp-siti');
+  assert.equal(weekly.entries[1].totalSessions, 1);
+
+  const office = computeOfficeStats(history, now);
+  assert.equal(office.weeklyLeaderboard[0].userId, 'emp-dimas');
 });

@@ -1,20 +1,35 @@
-import { AlertCircle, CheckCircle2, Clock, Lock, LogIn, UserPlus, Wrench } from 'lucide-react';
+import {
+  AlertCircle,
+  BookOpenCheck,
+  CheckCircle2,
+  Clock,
+  Lock,
+  LogIn,
+  UserPlus,
+  Wrench,
+} from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import type { DemoAccountInfo } from '../hooks/useOfficeQueue.ts';
 import { formatDuration, getPublicDisplayName } from '../shared/queueLogic.ts';
 import type { OfficeState } from '../shared/types.ts';
+import { PoopMascot } from './PoopAnimations.tsx';
 
 interface AuthScreenProps {
   officeState: OfficeState | null;
   demoAccounts: DemoAccountInfo[];
   authLoading: boolean;
   errorMessage: string | null;
+  isLocalFallback?: boolean;
   now: number;
   onClearError: () => void;
   onLogin: (identifier: string, password: string) => Promise<boolean>;
   onRegister: (params: {
     displayName: string;
     password: string;
+  }) => Promise<boolean>;
+  onGuestCheckIn: (params: {
+    guestName: string;
+    origin: string;
   }) => Promise<boolean>;
 }
 
@@ -23,15 +38,19 @@ export function AuthScreen({
   demoAccounts,
   authLoading,
   errorMessage,
+  isLocalFallback = false,
   now,
   onClearError,
   onLogin,
   onRegister,
+  onGuestCheckIn,
 }: AuthScreenProps) {
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [mode, setMode] = useState<'login' | 'register' | 'guest'>('login');
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [guestName, setGuestName] = useState('');
+  const [guestOrigin, setGuestOrigin] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
 
   const toilet = officeState?.toilet ?? null;
@@ -51,6 +70,22 @@ export function AuthScreen({
         return;
       }
       await onLogin(identifier.trim(), password);
+      return;
+    }
+
+    if (mode === 'guest') {
+      if (guestName.trim().length < 2) {
+        setLocalError('Nama tamu minimal 2 karakter.');
+        return;
+      }
+      if (guestOrigin.trim().length < 2) {
+        setLocalError('Asal instansi atau tujuan kunjungan wajib diisi.');
+        return;
+      }
+      await onGuestCheckIn({
+        guestName: guestName.trim(),
+        origin: guestOrigin.trim(),
+      });
       return;
     }
 
@@ -91,7 +126,7 @@ export function AuthScreen({
               Satu toilet kantor, antrean tertib tanpa bolak-balik ngecek.
             </h1>
             <p className="mt-3 text-base leading-relaxed text-slate-600">
-              Masuk ke akunmu untuk melihat status toilet secara langsung, ambil nomor antrean otomatis, dan pantau statistik kebiasaanmu di dashboard pribadi.
+              Karyawan bisa masuk ke dashboard pribadi untuk memantau status toilet, sementara tamu atau customer cukup mengisi Buku Tamu tanpa perlu membuat akun.
             </p>
           </div>
 
@@ -127,36 +162,45 @@ export function AuthScreen({
                 )}
               </div>
 
-              <div className="mt-4 flex items-baseline justify-between border-t border-slate-100 pt-4">
+              <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
                 {isOccupied && toilet.occupant ? (
                   <>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">
-                        {getPublicDisplayName(
-                          toilet.occupant.displayName,
-                          toilet.occupant.isAnonymous,
-                          toilet.occupant.userId
-                        )}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        {toilet.occupant.department ? (
-                          <>
-                            {toilet.occupant.department} <span aria-hidden="true">·</span>{' '}
-                          </>
-                        ) : null}
-                        {toilet.occupant.need === 'pup' ? 'Pup' : 'Cepat'}
-                      </p>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <PoopMascot
+                        mood={toilet.occupant.need === 'pup' ? 'ngeden' : 'cepat'}
+                        size={42}
+                      />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-900">
+                          {getPublicDisplayName(
+                            toilet.occupant.displayName,
+                            toilet.occupant.isAnonymous,
+                            toilet.occupant.userId
+                          )}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {toilet.occupant.department ? (
+                            <>
+                              {toilet.occupant.department} <span aria-hidden="true">·</span>{' '}
+                            </>
+                          ) : null}
+                          {toilet.occupant.need === 'pup' ? 'Pup' : 'Cepat'}
+                        </p>
+                      </div>
                     </div>
-                    <p className="font-mono text-2xl font-bold tabular-nums text-slate-900">
+                    <p className="font-mono text-2xl font-bold tabular-nums text-slate-900 shrink-0">
                       {formatDuration(elapsedMs)}
                     </p>
                   </>
                 ) : (
                   <>
-                    <p className="text-sm font-medium text-slate-700">
-                      {isMaintenance ? 'Sedang dibersihkan' : 'Toilet sedang kosong'}
-                    </p>
-                    <p className="font-mono text-2xl font-bold tabular-nums text-emerald-700">
+                    <div className="flex items-center gap-3">
+                      <PoopMascot mood={isMaintenance ? 'maintenance' : 'ready'} size={42} />
+                      <p className="text-sm font-medium text-slate-700">
+                        {isMaintenance ? 'Sedang dibersihkan' : 'Toilet sedang kosong'}
+                      </p>
+                    </div>
+                    <p className="font-mono text-2xl font-bold tabular-nums text-emerald-700 shrink-0">
                       00:00
                     </p>
                   </>
@@ -166,12 +210,12 @@ export function AuthScreen({
           )}
         </section>
 
-        {/* Right Login / Register Card */}
+        {/* Right Login / Register / Guestbook Card */}
         <section className="rounded-xl border border-slate-200 bg-white p-6 sm:p-7 lg:col-span-6">
           <div
             role="tablist"
             aria-label="Pilih mode akses akun"
-            className="grid grid-cols-2 gap-1 rounded-lg bg-slate-100 p-1"
+            className="grid grid-cols-3 gap-1 rounded-lg bg-slate-100 p-1"
           >
             <button
               type="button"
@@ -182,7 +226,7 @@ export function AuthScreen({
                 setLocalError(null);
                 onClearError();
               }}
-              className={`min-h-[38px] rounded-md px-3 py-1.5 text-sm font-semibold transition-colors ${
+              className={`min-h-[38px] rounded-md px-2.5 py-1.5 text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
                 mode === 'login'
                   ? 'bg-white text-slate-900 shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
@@ -199,7 +243,7 @@ export function AuthScreen({
                 setLocalError(null);
                 onClearError();
               }}
-              className={`min-h-[38px] rounded-md px-3 py-1.5 text-sm font-semibold transition-colors ${
+              className={`min-h-[38px] rounded-md px-2.5 py-1.5 text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
                 mode === 'register'
                   ? 'bg-white text-slate-900 shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
@@ -207,58 +251,117 @@ export function AuthScreen({
             >
               Daftar Baru
             </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === 'guest'}
+              onClick={() => {
+                setMode('guest');
+                setLocalError(null);
+                onClearError();
+              }}
+              className={`min-h-[38px] rounded-md px-2.5 py-1.5 text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
+                mode === 'guest'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Buku Tamu
+            </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="mt-5 space-y-4">
-            {mode === 'register' ? (
-              <div>
-                <label htmlFor="auth-name" className="block text-xs font-medium text-slate-700">
-                  Nama
-                </label>
-                <input
-                  id="auth-name"
-                  type="text"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="Contoh: Rina Wijaya"
-                  className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
-                />
-              </div>
-            ) : (
-              <div>
-                <label htmlFor="auth-identifier" className="block text-xs font-medium text-slate-700">
-                  Nama atau Email
-                </label>
-                <input
-                  id="auth-identifier"
-                  type="text"
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="Contoh: Siti Rahma"
-                  className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
-                />
-              </div>
-            )}
+          {isLocalFallback && (
+            <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-xs leading-relaxed text-amber-900">
+              Hosting statis terdeteksi tanpa server backend aktif. Aplikasi berjalan dengan penyimpanan browser lokal (data tersimpan di perangkat ini).
+            </p>
+          )}
 
-            <div>
-              <label htmlFor="auth-password" className="block text-xs font-medium text-slate-700">
-                Password
-              </label>
-              <div className="relative mt-1.5">
-                <Lock
-                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
-                  aria-hidden="true"
-                />
-                <input
-                  id="auth-password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Minimal 4 karakter"
-                  className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-9 pr-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
-                />
-              </div>
-            </div>
+          <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+            {mode === 'guest' ? (
+              <>
+                <p className="text-xs leading-relaxed text-slate-600">
+                  Tamu atau customer tidak perlu membuat akun, cukup isi Buku Tamu sebelum memakai atau mengantre toilet.
+                </p>
+                <div>
+                  <label htmlFor="guest-name" className="block text-xs font-medium text-slate-700">
+                    Nama Tamu
+                  </label>
+                  <input
+                    id="guest-name"
+                    type="text"
+                    value={guestName}
+                    onChange={(e) => setGuestName(e.target.value)}
+                    placeholder="Contoh: Budi Santoso"
+                    className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="guest-origin" className="block text-xs font-medium text-slate-700">
+                    Asal Instansi / Tujuan Kunjungan
+                  </label>
+                  <input
+                    id="guest-origin"
+                    type="text"
+                    value={guestOrigin}
+                    onChange={(e) => setGuestOrigin(e.target.value)}
+                    placeholder="Contoh: PT Maju Jaya / Meeting"
+                    className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                {mode === 'register' ? (
+                  <div>
+                    <label htmlFor="auth-name" className="block text-xs font-medium text-slate-700">
+                      Nama
+                    </label>
+                    <input
+                      id="auth-name"
+                      type="text"
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      placeholder="Contoh: Rina Wijaya"
+                      className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <label htmlFor="auth-identifier" className="block text-xs font-medium text-slate-700">
+                      Nama atau Email
+                    </label>
+                    <input
+                      id="auth-identifier"
+                      type="text"
+                      value={identifier}
+                      onChange={(e) => setIdentifier(e.target.value)}
+                      placeholder="Contoh: Siti Rahma"
+                      className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label htmlFor="auth-password" className="block text-xs font-medium text-slate-700">
+                    Password
+                  </label>
+                  <div className="relative mt-1.5">
+                    <Lock
+                      className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                      aria-hidden="true"
+                    />
+                    <input
+                      id="auth-password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Minimal 4 karakter"
+                      className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-9 pr-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
 
             {activeError && (
               <p role="alert" className="flex items-center gap-2 text-xs font-medium text-red-600">
@@ -277,6 +380,11 @@ export function AuthScreen({
                   <LogIn className="h-4 w-4" aria-hidden="true" />
                   <span>{authLoading ? 'Memproses...' : 'Masuk ke Dashboard Saya'}</span>
                 </>
+              ) : mode === 'guest' ? (
+                <>
+                  <BookOpenCheck className="h-4 w-4" aria-hidden="true" />
+                  <span>{authLoading ? 'Menyimpan...' : 'Isi Buku Tamu & Lanjut'}</span>
+                </>
               ) : (
                 <>
                   <UserPlus className="h-4 w-4" aria-hidden="true" />
@@ -286,7 +394,7 @@ export function AuthScreen({
             </button>
           </form>
 
-          {demoAccounts.length > 0 && (
+          {demoAccounts.length > 0 && mode !== 'guest' && (
             <div className="mt-6 border-t border-slate-100 pt-5">
               <p className="text-xs font-medium text-slate-500">
                 Masuk cepat menggunakan akun demo (password: <code className="font-mono text-slate-700">ngising123</code>):

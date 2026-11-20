@@ -1,7 +1,29 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { NeedType, OfficeState, UserAccount, UserRole } from '../shared/types.ts';
+import type {
+  GuestbookEntry,
+  GuestSession,
+  NeedType,
+  OfficeState,
+  UserAccount,
+  UserRole,
+} from '../shared/types.ts';
+import {
+  localAdminAction,
+  localGetAdminData,
+  localGetDemoAccounts,
+  localGetGuestByToken,
+  localGetPublicState,
+  localGetUserByToken,
+  localGuestCheckIn,
+  localLogin,
+  localMutateActor,
+  localRegister,
+  localUpdateProfile,
+  subscribeLocalChanges,
+} from '../utils/localOfficeFallback.ts';
 
 const TOKEN_STORAGE_KEY = 'ngising_auth_token_v1';
+const GUEST_TOKEN_STORAGE_KEY = 'ngising_guest_token_v1';
 const SOUND_STORAGE_KEY = 'ngising_sound_v1';
 
 export interface DemoAccountInfo {
@@ -14,6 +36,35 @@ export interface DemoAccountInfo {
 
 export interface AdminUserSummary extends UserAccount {
   sessionCount: number;
+}
+
+type FetchJsonResult<T> =
+  | { kind: 'ok'; status: number; data: T }
+  | { kind: 'http_error'; status: number; data: T | null }
+  | { kind: 'backend_unavailable' };
+
+async function safeFetchJson<T>(
+  url: string,
+  options?: RequestInit
+): Promise<FetchJsonResult<T>> {
+  try {
+    const res = await fetch(url, options);
+    const contentType = res.headers.get('content-type') || '';
+    const isJson = contentType.includes('application/json');
+
+    if (!isJson) {
+      // Static hosts (e.g. Wasmer Edge static build) often serve HTML 200/404 for /api/*
+      return { kind: 'backend_unavailable' };
+    }
+
+    const data = (await res.json()) as T;
+    if (!res.ok) {
+      return { kind: 'http_error', status: res.status, data };
+    }
+    return { kind: 'ok', status: res.status, data };
+  } catch {
+    return { kind: 'backend_unavailable' };
+  }
 }
 
 function playTurnAlertSound(): void {
@@ -41,20 +92,20 @@ function playTurnAlertSound(): void {
   }
 }
 
-function readStoredToken(): string | null {
+function readStoredValue(key: string): string | null {
   try {
-    return localStorage.getItem(TOKEN_STORAGE_KEY);
+    return localStorage.getItem(key);
   } catch {
     return null;
   }
 }
 
-function saveStoredToken(token: string | null): void {
+function saveStoredValue(key: string, value: string | null): void {
   try {
-    if (token) {
-      localStorage.setItem(TOKEN_STORAGE_KEY, token);
+    if (value) {
+      localStorage.setItem(key, value);
     } else {
-      localStorage.removeItem(TOKEN_STORAGE_KEY);
+      localStorage.removeItem(key);
     }
   } catch {
     // ignore
@@ -64,9 +115,15 @@ function saveStoredToken(token: string | null): void {
 export function useOfficeQueue() {
   const [state, setState] = useState<OfficeState | null>(null);
   const [user, setUser] = useState<UserAccount | null>(null);
-  const [token, setToken] = useState<string | null>(() => readStoredToken());
+  const [guest, setGuest] = useState<GuestSession | null>(null);
+  const [token, setToken] = useState<string | null>(() => readStoredValue(TOKEN_STORAGE_KEY));
+  const [guestToken, setGuestToken] = useState<string | null>(() =>
+    readStoredValue(GUEST_TOKEN_STORAGE_KEY)
+  );
   const [demoAccounts, setDemoAccounts] = useState<DemoAccountInfo[]>([]);
   const [adminUsers, setAdminUsers] = useState<AdminUserSummary[]>([]);
+  const [adminGuestbook, setAdminGuestbook] = useState<GuestbookEntry[]>([]);
+  const [isLocalFallback, setIsLocalFallback] = useState(false);
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(false);
   const [connected, setConnected] = useState(false);
@@ -85,12 +142,23 @@ export function useOfficeQueue() {
   const wasCalledRef = useRef<boolean>(false);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<number | null>(null);
+  const localModeRef = useRef<boolean>(false);
 
   const applyServerState = useCallback((incoming: OfficeState) => {
     serverOffsetRef.current = incoming.serverNow - Date.now();
     setState(incoming);
     setNow(Date.now() + serverOffsetRef.current);
   }, []);
+
+  const activateLocalFallback = useCallback(() => {
+    if (!localModeRef.current) {
+      localModeRef.current = true;
+      setIsLocalFallback(true);
+    }
+    setConnected(true);
+    setDemoAccounts(localGetDemoAccounts());
+    applyServerState(localGetPublicState());
+  }, [applyServerState]);
 
   const setSoundEnabled = useCallback((enabled: boolean) => {
     setSoundEnabledState(enabled);
@@ -101,60 +169,128 @@ export function useOfficeQueue() {
     }
   }, []);
 
-  // Bootstrap auth session + demo account directory + initial toilet state
+  // Bootstrap auth/guest session + demo account directory + initial toilet state
   useEffect(() => {
     let active = true;
 
     async function init() {
       try {
         const [stateRes, demoRes] = await Promise.all([
-          fetch('/api/state'),
-          fetch('/api/auth/demo-accounts'),
+          safeFetchJson<OfficeState>('/api/state'),
+          safeFetchJson<{ accounts: DemoAccountInfo[] }>('/api/auth/demo-accounts'),
         ]);
-        if (active && stateRes.ok) {
-          const officeData = (await stateRes.json()) as OfficeState;
-          applyServerState(officeData);
-        }
-        if (active && demoRes.ok) {
-          const demoData = (await demoRes.json()) as { accounts: DemoAccountInfo[] };
-          setDemoAccounts(demoData.accounts ?? []);
+
+        if (!active) return;
+
+        if (stateRes.kind === 'backend_unavailable' || demoRes.kind === 'backend_unavailable') {
+          activateLocalFallback();
+        } else {
+          if (stateRes.kind === 'ok') {
+            applyServerState(stateRes.data);
+          }
+          if (demoRes.kind === 'ok') {
+            setDemoAccounts(demoRes.data.accounts ?? []);
+          }
         }
 
         const params = new URLSearchParams(window.location.search);
         const autostart = params.get('autostart') === '1';
-        const existingToken = readStoredToken();
+        const existingToken = readStoredValue(TOKEN_STORAGE_KEY);
+        const existingGuestToken = readStoredValue(GUEST_TOKEN_STORAGE_KEY);
 
-        if (existingToken) {
-          const meRes = await fetch('/api/auth/me', {
-            headers: { Authorization: `Bearer ${existingToken}` },
-          });
-          if (active && meRes.ok) {
-            const meData = (await meRes.json()) as { user: UserAccount };
-            setUser(meData.user);
-            setToken(existingToken);
-          } else if (active) {
-            saveStoredToken(null);
+        if (localModeRef.current) {
+          if (existingToken) {
+            const localUser = localGetUserByToken(existingToken);
+            if (active && localUser) {
+              setUser(localUser);
+              setToken(existingToken);
+              setGuest(null);
+              setGuestToken(null);
+              saveStoredValue(GUEST_TOKEN_STORAGE_KEY, null);
+              return;
+            }
+            saveStoredValue(TOKEN_STORAGE_KEY, null);
             setToken(null);
             setUser(null);
           }
-        } else if (autostart) {
-          const loginRes = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              identifier: 'siti@kantor.id',
-              password: 'ngising123',
-            }),
+          if (autostart) {
+            const loginRes = localLogin('siti@kantor.id', 'ngising123');
+            if (active && loginRes.ok) {
+              saveStoredValue(TOKEN_STORAGE_KEY, loginRes.token);
+              setToken(loginRes.token);
+              setUser(loginRes.user);
+              return;
+            }
+          }
+          if (existingGuestToken) {
+            const localGuest = localGetGuestByToken(existingGuestToken);
+            if (active && localGuest) {
+              setGuest(localGuest);
+              setGuestToken(existingGuestToken);
+              return;
+            }
+            saveStoredValue(GUEST_TOKEN_STORAGE_KEY, null);
+            setGuestToken(null);
+            setGuest(null);
+          }
+          return;
+        }
+
+        if (existingToken) {
+          const meRes = await safeFetchJson<{ user: UserAccount }>('/api/auth/me', {
+            headers: { Authorization: `Bearer ${existingToken}` },
           });
-          if (active && loginRes.ok) {
-            const data = (await loginRes.json()) as { token: string; user: UserAccount };
-            saveStoredToken(data.token);
-            setToken(data.token);
-            setUser(data.user);
+          if (active && meRes.kind === 'ok') {
+            setUser(meRes.data.user);
+            setToken(existingToken);
+            setGuest(null);
+            setGuestToken(null);
+            saveStoredValue(GUEST_TOKEN_STORAGE_KEY, null);
+            return;
+          }
+          if (active) {
+            saveStoredValue(TOKEN_STORAGE_KEY, null);
+            setToken(null);
+            setUser(null);
           }
         }
-      } catch {
-        // ignore network hiccup on initial load
+
+        if (autostart) {
+          const loginRes = await safeFetchJson<{ token: string; user: UserAccount }>(
+            '/api/auth/login',
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                identifier: 'siti@kantor.id',
+                password: 'ngising123',
+              }),
+            }
+          );
+          if (active && loginRes.kind === 'ok') {
+            saveStoredValue(TOKEN_STORAGE_KEY, loginRes.data.token);
+            saveStoredValue(GUEST_TOKEN_STORAGE_KEY, null);
+            setToken(loginRes.data.token);
+            setUser(loginRes.data.user);
+            setGuestToken(null);
+            setGuest(null);
+            return;
+          }
+        }
+
+        if (existingGuestToken) {
+          const guestRes = await safeFetchJson<{ guest: GuestSession }>('/api/guest/me', {
+            headers: { Authorization: `Bearer ${existingGuestToken}` },
+          });
+          if (active && guestRes.kind === 'ok') {
+            setGuest(guestRes.data.guest);
+            setGuestToken(existingGuestToken);
+          } else if (active) {
+            saveStoredValue(GUEST_TOKEN_STORAGE_KEY, null);
+            setGuestToken(null);
+            setGuest(null);
+          }
+        }
       } finally {
         if (active) setLoading(false);
       }
@@ -164,7 +300,7 @@ export function useOfficeQueue() {
     return () => {
       active = false;
     };
-  }, [applyServerState]);
+  }, [activateLocalFallback, applyServerState]);
 
   // 1-second timer tick aligned to server clock
   useEffect(() => {
@@ -174,13 +310,20 @@ export function useOfficeQueue() {
     return () => window.clearInterval(timer);
   }, []);
 
-  // WebSocket live state subscription
+  // WebSocket live state subscription (or BroadcastChannel when in local fallback)
   useEffect(() => {
+    if (isLocalFallback) {
+      const unsub = subscribeLocalChanges(() => {
+        applyServerState(localGetPublicState());
+      });
+      return unsub;
+    }
+
     let disposed = false;
     let attempt = 0;
 
     const connect = () => {
-      if (disposed) return;
+      if (disposed || localModeRef.current) return;
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
       wsRef.current = ws;
@@ -206,7 +349,7 @@ export function useOfficeQueue() {
       };
 
       ws.onclose = () => {
-        if (disposed) return;
+        if (disposed || localModeRef.current) return;
         setConnected(false);
         const delay = Math.min(8000, 1000 * Math.pow(1.5, attempt));
         attempt += 1;
@@ -227,45 +370,70 @@ export function useOfficeQueue() {
       }
       wsRef.current?.close();
     };
-  }, [applyServerState]);
+  }, [applyServerState, isLocalFallback]);
 
-  // Turn chime when authenticated user becomes 'called'
+  // Turn chime when authenticated user OR checked-in guest becomes 'called'
+  const activeActorId = user?.id ?? guest?.id ?? null;
   useEffect(() => {
-    if (!state || !user) return;
+    if (!state || !activeActorId) return;
     const isCalledNow = state.queue.some(
-      (q) => q.userId === user.id && q.status === 'called'
+      (q) => q.userId === activeActorId && q.status === 'called'
     );
     if (isCalledNow && !wasCalledRef.current && soundEnabled) {
       playTurnAlertSound();
     }
     wasCalledRef.current = isCalledNow;
-  }, [state, user, soundEnabled]);
+  }, [state, activeActorId, soundEnabled]);
 
-  const login = useCallback(async (identifier: string, password: string): Promise<boolean> => {
-    setAuthLoading(true);
-    setErrorMessage(null);
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier, password }),
-      });
-      const data = (await res.json()) as { token?: string; user?: UserAccount; error?: string };
-      if (!res.ok || !data.token || !data.user) {
-        setErrorMessage(data.error || 'Gagal masuk ke akun.');
-        return false;
+  const login = useCallback(
+    async (identifier: string, password: string): Promise<boolean> => {
+      setAuthLoading(true);
+      setErrorMessage(null);
+      try {
+        if (!localModeRef.current) {
+          const res = await safeFetchJson<{
+            token?: string;
+            user?: UserAccount;
+            error?: string;
+          }>('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ identifier, password }),
+          });
+          if (res.kind !== 'backend_unavailable') {
+            if (res.kind === 'http_error' || !res.data.token || !res.data.user) {
+              setErrorMessage(res.data?.error || 'Gagal masuk ke akun.');
+              return false;
+            }
+            saveStoredValue(TOKEN_STORAGE_KEY, res.data.token);
+            saveStoredValue(GUEST_TOKEN_STORAGE_KEY, null);
+            setToken(res.data.token);
+            setUser(res.data.user);
+            setGuestToken(null);
+            setGuest(null);
+            return true;
+          }
+          activateLocalFallback();
+        }
+
+        const localRes = localLogin(identifier, password);
+        if (!localRes.ok) {
+          setErrorMessage(localRes.error);
+          return false;
+        }
+        saveStoredValue(TOKEN_STORAGE_KEY, localRes.token);
+        saveStoredValue(GUEST_TOKEN_STORAGE_KEY, null);
+        setToken(localRes.token);
+        setUser(localRes.user);
+        setGuestToken(null);
+        setGuest(null);
+        return true;
+      } finally {
+        setAuthLoading(false);
       }
-      saveStoredToken(data.token);
-      setToken(data.token);
-      setUser(data.user);
-      return true;
-    } catch {
-      setErrorMessage('Koneksi gagal. Periksa jaringanmu.');
-      return false;
-    } finally {
-      setAuthLoading(false);
-    }
-  }, []);
+    },
+    [activateLocalFallback]
+  );
 
   const register = useCallback(
     async (params: {
@@ -276,35 +444,115 @@ export function useOfficeQueue() {
       setAuthLoading(true);
       setErrorMessage(null);
       try {
-        const res = await fetch('/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(params),
-        });
-        const data = (await res.json()) as { token?: string; user?: UserAccount; error?: string };
-        if (!res.ok || !data.token || !data.user) {
-          setErrorMessage(data.error || 'Gagal mendaftarkan akun.');
+        if (!localModeRef.current) {
+          const res = await safeFetchJson<{
+            token?: string;
+            user?: UserAccount;
+            error?: string;
+          }>('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(params),
+          });
+          if (res.kind !== 'backend_unavailable') {
+            if (res.kind === 'http_error' || !res.data.token || !res.data.user) {
+              setErrorMessage(res.data?.error || 'Gagal mendaftarkan akun.');
+              return false;
+            }
+            saveStoredValue(TOKEN_STORAGE_KEY, res.data.token);
+            saveStoredValue(GUEST_TOKEN_STORAGE_KEY, null);
+            setToken(res.data.token);
+            setUser(res.data.user);
+            setGuestToken(null);
+            setGuest(null);
+            return true;
+          }
+          activateLocalFallback();
+        }
+
+        const localRes = localRegister(params);
+        if (!localRes.ok) {
+          setErrorMessage(localRes.error);
           return false;
         }
-        saveStoredToken(data.token);
-        setToken(data.token);
-        setUser(data.user);
+        saveStoredValue(TOKEN_STORAGE_KEY, localRes.token);
+        saveStoredValue(GUEST_TOKEN_STORAGE_KEY, null);
+        setToken(localRes.token);
+        setUser(localRes.user);
+        setGuestToken(null);
+        setGuest(null);
         return true;
-      } catch {
-        setErrorMessage('Koneksi gagal. Periksa jaringanmu.');
-        return false;
       } finally {
         setAuthLoading(false);
       }
     },
-    []
+    [activateLocalFallback]
   );
 
+  const checkInGuest = useCallback(
+    async (params: { guestName: string; origin: string }): Promise<boolean> => {
+      setAuthLoading(true);
+      setErrorMessage(null);
+      try {
+        if (!localModeRef.current) {
+          const res = await safeFetchJson<{
+            token?: string;
+            guest?: GuestSession;
+            error?: string;
+          }>('/api/guest/checkin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(params),
+          });
+          if (res.kind !== 'backend_unavailable') {
+            if (res.kind === 'http_error' || !res.data.token || !res.data.guest) {
+              setErrorMessage(res.data?.error || 'Gagal mengisi buku tamu.');
+              return false;
+            }
+            saveStoredValue(TOKEN_STORAGE_KEY, null);
+            saveStoredValue(GUEST_TOKEN_STORAGE_KEY, res.data.token);
+            setToken(null);
+            setUser(null);
+            setGuestToken(res.data.token);
+            setGuest(res.data.guest);
+            return true;
+          }
+          activateLocalFallback();
+        }
+
+        const localRes = localGuestCheckIn(params);
+        if (!localRes.ok) {
+          setErrorMessage(localRes.error);
+          return false;
+        }
+        saveStoredValue(TOKEN_STORAGE_KEY, null);
+        saveStoredValue(GUEST_TOKEN_STORAGE_KEY, localRes.token);
+        setToken(null);
+        setUser(null);
+        setGuestToken(localRes.token);
+        setGuest(localRes.guest);
+        applyServerState(localRes.state);
+        return true;
+      } finally {
+        setAuthLoading(false);
+      }
+    },
+    [activateLocalFallback, applyServerState]
+  );
+
+  const exitGuest = useCallback(() => {
+    saveStoredValue(GUEST_TOKEN_STORAGE_KEY, null);
+    setGuestToken(null);
+    setGuest(null);
+    setErrorMessage(null);
+  }, []);
+
   const logout = useCallback(() => {
-    saveStoredToken(null);
+    saveStoredValue(TOKEN_STORAGE_KEY, null);
     setToken(null);
     setUser(null);
     setAdminUsers([]);
+    setAdminGuestbook([]);
     setErrorMessage(null);
   }, []);
 
@@ -318,68 +566,38 @@ export function useOfficeQueue() {
       setBusy(true);
       setErrorMessage(null);
       try {
-        const res = await fetch('/api/auth/profile', {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(params),
-        });
-        const data = (await res.json()) as { user?: UserAccount; error?: string };
-        if (!res.ok || !data.user) {
-          setErrorMessage(data.error || 'Gagal memperbarui profil.');
-          return false;
-        }
-        setUser(data.user);
-        return true;
-      } catch {
-        setErrorMessage('Koneksi terputus saat memperbarui profil.');
-        return false;
-      } finally {
-        setBusy(false);
-      }
-    },
-    [token]
-  );
-
-  const mutate = useCallback(
-    async (
-      url: string,
-      body?: unknown,
-      method: 'POST' | 'PATCH' | 'DELETE' = 'POST'
-    ): Promise<boolean> => {
-      if (!token) {
-        setErrorMessage('Silakan masuk ke akun Ngising terlebih dahulu.');
-        return false;
-      }
-      setBusy(true);
-      setErrorMessage(null);
-      try {
-        const headers: Record<string, string> = {
-          Authorization: `Bearer ${token}`,
-        };
-        if (body !== undefined) headers['Content-Type'] = 'application/json';
-        const res = await fetch(url, {
-          method,
-          headers,
-          body: body !== undefined ? JSON.stringify(body) : undefined,
-        });
-        const data = (await res.json()) as OfficeState & { error?: string };
-        if (!res.ok) {
-          if (res.status === 401) {
-            saveStoredToken(null);
-            setToken(null);
-            setUser(null);
+        if (localModeRef.current) {
+          const res = localUpdateProfile(token, params);
+          if (!res.ok) {
+            setErrorMessage(res.error);
+            return false;
           }
-          setErrorMessage(data.error || 'Terjadi kesalahan pada server.');
+          setUser(res.user);
+          applyServerState(res.state);
+          return true;
+        }
+
+        const res = await safeFetchJson<{ user?: UserAccount; error?: string }>(
+          '/api/auth/profile',
+          {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(params),
+          }
+        );
+        if (res.kind === 'backend_unavailable') {
+          setErrorMessage('Koneksi terputus saat memperbarui profil.');
           return false;
         }
-        applyServerState(data);
+        if (res.kind === 'http_error' || !res.data.user) {
+          setErrorMessage(res.data?.error || 'Gagal memperbarui profil.');
+          return false;
+        }
+        setUser(res.data.user);
         return true;
-      } catch {
-        setErrorMessage('Koneksi ke server terputus.');
-        return false;
       } finally {
         setBusy(false);
       }
@@ -387,67 +605,179 @@ export function useOfficeQueue() {
     [applyServerState, token]
   );
 
-  const occupy = useCallback((need: NeedType) => mutate('/api/occupy', { need }), [mutate]);
+  const activeToken = token || guestToken;
+
+  const mutate = useCallback(
+    async (
+      url: string,
+      body?: unknown,
+      method: 'POST' | 'PATCH' | 'DELETE' = 'POST',
+      localAction?: () => { ok: true; state: OfficeState } | { ok: false; error: string; status?: number }
+    ): Promise<boolean> => {
+      if (!activeToken) {
+        setErrorMessage('Silakan masuk akun atau isi Buku Tamu terlebih dahulu.');
+        return false;
+      }
+      setBusy(true);
+      setErrorMessage(null);
+      try {
+        if (localModeRef.current && localAction) {
+          const localRes = localAction();
+          if (!localRes.ok) {
+            setErrorMessage(localRes.error);
+            return false;
+          }
+          applyServerState(localRes.state);
+          return true;
+        }
+
+        const headers: Record<string, string> = {
+          Authorization: `Bearer ${activeToken}`,
+        };
+        if (body !== undefined) headers['Content-Type'] = 'application/json';
+        const res = await safeFetchJson<OfficeState & { error?: string }>(url, {
+          method,
+          headers,
+          body: body !== undefined ? JSON.stringify(body) : undefined,
+        });
+
+        if (res.kind === 'backend_unavailable') {
+          setErrorMessage('Koneksi ke server terputus.');
+          return false;
+        }
+        if (res.kind === 'http_error') {
+          if (res.status === 401) {
+            if (token) {
+              saveStoredValue(TOKEN_STORAGE_KEY, null);
+              setToken(null);
+              setUser(null);
+            } else {
+              saveStoredValue(GUEST_TOKEN_STORAGE_KEY, null);
+              setGuestToken(null);
+              setGuest(null);
+            }
+          }
+          setErrorMessage(res.data?.error || 'Terjadi kesalahan pada server.');
+          return false;
+        }
+        applyServerState(res.data);
+        return true;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [activeToken, applyServerState, token]
+  );
+
+  const occupy = useCallback(
+    (need: NeedType) =>
+      mutate('/api/occupy', { need }, 'POST', () =>
+        localMutateActor(activeToken || '', 'occupy', { need })
+      ),
+    [activeToken, mutate]
+  );
 
   const release = useCallback(
-    (force = false) => mutate('/api/release', { force }),
-    [mutate]
+    (force = false) =>
+      mutate('/api/release', { force }, 'POST', () =>
+        localMutateActor(activeToken || '', 'release', { force })
+      ),
+    [activeToken, mutate]
   );
 
   const joinQueue = useCallback(
-    (need: NeedType) => mutate('/api/queue/join', { need }),
-    [mutate]
+    (need: NeedType) =>
+      mutate('/api/queue/join', { need }, 'POST', () =>
+        localMutateActor(activeToken || '', 'join', { need })
+      ),
+    [activeToken, mutate]
   );
 
-  const leaveQueue = useCallback(() => mutate('/api/queue/leave', {}), [mutate]);
+  const leaveQueue = useCallback(
+    () =>
+      mutate('/api/queue/leave', {}, 'POST', () =>
+        localMutateActor(activeToken || '', 'leave')
+      ),
+    [activeToken, mutate]
+  );
 
   // --- Admin Panel Actions ---
 
   const fetchAdminUsers = useCallback(async (): Promise<void> => {
     if (!token || user?.role !== 'admin') return;
-    try {
-      const res = await fetch('/api/admin/users', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) return;
-      const data = (await res.json()) as { users?: AdminUserSummary[] };
-      if (data.users) {
+    if (localModeRef.current) {
+      const data = localGetAdminData(token);
+      if (data) {
         setAdminUsers(data.users);
+        setAdminGuestbook(data.guestbook);
       }
-    } catch {
-      // ignore transient error
+      return;
+    }
+
+    const res = await safeFetchJson<{
+      users?: AdminUserSummary[];
+      guestbook?: GuestbookEntry[];
+    }>('/api/admin/users', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.kind === 'ok') {
+      if (res.data.users) setAdminUsers(res.data.users);
+      if (res.data.guestbook) setAdminGuestbook(res.data.guestbook);
     }
   }, [token, user?.role]);
 
   const adminUpdateToilet = useCallback(
     (name: string, location: string) =>
-      mutate('/api/admin/toilet', { name, location }, 'PATCH'),
-    [mutate]
+      mutate('/api/admin/toilet', { name, location }, 'PATCH', () => {
+        const res = localAdminAction(token || '', { type: 'updateToilet', name, location });
+        return res.ok && res.state ? { ok: true, state: res.state } : { ok: false, error: res.ok ? 'Gagal' : res.error };
+      }),
+    [mutate, token]
   );
 
   const adminToggleMaintenance = useCallback(
-    () => mutate('/api/admin/toilet/maintenance', {}),
-    [mutate]
+    () =>
+      mutate('/api/admin/toilet/maintenance', {}, 'POST', () => {
+        const res = localAdminAction(token || '', { type: 'toggleMaintenance' });
+        return res.ok && res.state ? { ok: true, state: res.state } : { ok: false, error: res.ok ? 'Gagal' : res.error };
+      }),
+    [mutate, token]
   );
 
   const adminForceRelease = useCallback(
-    () => mutate('/api/admin/toilet/force-release', {}),
-    [mutate]
+    () =>
+      mutate('/api/admin/toilet/force-release', {}, 'POST', () => {
+        const res = localAdminAction(token || '', { type: 'forceRelease' });
+        return res.ok && res.state ? { ok: true, state: res.state } : { ok: false, error: res.ok ? 'Gagal' : res.error };
+      }),
+    [mutate, token]
   );
 
   const adminPrioritizeQueue = useCallback(
-    (queueId: string) => mutate(`/api/admin/queue/${encodeURIComponent(queueId)}/prioritize`, {}),
-    [mutate]
+    (queueId: string) =>
+      mutate(`/api/admin/queue/${encodeURIComponent(queueId)}/prioritize`, {}, 'POST', () => {
+        const res = localAdminAction(token || '', { type: 'prioritizeQueue', queueId });
+        return res.ok && res.state ? { ok: true, state: res.state } : { ok: false, error: res.ok ? 'Gagal' : res.error };
+      }),
+    [mutate, token]
   );
 
   const adminRemoveQueue = useCallback(
-    (queueId: string) => mutate(`/api/admin/queue/${encodeURIComponent(queueId)}`, undefined, 'DELETE'),
-    [mutate]
+    (queueId: string) =>
+      mutate(`/api/admin/queue/${encodeURIComponent(queueId)}`, undefined, 'DELETE', () => {
+        const res = localAdminAction(token || '', { type: 'removeQueue', queueId });
+        return res.ok && res.state ? { ok: true, state: res.state } : { ok: false, error: res.ok ? 'Gagal' : res.error };
+      }),
+    [mutate, token]
   );
 
   const adminClearQueue = useCallback(
-    () => mutate('/api/admin/queue/clear', {}),
-    [mutate]
+    () =>
+      mutate('/api/admin/queue/clear', {}, 'POST', () => {
+        const res = localAdminAction(token || '', { type: 'clearQueue' });
+        return res.ok && res.state ? { ok: true, state: res.state } : { ok: false, error: res.ok ? 'Gagal' : res.error };
+      }),
+    [mutate, token]
   );
 
   const adminDeleteHistory = useCallback(
@@ -455,12 +785,59 @@ export function useOfficeQueue() {
       const ok = await mutate(
         `/api/admin/history/${encodeURIComponent(historyId)}`,
         undefined,
-        'DELETE'
+        'DELETE',
+        () => {
+          const res = localAdminAction(token || '', { type: 'deleteHistory', historyId });
+          return res.ok && res.state ? { ok: true, state: res.state } : { ok: false, error: res.ok ? 'Gagal' : res.error };
+        }
       );
       if (ok) void fetchAdminUsers();
       return ok;
     },
-    [mutate, fetchAdminUsers]
+    [mutate, fetchAdminUsers, token]
+  );
+
+  const adminDeleteGuestbook = useCallback(
+    async (entryId: string): Promise<boolean> => {
+      if (!token) return false;
+      setBusy(true);
+      setErrorMessage(null);
+      try {
+        if (localModeRef.current) {
+          const localRes = localAdminAction(token, { type: 'deleteGuestbook', entryId });
+          if (!localRes.ok) {
+            setErrorMessage(localRes.error);
+            return false;
+          }
+          if (localRes.guestbook) setAdminGuestbook(localRes.guestbook);
+          if (localRes.state) applyServerState(localRes.state);
+          return true;
+        }
+
+        const res = await safeFetchJson<{
+          guestbook?: GuestbookEntry[];
+          state?: OfficeState;
+          error?: string;
+        }>(`/api/admin/guestbook/${encodeURIComponent(entryId)}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.kind === 'backend_unavailable') {
+          setErrorMessage('Koneksi ke server terputus.');
+          return false;
+        }
+        if (res.kind === 'http_error') {
+          setErrorMessage(res.data?.error || 'Gagal menghapus catatan buku tamu.');
+          return false;
+        }
+        if (res.data.guestbook) setAdminGuestbook(res.data.guestbook);
+        if (res.data.state) applyServerState(res.data.state);
+        return true;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [token, applyServerState]
   );
 
   const adminUpdateUserRole = useCallback(
@@ -469,24 +846,37 @@ export function useOfficeQueue() {
       setBusy(true);
       setErrorMessage(null);
       try {
-        const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}/role`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ role }),
-        });
-        const data = (await res.json()) as { users?: AdminUserSummary[]; error?: string };
-        if (!res.ok) {
-          setErrorMessage(data.error || 'Gagal memperbarui peran akun.');
+        if (localModeRef.current) {
+          const localRes = localAdminAction(token, { type: 'updateUserRole', userId, role });
+          if (!localRes.ok) {
+            setErrorMessage(localRes.error);
+            return false;
+          }
+          if (localRes.users) setAdminUsers(localRes.users);
+          return true;
+        }
+
+        const res = await safeFetchJson<{ users?: AdminUserSummary[]; error?: string }>(
+          `/api/admin/users/${encodeURIComponent(userId)}/role`,
+          {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ role }),
+          }
+        );
+        if (res.kind === 'backend_unavailable') {
+          setErrorMessage('Koneksi ke server terputus.');
           return false;
         }
-        if (data.users) setAdminUsers(data.users);
+        if (res.kind === 'http_error') {
+          setErrorMessage(res.data?.error || 'Gagal memperbarui peran akun.');
+          return false;
+        }
+        if (res.data.users) setAdminUsers(res.data.users);
         return true;
-      } catch {
-        setErrorMessage('Koneksi ke server terputus.');
-        return false;
       } finally {
         setBusy(false);
       }
@@ -500,7 +890,16 @@ export function useOfficeQueue() {
       setBusy(true);
       setErrorMessage(null);
       try {
-        const res = await fetch(
+        if (localModeRef.current) {
+          const localRes = localAdminAction(token, { type: 'resetPassword', userId, password });
+          if (!localRes.ok) {
+            setErrorMessage(localRes.error);
+            return null;
+          }
+          return localRes.message || 'Password berhasil direset.';
+        }
+
+        const res = await safeFetchJson<{ message?: string; error?: string }>(
           `/api/admin/users/${encodeURIComponent(userId)}/reset-password`,
           {
             method: 'POST',
@@ -511,15 +910,15 @@ export function useOfficeQueue() {
             body: JSON.stringify({ password }),
           }
         );
-        const data = (await res.json()) as { message?: string; error?: string };
-        if (!res.ok) {
-          setErrorMessage(data.error || 'Gagal mereset password.');
+        if (res.kind === 'backend_unavailable') {
+          setErrorMessage('Koneksi ke server terputus.');
           return null;
         }
-        return data.message || 'Password berhasil direset.';
-      } catch {
-        setErrorMessage('Koneksi ke server terputus.');
-        return null;
+        if (res.kind === 'http_error') {
+          setErrorMessage(res.data?.error || 'Gagal mereset password.');
+          return null;
+        }
+        return res.data.message || 'Password berhasil direset.';
       } finally {
         setBusy(false);
       }
@@ -533,25 +932,36 @@ export function useOfficeQueue() {
       setBusy(true);
       setErrorMessage(null);
       try {
-        const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}`, {
-          method: 'DELETE',
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = (await res.json()) as {
+        if (localModeRef.current) {
+          const localRes = localAdminAction(token, { type: 'deleteUser', userId });
+          if (!localRes.ok) {
+            setErrorMessage(localRes.error);
+            return false;
+          }
+          if (localRes.users) setAdminUsers(localRes.users);
+          if (localRes.state) applyServerState(localRes.state);
+          return true;
+        }
+
+        const res = await safeFetchJson<{
           users?: AdminUserSummary[];
           state?: OfficeState;
           error?: string;
-        };
-        if (!res.ok) {
-          setErrorMessage(data.error || 'Gagal menghapus akun.');
+        }>(`/api/admin/users/${encodeURIComponent(userId)}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.kind === 'backend_unavailable') {
+          setErrorMessage('Koneksi ke server terputus.');
           return false;
         }
-        if (data.users) setAdminUsers(data.users);
-        if (data.state) applyServerState(data.state);
+        if (res.kind === 'http_error') {
+          setErrorMessage(res.data?.error || 'Gagal menghapus akun.');
+          return false;
+        }
+        if (res.data.users) setAdminUsers(res.data.users);
+        if (res.data.state) applyServerState(res.data.state);
         return true;
-      } catch {
-        setErrorMessage('Koneksi ke server terputus.');
-        return false;
       } finally {
         setBusy(false);
       }
@@ -564,25 +974,39 @@ export function useOfficeQueue() {
     setBusy(true);
     setErrorMessage(null);
     try {
-      const res = await fetch('/api/admin/reset-demo', {
+      if (localModeRef.current) {
+        const localRes = localAdminAction(token, { type: 'resetDemo' });
+        if (!localRes.ok) {
+          setErrorMessage(localRes.error);
+          return false;
+        }
+        if (localRes.users) setAdminUsers(localRes.users);
+        if (localRes.guestbook) setAdminGuestbook(localRes.guestbook);
+        if (localRes.state) applyServerState(localRes.state);
+        return true;
+      }
+
+      const res = await safeFetchJson<{
+        users?: AdminUserSummary[];
+        guestbook?: GuestbookEntry[];
+        state?: OfficeState;
+        error?: string;
+      }>('/api/admin/reset-demo', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = (await res.json()) as {
-        users?: AdminUserSummary[];
-        state?: OfficeState;
-        error?: string;
-      };
-      if (!res.ok) {
-        setErrorMessage(data.error || 'Gagal mereset data demo.');
+      if (res.kind === 'backend_unavailable') {
+        setErrorMessage('Koneksi ke server terputus.');
         return false;
       }
-      if (data.users) setAdminUsers(data.users);
-      if (data.state) applyServerState(data.state);
+      if (res.kind === 'http_error') {
+        setErrorMessage(res.data?.error || 'Gagal mereset data demo.');
+        return false;
+      }
+      if (res.data.users) setAdminUsers(res.data.users);
+      if (res.data.guestbook) setAdminGuestbook(res.data.guestbook);
+      if (res.data.state) applyServerState(res.data.state);
       return true;
-    } catch {
-      setErrorMessage('Koneksi ke server terputus.');
-      return false;
     } finally {
       setBusy(false);
     }
@@ -591,8 +1015,11 @@ export function useOfficeQueue() {
   return {
     state,
     user,
+    guest,
     demoAccounts,
     adminUsers,
+    adminGuestbook,
+    isLocalFallback,
     loading,
     authLoading,
     connected,
@@ -604,6 +1031,8 @@ export function useOfficeQueue() {
     now,
     login,
     register,
+    checkInGuest,
+    exitGuest,
     logout,
     updateProfile,
     occupy,
@@ -618,6 +1047,7 @@ export function useOfficeQueue() {
     adminRemoveQueue,
     adminClearQueue,
     adminDeleteHistory,
+    adminDeleteGuestbook,
     adminUpdateUserRole,
     adminResetUserPassword,
     adminDeleteUser,

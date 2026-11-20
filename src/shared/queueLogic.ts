@@ -1,4 +1,5 @@
 import type {
+  DailyQuotaInfo,
   HistoryEntry,
   HourlyBucket,
   LeaderboardEntry,
@@ -14,6 +15,8 @@ export const CLAIM_WINDOW_MS = 120_000;
 export const DEFAULT_PUP_MS = 9 * 60 * 1000;
 export const DEFAULT_CEPAT_MS = 3 * 60 * 1000;
 export const OVERTIME_THRESHOLD_MS = 15 * 60 * 1000;
+export const DAILY_SESSION_LIMIT = 10;
+export const WEEKLY_WINDOW_DAYS = 7;
 
 export function formatDuration(ms: number): string {
   const safeSeconds = Math.max(0, Math.floor(ms / 1000));
@@ -98,6 +101,30 @@ export function validateRegistrationInput(params: {
   };
 }
 
+export function validateGuestbookInput(params: {
+  guestName: string;
+  origin: string;
+}):
+  | { valid: true; guestName: string; origin: string }
+  | { valid: false; error: string } {
+  const guestName = params.guestName.trim();
+  const origin = params.origin.trim();
+  if (guestName.length < 2) {
+    return { valid: false, error: 'Nama tamu minimal 2 karakter.' };
+  }
+  if (guestName.length > 40) {
+    return { valid: false, error: 'Nama tamu maksimal 40 karakter.' };
+  }
+  if (origin.length < 2) {
+    return { valid: false, error: 'Asal instansi atau keperluan kunjungan wajib diisi.' };
+  }
+  return {
+    valid: true,
+    guestName,
+    origin: origin.slice(0, 60),
+  };
+}
+
 export function promoteNextEligible(state: OfficeState, now: number): OfficeState {
   const toilet: Stall = {
     ...state.toilet,
@@ -140,6 +167,7 @@ export function promoteNextEligible(state: OfficeState, now: number): OfficeStat
         displayName: target.displayName,
         department: target.department,
         isAnonymous: target.isAnonymous,
+        isGuest: target.isGuest,
         need: target.need,
         calledAt: now,
         expiresAt,
@@ -155,6 +183,35 @@ export function promoteNextEligible(state: OfficeState, now: number): OfficeStat
   };
 }
 
+export function getTodayStartMs(now: number): number {
+  const startOfDay = new Date(now);
+  startOfDay.setHours(0, 0, 0, 0);
+  return startOfDay.getTime();
+}
+
+export function getDailyQuota(
+  state: OfficeState,
+  userId: string,
+  now: number
+): DailyQuotaInfo {
+  const todayStartMs = getTodayStartMs(now);
+  const completedToday = state.history.filter(
+    (h) => h.userId === userId && h.startedAt >= todayStartMs
+  ).length;
+  const activeToday =
+    state.toilet.status === 'occupied' &&
+    state.toilet.occupant?.userId === userId &&
+    state.toilet.occupant.startedAt >= todayStartMs
+      ? 1
+      : 0;
+  const used = completedToday + activeToday;
+  return {
+    used,
+    limit: DAILY_SESSION_LIMIT,
+    remaining: Math.max(0, DAILY_SESSION_LIMIT - used),
+  };
+}
+
 export function occupyStall(
   state: OfficeState,
   params: {
@@ -162,6 +219,7 @@ export function occupyStall(
     displayName: string;
     department: string;
     isAnonymous: boolean;
+    isGuest?: boolean;
     need: NeedType;
   },
   now: number
@@ -192,6 +250,14 @@ export function occupyStall(
     };
   }
 
+  const quota = getDailyQuota(state, params.userId, now);
+  if (quota.remaining <= 0) {
+    return {
+      ok: false,
+      error: `Kuota ngising harian kamu sudah habis (maksimal ${DAILY_SESSION_LIMIT}x sehari). Lanjut lagi besok!`,
+    };
+  }
+
   const nextToilet: Stall = {
     ...toilet,
     status: 'occupied',
@@ -201,6 +267,7 @@ export function occupyStall(
       displayName: checked.name,
       department: checked.department,
       isAnonymous: params.isAnonymous,
+      isGuest: Boolean(params.isGuest),
       need: params.need,
       startedAt: now,
     },
@@ -248,6 +315,7 @@ export function releaseStall(
     displayName: occ.displayName,
     department: occ.department,
     isAnonymous: occ.isAnonymous,
+    isGuest: Boolean(occ.isGuest),
     need: occ.need,
     startedAt: occ.startedAt,
     endedAt: now,
@@ -283,6 +351,7 @@ export function joinQueue(
     displayName: string;
     department: string;
     isAnonymous: boolean;
+    isGuest?: boolean;
     need: NeedType;
   },
   now: number
@@ -300,12 +369,21 @@ export function joinQueue(
     return { ok: false, error: 'Kamu sudah terdaftar di dalam antrean saat ini.' };
   }
 
+  const quota = getDailyQuota(state, params.userId, now);
+  if (quota.remaining <= 0) {
+    return {
+      ok: false,
+      error: `Kuota ngising harian kamu sudah habis (maksimal ${DAILY_SESSION_LIMIT}x sehari). Lanjut lagi besok!`,
+    };
+  }
+
   const entry: QueueEntry = {
     id: `q-${now}-${Math.random().toString(36).slice(2, 7)}`,
     userId: params.userId,
     displayName: checked.name,
     department: checked.department,
     isAnonymous: params.isAnonymous,
+    isGuest: Boolean(params.isGuest),
     need: params.need,
     joinedAt: now,
     status: 'waiting',
@@ -514,6 +592,25 @@ export function removeHistoryEntry(
   };
 }
 
+export function removeGuestbookEntry(
+  state: OfficeState,
+  entryId: string,
+  now: number
+): { ok: true; state: OfficeState } | { ok: false; error: string } {
+  const exists = state.guestbook.some((g) => g.id === entryId);
+  if (!exists) {
+    return { ok: false, error: 'Catatan buku tamu tidak ditemukan.' };
+  }
+  return {
+    ok: true,
+    state: {
+      ...state,
+      guestbook: state.guestbook.filter((g) => g.id !== entryId),
+      serverNow: now,
+    },
+  };
+}
+
 export function getAverageDurations(history: HistoryEntry[]): {
   avgPupMs: number;
   avgCepatMs: number;
@@ -564,10 +661,79 @@ export function estimateWaitMinutes(
   return Math.max(1, Math.round(waitMs / 60_000));
 }
 
+function aggregateLeaderboard(
+  items: HistoryEntry[],
+  sortBy: 'duration' | 'sessions'
+): LeaderboardEntry[] {
+  const userMap = new Map<string, LeaderboardEntry>();
+  for (const item of items) {
+    const publicName = getPublicDisplayName(item.displayName, item.isAnonymous, item.userId);
+    const existing = userMap.get(item.userId);
+    if (!existing) {
+      userMap.set(item.userId, {
+        userId: item.userId,
+        displayName: publicName,
+        department: item.department,
+        totalSessions: 1,
+        pupSessions: item.need === 'pup' ? 1 : 0,
+        cepatSessions: item.need === 'cepat' ? 1 : 0,
+        totalDurationMs: item.durationMs,
+        avgDurationMs: item.durationMs,
+        longestDurationMs: item.durationMs,
+      });
+    } else {
+      existing.totalSessions += 1;
+      if (item.need === 'pup') {
+        existing.pupSessions += 1;
+      } else {
+        existing.cepatSessions += 1;
+      }
+      existing.totalDurationMs += item.durationMs;
+      existing.avgDurationMs = Math.round(existing.totalDurationMs / existing.totalSessions);
+      if (item.durationMs > existing.longestDurationMs) {
+        existing.longestDurationMs = item.durationMs;
+      }
+    }
+  }
+
+  const entries = Array.from(userMap.values());
+  if (sortBy === 'sessions') {
+    return entries.sort(
+      (a, b) =>
+        b.totalSessions - a.totalSessions || b.totalDurationMs - a.totalDurationMs
+    );
+  }
+  return entries.sort((a, b) => b.totalDurationMs - a.totalDurationMs);
+}
+
+export function computeWeeklyLeaderboard(
+  history: HistoryEntry[],
+  now: number
+): {
+  entries: LeaderboardEntry[];
+  totalSessions: number;
+  pupSessions: number;
+  cepatSessions: number;
+  weekRangeLabel: string;
+} {
+  const todayStartMs = getTodayStartMs(now);
+  const weekStartMs = todayStartMs - (WEEKLY_WINDOW_DAYS - 1) * 86_400_000;
+  const weeklyItems = history.filter((h) => h.startedAt >= weekStartMs && h.startedAt <= now + 60_000);
+
+  const fmt = (ms: number) =>
+    new Date(ms).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+
+  return {
+    entries: aggregateLeaderboard(weeklyItems, 'sessions'),
+    totalSessions: weeklyItems.length,
+    pupSessions: weeklyItems.filter((h) => h.need === 'pup').length,
+    cepatSessions: weeklyItems.filter((h) => h.need === 'cepat').length,
+    weekRangeLabel: `${fmt(weekStartMs)} – ${fmt(todayStartMs)}`,
+  };
+}
+
 export function computeOfficeStats(history: HistoryEntry[], now: number): OfficeStats {
-  const startOfDay = new Date(now);
-  startOfDay.setHours(0, 0, 0, 0);
-  const todayStartMs = startOfDay.getTime();
+  const todayStartMs = getTodayStartMs(now);
 
   const todayHistory = history.filter((h) => h.startedAt >= todayStartMs);
   const activeDataset = todayHistory.length > 0 ? todayHistory : history;
@@ -623,37 +789,8 @@ export function computeOfficeStats(history: HistoryEntry[], now: number): Office
   const peakHourLabel =
     peakBucket && peakBucket.totalCount > 0 ? peakBucket.label : 'Belum ada data';
 
-  const userMap = new Map<string, LeaderboardEntry>();
-  for (const item of activeDataset) {
-    const publicName = getPublicDisplayName(item.displayName, item.isAnonymous, item.userId);
-    const existing = userMap.get(item.userId);
-    if (!existing) {
-      userMap.set(item.userId, {
-        userId: item.userId,
-        displayName: publicName,
-        department: item.department,
-        totalSessions: 1,
-        pupSessions: item.need === 'pup' ? 1 : 0,
-        totalDurationMs: item.durationMs,
-        avgDurationMs: item.durationMs,
-        longestDurationMs: item.durationMs,
-      });
-    } else {
-      existing.totalSessions += 1;
-      if (item.need === 'pup') {
-        existing.pupSessions += 1;
-      }
-      existing.totalDurationMs += item.durationMs;
-      existing.avgDurationMs = Math.round(existing.totalDurationMs / existing.totalSessions);
-      if (item.durationMs > existing.longestDurationMs) {
-        existing.longestDurationMs = item.durationMs;
-      }
-    }
-  }
-
-  const leaderboard = Array.from(userMap.values()).sort(
-    (a, b) => b.totalDurationMs - a.totalDurationMs
-  );
+  const leaderboard = aggregateLeaderboard(activeDataset, 'duration');
+  const weekly = computeWeeklyLeaderboard(history, now);
 
   return {
     totalToday: todayHistory.length,
@@ -664,6 +801,11 @@ export function computeOfficeStats(history: HistoryEntry[], now: number): Office
     peakHourLabel,
     hourly,
     leaderboard,
+    weeklyLeaderboard: weekly.entries,
+    weeklyTotalSessions: weekly.totalSessions,
+    weeklyPupSessions: weekly.pupSessions,
+    weeklyCepatSessions: weekly.cepatSessions,
+    weekRangeLabel: weekly.weekRangeLabel,
   };
 }
 

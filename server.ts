@@ -6,9 +6,11 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { WebSocket, WebSocketServer } from 'ws';
 import {
+  createGuestToken,
   createSessionToken,
   hashPassword,
   toPublicUser,
+  verifyGuestToken,
   verifyPassword,
   verifySessionToken,
 } from './src/server/auth.ts';
@@ -21,14 +23,22 @@ import {
   prioritizeQueueEntry,
   promoteNextEligible,
   releaseStall,
+  removeGuestbookEntry,
   removeHistoryEntry,
   removeQueueEntry,
   toggleStallMaintenance,
   updateToiletInfo,
   validateEmployeeInput,
+  validateGuestbookInput,
   validateRegistrationInput,
 } from './src/shared/queueLogic.ts';
-import type { NeedType, OfficeState, StoredUserRecord, UserRole } from './src/shared/types.ts';
+import type {
+  GuestbookEntry,
+  NeedType,
+  OfficeState,
+  StoredUserRecord,
+  UserRole,
+} from './src/shared/types.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -83,6 +93,10 @@ function loadOrCreateDatabase(): PersistedDatabase {
             mutated = true;
           }
         }
+        if (!Array.isArray(parsed.office.guestbook)) {
+          parsed.office.guestbook = [];
+          mutated = true;
+        }
         parsed.office = promoteNextEligible(parsed.office, Date.now());
         if (mutated) {
           persistDatabase(parsed);
@@ -105,8 +119,19 @@ function loadOrCreateDatabase(): PersistedDatabase {
 
 const db: PersistedDatabase = loadOrCreateDatabase();
 
+interface ActorIdentity {
+  kind: 'user' | 'guest';
+  id: string;
+  displayName: string;
+  department: string;
+  isAnonymous: boolean;
+  isAdmin: boolean;
+  isGuest: boolean;
+}
+
 interface AuthenticatedRequest extends Request {
   authUser?: StoredUserRecord;
+  authActor?: ActorIdentity;
 }
 
 function extractBearerToken(req: Request): string | null {
@@ -132,7 +157,60 @@ function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunctio
     return;
   }
   req.authUser = user;
+  req.authActor = {
+    kind: 'user',
+    id: user.id,
+    displayName: user.displayName,
+    department: user.department,
+    isAnonymous: user.isAnonymous,
+    isAdmin: user.role === 'admin',
+    isGuest: false,
+  };
   next();
+}
+
+function requireActor(req: AuthenticatedRequest, res: Response, next: NextFunction): void {
+  const token = extractBearerToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Silakan masuk akun atau isi Buku Tamu terlebih dahulu.' });
+    return;
+  }
+
+  const verifiedUser = verifySessionToken(token, db.authSecret);
+  if (verifiedUser) {
+    const user = db.users.find((u) => u.id === verifiedUser.userId);
+    if (user) {
+      req.authUser = user;
+      req.authActor = {
+        kind: 'user',
+        id: user.id,
+        displayName: user.displayName,
+        department: user.department,
+        isAnonymous: user.isAnonymous,
+        isAdmin: user.role === 'admin',
+        isGuest: false,
+      };
+      next();
+      return;
+    }
+  }
+
+  const verifiedGuest = verifyGuestToken(token, db.authSecret);
+  if (verifiedGuest) {
+    req.authActor = {
+      kind: 'guest',
+      id: verifiedGuest.id,
+      displayName: verifiedGuest.displayName,
+      department: `Tamu · ${verifiedGuest.origin}`,
+      isAnonymous: false,
+      isAdmin: false,
+      isGuest: true,
+    };
+    next();
+    return;
+  }
+
+  res.status(401).json({ error: 'Sesi tidak valid. Silakan masuk akun atau isi Buku Tamu.' });
 }
 
 function requireAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction): void {
@@ -152,6 +230,7 @@ async function startServer(): Promise<void> {
 
   const getPublicState = (): OfficeState => ({
     ...db.office,
+    guestbook: [],
     onlineCount: wss.clients.size,
     serverNow: Date.now(),
   });
@@ -380,6 +459,64 @@ async function startServer(): Promise<void> {
     res.json({ user: toPublicUser(user) });
   });
 
+  // Guestbook Check-In (No account/password required, mandatory guestbook entry)
+  app.post('/api/guest/checkin', (req, res) => {
+    const body = req.body as { guestName?: string; origin?: string };
+    const check = validateGuestbookInput({
+      guestName: String(body.guestName ?? ''),
+      origin: String(body.origin ?? ''),
+    });
+    if (!check.valid) {
+      res.status(400).json({ error: check.error });
+      return;
+    }
+
+    const now = Date.now();
+    const guestId = `guest-${now}-${crypto.randomBytes(3).toString('hex')}`;
+    const entry: GuestbookEntry = {
+      id: `gb-${now}-${crypto.randomBytes(3).toString('hex')}`,
+      guestId,
+      guestName: check.guestName,
+      origin: check.origin,
+      visitedAt: now,
+    };
+
+    const guest = {
+      id: guestId,
+      displayName: check.guestName,
+      origin: check.origin,
+      checkedInAt: now,
+    };
+
+    db.office = {
+      ...db.office,
+      guestbook: [entry, ...db.office.guestbook].slice(0, 300),
+      serverNow: now,
+    };
+    persistDatabase(db);
+    broadcastState();
+
+    const token = createGuestToken(guest, db.authSecret);
+    res.status(201).json({
+      token,
+      guest,
+    });
+  });
+
+  app.get('/api/guest/me', (req, res) => {
+    const token = extractBearerToken(req);
+    if (!token) {
+      res.status(401).json({ error: 'Belum mengisi buku tamu.' });
+      return;
+    }
+    const guest = verifyGuestToken(token, db.authSecret);
+    if (!guest) {
+      res.status(401).json({ error: 'Sesi tamu tidak valid.' });
+      return;
+    }
+    res.json({ guest });
+  });
+
   app.get('/api/state', (_req, res) => {
     const now = Date.now();
     const promoted = promoteNextEligible(db.office, now);
@@ -390,16 +527,17 @@ async function startServer(): Promise<void> {
     res.json(getPublicState());
   });
 
-  app.post('/api/occupy', requireAuth, (req: AuthenticatedRequest, res) => {
-    const user = req.authUser!;
+  app.post('/api/occupy', requireActor, (req: AuthenticatedRequest, res) => {
+    const actor = req.authActor!;
     const body = req.body as { need?: NeedType };
     const result = occupyStall(
       db.office,
       {
-        userId: user.id,
-        displayName: user.displayName,
-        department: user.department,
-        isAnonymous: user.isAnonymous,
+        userId: actor.id,
+        displayName: actor.displayName,
+        department: actor.department,
+        isAnonymous: actor.isAnonymous,
+        isGuest: actor.isGuest,
         need: body.need === 'cepat' ? 'cepat' : 'pup',
       },
       Date.now()
@@ -412,14 +550,14 @@ async function startServer(): Promise<void> {
     res.json(getPublicState());
   });
 
-  app.post('/api/release', requireAuth, (req: AuthenticatedRequest, res) => {
-    const user = req.authUser!;
+  app.post('/api/release', requireActor, (req: AuthenticatedRequest, res) => {
+    const actor = req.authActor!;
     const body = req.body as { force?: boolean };
-    const allowForce = Boolean(body.force) && user.role === 'admin';
+    const allowForce = Boolean(body.force) && actor.isAdmin;
     const result = releaseStall(
       db.office,
       {
-        userId: user.id,
+        userId: actor.id,
         force: allowForce,
       },
       Date.now()
@@ -432,16 +570,17 @@ async function startServer(): Promise<void> {
     res.json(getPublicState());
   });
 
-  app.post('/api/queue/join', requireAuth, (req: AuthenticatedRequest, res) => {
-    const user = req.authUser!;
+  app.post('/api/queue/join', requireActor, (req: AuthenticatedRequest, res) => {
+    const actor = req.authActor!;
     const body = req.body as { need?: NeedType };
     const result = joinQueue(
       db.office,
       {
-        userId: user.id,
-        displayName: user.displayName,
-        department: user.department,
-        isAnonymous: user.isAnonymous,
+        userId: actor.id,
+        displayName: actor.displayName,
+        department: actor.department,
+        isAnonymous: actor.isAnonymous,
+        isGuest: actor.isGuest,
         need: body.need === 'cepat' ? 'cepat' : 'pup',
       },
       Date.now()
@@ -454,9 +593,9 @@ async function startServer(): Promise<void> {
     res.json(getPublicState());
   });
 
-  app.post('/api/queue/leave', requireAuth, (req: AuthenticatedRequest, res) => {
-    const user = req.authUser!;
-    const result = leaveQueue(db.office, user.id, Date.now());
+  app.post('/api/queue/leave', requireActor, (req: AuthenticatedRequest, res) => {
+    const actor = req.authActor!;
+    const result = leaveQueue(db.office, actor.id, Date.now());
     if (!result.ok) {
       res.status(400).json({ error: result.error });
       return;
@@ -474,7 +613,7 @@ async function startServer(): Promise<void> {
     }));
 
   app.get('/api/admin/users', requireAuth, requireAdmin, (_req, res) => {
-    res.json({ users: buildAdminUsersPayload() });
+    res.json({ users: buildAdminUsersPayload(), guestbook: db.office.guestbook });
   });
 
   app.patch('/api/admin/users/:id/role', requireAuth, requireAdmin, (req: AuthenticatedRequest, res) => {
@@ -647,13 +786,27 @@ async function startServer(): Promise<void> {
     res.json(getPublicState());
   });
 
+  app.delete('/api/admin/guestbook/:id', requireAuth, requireAdmin, (req, res) => {
+    const result = removeGuestbookEntry(db.office, req.params.id, Date.now());
+    if (!result.ok) {
+      res.status(400).json({ error: result.error });
+      return;
+    }
+    commitOfficeState(result.state);
+    res.json({ guestbook: db.office.guestbook, state: getPublicState() });
+  });
+
   app.post('/api/admin/reset-demo', requireAuth, requireAdmin, (_req, res) => {
     const now = Date.now();
     const seedUsers = createSeedUsers(now);
     const seedIds = new Set(seedUsers.map((u) => u.id));
     db.users = [...seedUsers, ...db.users.filter((u) => !seedIds.has(u.id))];
     commitOfficeState(createSeedState(now));
-    res.json({ users: buildAdminUsersPayload(), state: getPublicState() });
+    res.json({
+      users: buildAdminUsersPayload(),
+      guestbook: db.office.guestbook,
+      state: getPublicState(),
+    });
   });
 
   const isProd = process.env.NODE_ENV === 'production';

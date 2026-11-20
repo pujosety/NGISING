@@ -1,8 +1,14 @@
-import { AlertCircle, EyeOff, Wifi, WifiOff } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { AlertCircle, Award, EyeOff, Medal, Trophy, Wifi, WifiOff } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AdminPanelView } from './components/AdminPanelView.tsx';
 import { AuthScreen } from './components/AuthScreen.tsx';
+import { GuestWorkspace } from './components/GuestWorkspace.tsx';
 import { HistoryView } from './components/HistoryView.tsx';
+import {
+  PoopInteractionBurst,
+  type PoopBurstEvent,
+  type PoopBurstKind,
+} from './components/PoopAnimations.tsx';
 import { QueuePanel } from './components/QueuePanel.tsx';
 import { SettingsView } from './components/SettingsView.tsx';
 import { Sidebar, type WorkspaceTab } from './components/Sidebar.tsx';
@@ -11,8 +17,9 @@ import { StatsView } from './components/StatsView.tsx';
 import { useOfficeQueue } from './hooks/useOfficeQueue.ts';
 import {
   computePersonalStats,
+  computeWeeklyLeaderboard,
   formatDuration,
-  formatMinutesLabel,
+  getDailyQuota,
 } from './shared/queueLogic.ts';
 import type { NeedType } from './shared/types.ts';
 
@@ -35,8 +42,11 @@ export default function App() {
   const {
     state,
     user,
+    guest,
     demoAccounts,
     adminUsers,
+    adminGuestbook,
+    isLocalFallback,
     loading,
     authLoading,
     connected,
@@ -48,6 +58,8 @@ export default function App() {
     now,
     login,
     register,
+    checkInGuest,
+    exitGuest,
     logout,
     updateProfile,
     occupy,
@@ -62,6 +74,7 @@ export default function App() {
     adminRemoveQueue,
     adminClearQueue,
     adminDeleteHistory,
+    adminDeleteGuestbook,
     adminUpdateUserRole,
     adminResetUserPassword,
     adminDeleteUser,
@@ -70,6 +83,47 @@ export default function App() {
 
   const [activeTab, setActiveTab] = useState<WorkspaceTab>('dashboard');
   const [selectedNeed, setSelectedNeed] = useState<NeedType>('pup');
+  const [burstEvent, setBurstEvent] = useState<PoopBurstEvent | null>(null);
+  const burstTimerRef = useRef<number | null>(null);
+
+  const triggerBurst = useCallback((kind: PoopBurstKind) => {
+    if (burstTimerRef.current !== null) {
+      window.clearTimeout(burstTimerRef.current);
+    }
+    setBurstEvent({ id: Date.now(), kind });
+    burstTimerRef.current = window.setTimeout(() => {
+      setBurstEvent(null);
+    }, 1500);
+  }, []);
+
+  const handleOccupy = useCallback(
+    async (need: NeedType) => {
+      const ok = await occupy(need);
+      if (ok) triggerBurst('occupy');
+    },
+    [occupy, triggerBurst]
+  );
+
+  const handleRelease = useCallback(
+    async (force = false) => {
+      const ok = await release(force);
+      if (ok) triggerBurst('release');
+    },
+    [release, triggerBurst]
+  );
+
+  const handleJoinQueue = useCallback(
+    async (need: NeedType) => {
+      const ok = await joinQueue(need);
+      if (ok) triggerBurst('queue');
+    },
+    [joinQueue, triggerBurst]
+  );
+
+  const handleLeaveQueue = useCallback(async () => {
+    const ok = await leaveQueue();
+    if (ok) triggerBurst('leave');
+  }, [leaveQueue, triggerBurst]);
 
   const isAdmin = user?.role === 'admin';
   const safeActiveTab: WorkspaceTab =
@@ -79,11 +133,21 @@ export default function App() {
     if (isAdmin && safeActiveTab === 'admin') {
       void fetchAdminUsers();
     }
-  }, [isAdmin, safeActiveTab, fetchAdminUsers]);
+  }, [isAdmin, safeActiveTab, state?.serverNow, fetchAdminUsers]);
 
   const personalStats = useMemo(() => {
     if (!state || !user) return null;
     return computePersonalStats(state.history, user.id, now);
+  }, [state, user, now]);
+
+  const weeklySummary = useMemo(() => {
+    if (!state) return null;
+    return computeWeeklyLeaderboard(state.history, now);
+  }, [state, now]);
+
+  const myDailyQuota = useMemo(() => {
+    if (!state || !user) return undefined;
+    return getDailyQuota(state, user.id, now);
   }, [state, user, now]);
 
   if (loading) {
@@ -97,6 +161,28 @@ export default function App() {
     );
   }
 
+  if (!user && guest) {
+    return (
+      <GuestWorkspace
+        guest={guest}
+        officeState={state}
+        connected={connected}
+        busy={busy}
+        now={now}
+        selectedNeed={selectedNeed}
+        onSelectNeed={setSelectedNeed}
+        errorMessage={errorMessage}
+        burstEvent={burstEvent}
+        onClearError={clearError}
+        onOccupy={handleOccupy}
+        onRelease={handleRelease}
+        onJoinQueue={handleJoinQueue}
+        onLeaveQueue={handleLeaveQueue}
+        onExitGuest={exitGuest}
+      />
+    );
+  }
+
   if (!user) {
     return (
       <AuthScreen
@@ -104,10 +190,12 @@ export default function App() {
         demoAccounts={demoAccounts}
         authLoading={authLoading}
         errorMessage={errorMessage}
+        isLocalFallback={isLocalFallback}
         now={now}
         onClearError={clearError}
         onLogin={login}
         onRegister={register}
+        onGuestCheckIn={checkInGuest}
       />
     );
   }
@@ -143,6 +231,7 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900">
+      <PoopInteractionBurst event={burstEvent} />
       <Sidebar
         activeTab={safeActiveTab}
         onSelectTab={setActiveTab}
@@ -253,18 +342,32 @@ export default function App() {
                 </div>
 
                 <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
-                  <p className="text-xs font-medium text-slate-500">Sesi Saya Hari Ini</p>
-                  <p className="mt-1.5 font-mono text-2xl font-bold tabular-nums text-slate-900">
-                    {personalStats?.todaySessions ?? 0}
+                  <p className="text-xs font-medium text-slate-500">Kuota Ngising Hari Ini</p>
+                  <p
+                    className={`mt-1.5 font-mono text-2xl font-bold tabular-nums ${
+                      myDailyQuota && myDailyQuota.remaining <= 0
+                        ? 'text-red-600'
+                        : 'text-slate-900'
+                    }`}
+                  >
+                    {myDailyQuota?.used ?? 0}
+                    <span className="text-base font-normal text-slate-500">
+                      {' '}
+                      / {myDailyQuota?.limit ?? 10}
+                    </span>
                   </p>
                 </div>
 
                 <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
-                  <p className="text-xs font-medium text-slate-500">Rata-rata Pup Saya</p>
-                  <p className="mt-1.5 font-mono text-2xl font-bold tabular-nums text-slate-900">
-                    {personalStats && personalStats.avgPupMs > 0
-                      ? formatMinutesLabel(personalStats.avgPupMs)
-                      : '-'}
+                  <p className="text-xs font-medium text-slate-500">Sisa Kuota Hari Ini</p>
+                  <p
+                    className={`mt-1.5 font-mono text-2xl font-bold tabular-nums ${
+                      myDailyQuota && myDailyQuota.remaining <= 0
+                        ? 'text-red-600'
+                        : 'text-teal-700'
+                    }`}
+                  >
+                    {myDailyQuota?.remaining ?? 10}x
                   </p>
                 </div>
 
@@ -289,9 +392,10 @@ export default function App() {
                     now={now}
                     busy={busy}
                     userAlreadyQueued={myQueueIndex !== -1}
-                    onOccupy={occupy}
-                    onRelease={release}
-                    onJoinQueue={joinQueue}
+                    dailyQuota={myDailyQuota}
+                    onOccupy={handleOccupy}
+                    onRelease={handleRelease}
+                    onJoinQueue={handleJoinQueue}
                   />
                 </div>
 
@@ -305,18 +409,20 @@ export default function App() {
                     now={now}
                     busy={busy}
                     userAlreadyOccupying={userAlreadyOccupying}
-                    onJoinQueue={joinQueue}
-                    onLeaveQueue={leaveQueue}
-                    onClaimToilet={occupy}
+                    dailyQuota={myDailyQuota}
+                    onJoinQueue={handleJoinQueue}
+                    onLeaveQueue={handleLeaveQueue}
+                    onClaimToilet={handleOccupy}
                   />
                 </div>
               </div>
 
-              {/* Personal Recent Sessions on Dashboard */}
-              <section
-                aria-labelledby="personal-recent-heading"
-                className="overflow-hidden rounded-xl border border-slate-200 bg-white"
-              >
+              {/* Personal Recent Sessions + Weekly Leaderboard Preview */}
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-start">
+                <section
+                  aria-labelledby="personal-recent-heading"
+                  className="overflow-hidden rounded-xl border border-slate-200 bg-white lg:col-span-7"
+                >
                 <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
                   <div>
                     <h3
@@ -381,6 +487,81 @@ export default function App() {
                   </div>
                 )}
               </section>
+
+                {/* Top 3 Leaderboard Mingguan Preview */}
+                <section
+                  aria-labelledby="dashboard-weekly-heading"
+                  className="overflow-hidden rounded-xl border border-slate-200 bg-white lg:col-span-5"
+                >
+                  <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+                    <div>
+                      <h3
+                        id="dashboard-weekly-heading"
+                        className="font-display text-base font-bold text-slate-900"
+                      >
+                        Leaderboard Mingguan
+                      </h3>
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        {weeklySummary?.weekRangeLabel ?? '7 hari terakhir'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('stats')}
+                      className="text-xs font-semibold text-teal-700 hover:underline whitespace-nowrap"
+                    >
+                      Lihat Lengkap
+                    </button>
+                  </div>
+
+                  {!weeklySummary || weeklySummary.entries.length === 0 ? (
+                    <div className="px-6 py-8 text-center text-sm text-slate-500">
+                      Belum ada sesi minggu ini.
+                    </div>
+                  ) : (
+                    <ol className="divide-y divide-slate-100">
+                      {weeklySummary.entries.slice(0, 3).map((entry, idx) => {
+                        const RankIcon = idx === 0 ? Trophy : idx === 1 ? Medal : Award;
+                        const rankColor =
+                          idx === 0
+                            ? 'text-amber-600'
+                            : idx === 1
+                              ? 'text-slate-500'
+                              : 'text-amber-700';
+                        return (
+                          <li
+                            key={entry.userId}
+                            className="flex items-center justify-between gap-3 px-5 py-3.5"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <RankIcon className={`h-4 w-4 shrink-0 ${rankColor}`} aria-hidden="true" />
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-semibold text-slate-900">
+                                  {entry.userId === user.id
+                                    ? `${user.displayName} (Kamu)`
+                                    : entry.displayName}
+                                </p>
+                                <p className="text-xs text-slate-500 tabular-nums">
+                                  {entry.pupSessions} Pup <span aria-hidden="true">·</span>{' '}
+                                  {entry.cepatSessions} Cepat
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <p className="font-mono text-sm font-bold tabular-nums text-slate-900">
+                                {entry.totalSessions}x
+                              </p>
+                              <p className="font-mono text-[11px] tabular-nums text-slate-500">
+                                {formatDuration(entry.totalDurationMs)}
+                              </p>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  )}
+                </section>
+              </div>
             </div>
           ) : safeActiveTab === 'history' ? (
             <HistoryView history={history} currentUserId={user.id} />
@@ -392,6 +573,7 @@ export default function App() {
               officeState={state}
               currentUserId={user.id}
               users={adminUsers}
+              guestbook={adminGuestbook}
               now={now}
               busy={busy}
               onUpdateToilet={adminUpdateToilet}
@@ -404,6 +586,7 @@ export default function App() {
               onResetUserPassword={adminResetUserPassword}
               onDeleteUser={adminDeleteUser}
               onDeleteHistory={adminDeleteHistory}
+              onDeleteGuestbook={adminDeleteGuestbook}
               onResetDemo={adminResetDemo}
             />
           ) : (

@@ -1,4 +1,6 @@
-import { useMemo } from 'react';
+import { Award, Medal, Trophy } from 'lucide-react';
+import { motion } from 'motion/react';
+import { useMemo, useState } from 'react';
 import {
   computeOfficeStats,
   computePersonalStats,
@@ -6,6 +8,7 @@ import {
   formatMinutesLabel,
 } from '../shared/queueLogic.ts';
 import type { HistoryEntry, UserAccount } from '../shared/types.ts';
+import { PoopMascot } from './PoopAnimations.tsx';
 
 interface StatsViewProps {
   history: HistoryEntry[];
@@ -14,6 +17,8 @@ interface StatsViewProps {
 }
 
 export function StatsView({ history, user, now }: StatsViewProps) {
+  const [boardScope, setBoardScope] = useState<'weekly' | 'today'>('weekly');
+
   const personal = useMemo(
     () => computePersonalStats(history, user.id, now),
     [history, user.id, now]
@@ -23,6 +28,10 @@ export function StatsView({ history, user, now }: StatsViewProps) {
     1,
     ...office.hourly.map((bucket) => bucket.totalCount)
   );
+
+  const topThreeWeekly = office.weeklyLeaderboard.slice(0, 3);
+  const activeLeaderboard =
+    boardScope === 'weekly' ? office.weeklyLeaderboard : office.leaderboard;
 
   return (
     <div className="space-y-8">
@@ -41,7 +50,8 @@ export function StatsView({ history, user, now }: StatsViewProps) {
           <div className="rounded-xl border border-slate-200 bg-white p-5">
             <p className="text-xs font-medium text-slate-500">Sesi Saya Hari Ini</p>
             <p className="mt-2 font-mono text-2xl font-bold tabular-nums text-slate-900">
-              {personal.todaySessions}
+              {personal.todaySessions}{' '}
+              <span className="text-sm font-normal text-slate-500">/ 10 kuota</span>
             </p>
             <p className="mt-1 text-xs text-slate-500 tabular-nums">
               {personal.pupSessions} Pup <span aria-hidden="true">·</span>{' '}
@@ -81,14 +91,185 @@ export function StatsView({ history, user, now }: StatsViewProps) {
         </div>
       </section>
 
+      {/* Weekly Leaderboard Spotlight & Full Table */}
+      <section className="space-y-4" aria-labelledby="weekly-leaderboard-heading">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2
+              id="weekly-leaderboard-heading"
+              className="font-display text-lg font-bold text-slate-900"
+            >
+              Leaderboard Mingguan
+            </h2>
+            <p className="mt-0.5 text-sm text-slate-500">
+              Periode {office.weekRangeLabel} <span aria-hidden="true">·</span>{' '}
+              <span className="font-mono tabular-nums">{office.weeklyTotalSessions}</span> sesi tercatat (
+              {office.weeklyPupSessions} Pup, {office.weeklyCepatSessions} Cepat)
+            </p>
+          </div>
+
+          <div
+            role="group"
+            aria-label="Pilih periode leaderboard"
+            className="inline-flex items-center gap-1 rounded-lg bg-slate-100 p-1 self-start sm:self-auto"
+          >
+            <button
+              type="button"
+              onClick={() => setBoardScope('weekly')}
+              className={`min-h-[34px] rounded-md px-3.5 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap ${
+                boardScope === 'weekly'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Mingguan (7 Hari)
+            </button>
+            <button
+              type="button"
+              onClick={() => setBoardScope('today')}
+              className={`min-h-[34px] rounded-md px-3.5 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap ${
+                boardScope === 'today'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Hari Ini
+            </button>
+          </div>
+        </div>
+
+        {/* Top 3 Mingguan Podium */}
+        {boardScope === 'weekly' && topThreeWeekly.length > 0 && (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            {topThreeWeekly.map((entry, idx) => {
+              const isFirst = idx === 0;
+              const RankIcon = idx === 0 ? Trophy : idx === 1 ? Medal : Award;
+              const rankColor =
+                idx === 0
+                  ? 'text-amber-600'
+                  : idx === 1
+                    ? 'text-slate-600'
+                    : 'text-amber-700';
+
+              return (
+                <motion.div
+                  key={entry.userId}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className={`rounded-xl border bg-white p-5 ${
+                    isFirst ? 'border-amber-300 ring-1 ring-amber-200' : 'border-slate-200'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className={`inline-flex items-center gap-1.5 text-xs font-bold ${rankColor}`}>
+                        <RankIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                        <span>{isFirst ? 'Peringkat #1 Minggu Ini' : `Peringkat #${idx + 1}`}</span>
+                      </p>
+                      <h3 className="mt-1.5 font-display text-base font-bold text-slate-900">
+                        {entry.userId === user.id ? `${user.displayName} (Kamu)` : entry.displayName}
+                      </h3>
+                      {entry.department ? (
+                        <p className="text-xs text-slate-500">{entry.department}</p>
+                      ) : null}
+                    </div>
+                    {isFirst && <PoopMascot mood="called" size={44} />}
+                  </div>
+
+                  <div className="mt-4 flex items-baseline justify-between border-t border-slate-100 pt-3">
+                    <span className="font-mono text-xl font-bold tabular-nums text-slate-900">
+                      {entry.totalSessions} sesi
+                    </span>
+                    <span className="font-mono text-xs tabular-nums text-slate-500">
+                      {formatDuration(entry.totalDurationMs)} total
+                    </span>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Full Leaderboard Table */}
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+          <div className="border-b border-slate-200 px-5 py-4">
+            <h3 className="font-display text-base font-bold text-slate-900">
+              {boardScope === 'weekly'
+                ? 'Klasemen Lengkap Mingguan (7 Hari Terakhir)'
+                : 'Rekap Aktivitas Hari Ini'}
+            </h3>
+            <p className="mt-0.5 text-xs text-slate-500">
+              {boardScope === 'weekly'
+                ? 'Diurutkan berdasarkan jumlah sesi terbanyak dalam 7 hari terakhir, lalu total durasi.'
+                : 'Diurutkan berdasarkan total durasi penggunaan hari ini.'}
+            </p>
+          </div>
+
+          {activeLeaderboard.length === 0 ? (
+            <div className="px-6 py-10 text-center text-sm text-slate-500">
+              Belum ada sesi selesai untuk dirangkum.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-left text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50/70 text-xs font-semibold text-slate-600">
+                    <th className="px-5 py-3">Peringkat</th>
+                    <th className="px-5 py-3">Karyawan / Tamu</th>
+                    <th className="px-5 py-3 text-right">Total Sesi</th>
+                    <th className="px-5 py-3 text-right">Sesi Pup</th>
+                    <th className="px-5 py-3 text-right">Rata-rata</th>
+                    <th className="px-5 py-3 text-right">Terlama</th>
+                    <th className="px-5 py-3 text-right">Total Waktu</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {activeLeaderboard.map((row, idx) => (
+                    <tr key={row.userId} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="px-5 py-3 font-mono text-xs font-bold tabular-nums text-slate-600">
+                        #{idx + 1}
+                      </td>
+                      <td className="px-5 py-3">
+                        <p className="font-semibold text-slate-900">
+                          {row.userId === user.id ? `${user.displayName} (Kamu)` : row.displayName}
+                        </p>
+                        {row.department ? (
+                          <p className="text-xs text-slate-500">{row.department}</p>
+                        ) : null}
+                      </td>
+                      <td className="px-5 py-3 text-right font-mono text-xs font-bold tabular-nums text-slate-900">
+                        {row.totalSessions}
+                      </td>
+                      <td className="px-5 py-3 text-right font-mono text-xs tabular-nums text-amber-700">
+                        {row.pupSessions}
+                      </td>
+                      <td className="px-5 py-3 text-right font-mono text-xs tabular-nums text-slate-700">
+                        {formatDuration(row.avgDurationMs)}
+                      </td>
+                      <td className="px-5 py-3 text-right font-mono text-xs tabular-nums text-slate-700">
+                        {formatDuration(row.longestDurationMs)}
+                      </td>
+                      <td className="px-5 py-3 text-right font-mono text-xs font-bold tabular-nums text-slate-900">
+                        {formatDuration(row.totalDurationMs)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* Office-Wide Statistics Section */}
       <section className="space-y-4" aria-labelledby="office-stats-heading">
         <div>
           <h2 id="office-stats-heading" className="font-display text-lg font-bold text-slate-900">
-            Statistik Toilet Kantor
+            Statistik Toilet Kantor Hari Ini
           </h2>
           <p className="mt-0.5 text-sm text-slate-500">
-            Perbandingan aktivitas seluruh karyawan di 1 toilet kantor.
+            Ringkasan aktivitas harian dan distribusi jam sibuk di 1 toilet kantor.
           </p>
         </div>
 
@@ -192,72 +373,6 @@ export function StatsView({ history, user, now }: StatsViewProps) {
               );
             })}
           </div>
-        </div>
-
-        {/* Leaderboard Table */}
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-          <div className="border-b border-slate-200 px-5 py-4">
-            <h3 className="font-display text-base font-bold text-slate-900">
-              Rekap Aktivitas Karyawan
-            </h3>
-            <p className="mt-0.5 text-xs text-slate-500">
-              Diurutkan berdasarkan total durasi penggunaan tercatat.
-            </p>
-          </div>
-
-          {office.leaderboard.length === 0 ? (
-            <div className="px-6 py-10 text-center text-sm text-slate-500">
-              Belum ada sesi selesai untuk dirangkum.
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-left text-sm">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50/70 text-xs font-semibold text-slate-600">
-                    <th className="px-5 py-3">Peringkat</th>
-                    <th className="px-5 py-3">Karyawan</th>
-                    <th className="px-5 py-3 text-right">Total Sesi</th>
-                    <th className="px-5 py-3 text-right">Sesi Pup</th>
-                    <th className="px-5 py-3 text-right">Rata-rata</th>
-                    <th className="px-5 py-3 text-right">Terlama</th>
-                    <th className="px-5 py-3 text-right">Total Waktu</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {office.leaderboard.map((row, idx) => (
-                    <tr key={row.userId} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="px-5 py-3 font-mono text-xs font-bold tabular-nums text-slate-500">
-                        #{idx + 1}
-                      </td>
-                      <td className="px-5 py-3">
-                        <p className="font-semibold text-slate-900">
-                          {row.userId === user.id ? `${user.displayName} (Kamu)` : row.displayName}
-                        </p>
-                        {row.department ? (
-                          <p className="text-xs text-slate-500">{row.department}</p>
-                        ) : null}
-                      </td>
-                      <td className="px-5 py-3 text-right font-mono text-xs tabular-nums text-slate-700">
-                        {row.totalSessions}
-                      </td>
-                      <td className="px-5 py-3 text-right font-mono text-xs tabular-nums text-amber-700">
-                        {row.pupSessions}
-                      </td>
-                      <td className="px-5 py-3 text-right font-mono text-xs tabular-nums text-slate-700">
-                        {formatDuration(row.avgDurationMs)}
-                      </td>
-                      <td className="px-5 py-3 text-right font-mono text-xs tabular-nums text-slate-700">
-                        {formatDuration(row.longestDurationMs)}
-                      </td>
-                      <td className="px-5 py-3 text-right font-mono text-xs font-bold tabular-nums text-slate-900">
-                        {formatDuration(row.totalDurationMs)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
         </div>
       </section>
     </div>

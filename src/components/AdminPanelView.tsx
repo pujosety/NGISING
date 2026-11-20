@@ -13,12 +13,13 @@ import {
 import { useMemo, useState, type FormEvent } from 'react';
 import type { AdminUserSummary } from '../hooks/useOfficeQueue.ts';
 import { formatDuration } from '../shared/queueLogic.ts';
-import type { OfficeState, UserRole } from '../shared/types.ts';
+import type { GuestbookEntry, OfficeState, UserRole } from '../shared/types.ts';
 
 interface AdminPanelViewProps {
   officeState: OfficeState;
   currentUserId: string;
   users: AdminUserSummary[];
+  guestbook: GuestbookEntry[];
   now: number;
   busy: boolean;
   onUpdateToilet: (name: string, location: string) => Promise<boolean>;
@@ -31,6 +32,7 @@ interface AdminPanelViewProps {
   onResetUserPassword: (userId: string) => Promise<string | null>;
   onDeleteUser: (userId: string) => Promise<boolean>;
   onDeleteHistory: (historyId: string) => Promise<boolean>;
+  onDeleteGuestbook: (entryId: string) => Promise<boolean>;
   onResetDemo: () => Promise<boolean>;
 }
 
@@ -41,10 +43,20 @@ function formatTimeOnly(timestamp: number): string {
   });
 }
 
+function formatDateTime(timestamp: number): string {
+  return new Date(timestamp).toLocaleString('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 export function AdminPanelView({
   officeState,
   currentUserId,
   users,
+  guestbook,
   now,
   busy,
   onUpdateToilet,
@@ -57,6 +69,7 @@ export function AdminPanelView({
   onResetUserPassword,
   onDeleteUser,
   onDeleteHistory,
+  onDeleteGuestbook,
   onResetDemo,
 }: AdminPanelViewProps) {
   const { toilet, queue, history } = officeState;
@@ -113,6 +126,28 @@ export function AdminPanelView({
     const link = document.createElement('a');
     link.href = url;
     link.download = `audit-ngising-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportGuestbookCsv = () => {
+    const header = ['Waktu Kunjungan', 'Nama Tamu', 'Asal Instansi / Tujuan'];
+    const rows = guestbook.map((item) => [
+      new Date(item.visitedAt).toISOString(),
+      item.guestName,
+      item.origin,
+    ]);
+    const csv = [header, ...rows]
+      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `buku-tamu-ngising-${new Date().toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -673,6 +708,79 @@ export function AdminPanelView({
                         disabled={busy}
                         aria-label={`Hapus log sesi ${item.displayName}`}
                         onClick={() => onDeleteHistory(item.id)}
+                        className="inline-flex min-h-[30px] items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 hover:border-red-200 hover:bg-red-50 hover:text-red-700 transition-colors"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                        <span>Hapus</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      {/* Section 5: Buku Tamu Kantor */}
+      <section
+        aria-labelledby="admin-guestbook-heading"
+        className="overflow-hidden rounded-xl border border-slate-200 bg-white"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
+          <div>
+            <h3 id="admin-guestbook-heading" className="font-display text-base font-bold text-slate-900">
+              Buku Tamu Kantor ({guestbook.length})
+            </h3>
+            <p className="mt-0.5 text-xs text-slate-500">
+              Catatan tamu dan customer yang mengisi buku tamu sebelum memakai toilet kantor.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleExportGuestbookCsv}
+            disabled={guestbook.length === 0}
+            className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 transition-colors whitespace-nowrap"
+          >
+            <Download className="h-3.5 w-3.5 text-slate-500" aria-hidden="true" />
+            <span>Ekspor CSV Buku Tamu</span>
+          </button>
+        </div>
+
+        {guestbook.length === 0 ? (
+          <div className="px-6 py-10 text-center text-sm text-slate-500">
+            Belum ada catatan kunjungan tamu.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-left text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50/70 text-xs font-semibold text-slate-600">
+                  <th className="px-5 py-3">Nama Tamu</th>
+                  <th className="px-5 py-3">Asal Instansi / Tujuan</th>
+                  <th className="px-5 py-3 text-right">Waktu Kunjungan</th>
+                  <th className="px-5 py-3 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {guestbook.map((entry) => (
+                  <tr key={entry.id} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="px-5 py-3 font-medium text-slate-900">
+                      {entry.guestName}
+                    </td>
+                    <td className="px-5 py-3 text-slate-600">
+                      {entry.origin}
+                    </td>
+                    <td className="px-5 py-3 text-right font-mono text-xs tabular-nums text-slate-600">
+                      {formatDateTime(entry.visitedAt)}
+                    </td>
+                    <td className="px-5 py-3 text-right">
+                      <button
+                        type="button"
+                        disabled={busy}
+                        aria-label={`Hapus buku tamu ${entry.guestName}`}
+                        onClick={() => onDeleteGuestbook(entry.id)}
                         className="inline-flex min-h-[30px] items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 hover:border-red-200 hover:bg-red-50 hover:text-red-700 transition-colors"
                       >
                         <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />

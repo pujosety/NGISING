@@ -59,6 +59,18 @@ export function createSeedState(now = Date.now()): OfficeState {
   const s7 = relPast(1, 25, 9);
   const s8 = relPast(0, 35, 7);
 
+  const day = 24 * hour;
+  const relDaysAgo = (daysAgo: number, hourOfDay: number, durationMin: number) => {
+    const d = new Date(now - daysAgo * day);
+    d.setHours(hourOfDay, 15, 0, 0);
+    const start = d.getTime();
+    return {
+      startedAt: start,
+      endedAt: start + durationMin * min,
+      durationMs: durationMin * min,
+    };
+  };
+
   return {
     toilet: {
       id: 'toilet-utama',
@@ -178,6 +190,70 @@ export function createSeedState(now = Date.now()): OfficeState {
         isAnonymous: false,
         need: 'pup',
         ...s1,
+      },
+      {
+        id: 'hist-week-1',
+        stallId: 'toilet-utama',
+        stallName: 'Toilet Kantor',
+        userId: 'emp-dimas',
+        displayName: 'Dimas Pratama',
+        department: 'Engineering',
+        isAnonymous: false,
+        need: 'pup',
+        ...relDaysAgo(1, 10, 12),
+      },
+      {
+        id: 'hist-week-2',
+        stallId: 'toilet-utama',
+        stallName: 'Toilet Kantor',
+        userId: 'emp-dimas',
+        displayName: 'Dimas Pratama',
+        department: 'Engineering',
+        isAnonymous: false,
+        need: 'pup',
+        ...relDaysAgo(2, 14, 9),
+      },
+      {
+        id: 'hist-week-3',
+        stallId: 'toilet-utama',
+        stallName: 'Toilet Kantor',
+        userId: 'emp-eko',
+        displayName: 'Eko Nugroho',
+        department: 'Operations',
+        isAnonymous: false,
+        need: 'pup',
+        ...relDaysAgo(1, 11, 10),
+      },
+      {
+        id: 'hist-week-4',
+        stallId: 'toilet-utama',
+        stallName: 'Toilet Kantor',
+        userId: 'emp-siti',
+        displayName: 'Siti Rahma',
+        department: 'Design',
+        isAnonymous: false,
+        need: 'cepat',
+        ...relDaysAgo(2, 9, 4),
+      },
+      {
+        id: 'hist-week-5',
+        stallId: 'toilet-utama',
+        stallName: 'Toilet Kantor',
+        userId: 'emp-bagus',
+        displayName: 'Bagus Saputra',
+        department: 'Product',
+        isAnonymous: false,
+        need: 'pup',
+        ...relDaysAgo(3, 15, 11),
+      },
+    ],
+    guestbook: [
+      {
+        id: 'gb-seed-1',
+        guestId: 'guest-seed-1',
+        guestName: 'Hendra Kusuma',
+        origin: 'PT Nusantara · Meeting Klien',
+        visitedAt: now - 55 * min,
       },
     ],
     onlineCount: 1,
