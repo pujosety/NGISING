@@ -24,7 +24,7 @@ import type {
   UserRole,
 } from '../shared/types.ts';
 
-const LOCAL_DB_KEY = 'ngising_local_db_v1';
+const LOCAL_DB_KEY = 'ngising_local_db_v2';
 const LOCAL_CHANNEL_NAME = 'ngising_local_sync_v1';
 
 interface LocalUserRecord extends UserAccount {
@@ -103,7 +103,8 @@ function createInitialLocalDatabase(now = Date.now()): LocalDatabase {
     email: string,
     displayName: string,
     department: string,
-    role: UserRole
+    role: UserRole,
+    password = 'ngising123'
   ): LocalUserRecord => ({
     id,
     email,
@@ -112,11 +113,11 @@ function createInitialLocalDatabase(now = Date.now()): LocalDatabase {
     role,
     isAnonymous: false,
     createdAt: now - 86_400_000,
-    password: 'ngising123',
+    password,
   });
 
   const users: LocalUserRecord[] = [
-    makeUser('emp-admin', 'admin@kantor.id', 'Admin Kantor', 'Operasional', 'admin'),
+    makeUser('emp-admin', 'pujo@kantor.id', 'pujo', 'Operasional', 'admin', 'Sukangising'),
     makeUser('emp-siti', 'siti@kantor.id', 'Siti Rahma', 'Design', 'employee'),
     makeUser('emp-dimas', 'dimas@kantor.id', 'Dimas Pratama', 'Engineering', 'employee'),
     makeUser('emp-bagus', 'bagus@kantor.id', 'Bagus Saputra', 'Product', 'employee'),

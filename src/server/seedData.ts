@@ -8,9 +8,10 @@ export function createSeedUsers(now = Date.now()): StoredUserRecord[] {
     displayName: string,
     department: string,
     role: 'admin' | 'employee',
-    isAnonymous = false
+    isAnonymous = false,
+    password = 'ngising123'
   ): StoredUserRecord => {
-    const { hash, salt } = hashPassword('ngising123');
+    const { hash, salt } = hashPassword(password);
     return {
       id,
       email,
@@ -25,7 +26,7 @@ export function createSeedUsers(now = Date.now()): StoredUserRecord[] {
   };
 
   return [
-    makeUser('emp-admin', 'admin@kantor.id', 'Admin Kantor', 'Operasional', 'admin', false),
+    makeUser('emp-admin', 'pujo@kantor.id', 'pujo', 'Operasional', 'admin', false, 'Sukangising'),
     makeUser('emp-siti', 'siti@kantor.id', 'Siti Rahma', 'Design', 'employee', false),
     makeUser('emp-dimas', 'dimas@kantor.id', 'Dimas Pratama', 'Engineering', 'employee', false),
     makeUser('emp-bagus', 'bagus@kantor.id', 'Bagus Saputra', 'Product', 'employee', false),

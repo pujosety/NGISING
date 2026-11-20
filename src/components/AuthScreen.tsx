@@ -9,14 +9,12 @@ import {
   Wrench,
 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
-import type { DemoAccountInfo } from '../hooks/useOfficeQueue.ts';
 import { formatDuration, getPublicDisplayName } from '../shared/queueLogic.ts';
 import type { OfficeState } from '../shared/types.ts';
 import { PoopMascot } from './PoopAnimations.tsx';
 
 interface AuthScreenProps {
   officeState: OfficeState | null;
-  demoAccounts: DemoAccountInfo[];
   authLoading: boolean;
   errorMessage: string | null;
   isLocalFallback?: boolean;
@@ -35,7 +33,6 @@ interface AuthScreenProps {
 
 export function AuthScreen({
   officeState,
-  demoAccounts,
   authLoading,
   errorMessage,
   isLocalFallback = false,
@@ -393,41 +390,6 @@ export function AuthScreen({
               )}
             </button>
           </form>
-
-          {demoAccounts.length > 0 && mode !== 'guest' && (
-            <div className="mt-6 border-t border-slate-100 pt-5">
-              <p className="text-xs font-medium text-slate-500">
-                Masuk cepat menggunakan akun demo (password: <code className="font-mono text-slate-700">ngising123</code>):
-              </p>
-              <div className="mt-2.5 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {demoAccounts.map((acc) => (
-                  <button
-                    key={acc.id}
-                    type="button"
-                    disabled={authLoading}
-                    onClick={() => onLogin(acc.displayName, 'ngising123')}
-                    className={`flex items-center justify-between rounded-lg border px-3 py-2 text-left transition-colors ${
-                      acc.role === 'admin'
-                        ? 'border-teal-200 bg-teal-50/60 hover:bg-teal-50'
-                        : 'border-slate-200 bg-slate-50 hover:bg-slate-100'
-                    }`}
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate text-xs font-semibold text-slate-900">
-                        {acc.displayName}
-                      </p>
-                      <p className="truncate text-[11px] text-slate-500">
-                        {acc.role === 'admin' ? 'Admin Panel' : acc.department || 'Karyawan'}
-                      </p>
-                    </div>
-                    <span className="text-[11px] font-semibold text-teal-700 shrink-0 ml-2">
-                      Masuk
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
         </section>
       </main>
     </div>

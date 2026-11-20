@@ -10,7 +10,6 @@ import type {
 import {
   localAdminAction,
   localGetAdminData,
-  localGetDemoAccounts,
   localGetGuestByToken,
   localGetPublicState,
   localGetUserByToken,
@@ -25,14 +24,6 @@ import {
 const TOKEN_STORAGE_KEY = 'ngising_auth_token_v1';
 const GUEST_TOKEN_STORAGE_KEY = 'ngising_guest_token_v1';
 const SOUND_STORAGE_KEY = 'ngising_sound_v1';
-
-export interface DemoAccountInfo {
-  id: string;
-  email: string;
-  displayName: string;
-  department: string;
-  role: UserRole;
-}
 
 export interface AdminUserSummary extends UserAccount {
   sessionCount: number;
@@ -120,7 +111,6 @@ export function useOfficeQueue() {
   const [guestToken, setGuestToken] = useState<string | null>(() =>
     readStoredValue(GUEST_TOKEN_STORAGE_KEY)
   );
-  const [demoAccounts, setDemoAccounts] = useState<DemoAccountInfo[]>([]);
   const [adminUsers, setAdminUsers] = useState<AdminUserSummary[]>([]);
   const [adminGuestbook, setAdminGuestbook] = useState<GuestbookEntry[]>([]);
   const [isLocalFallback, setIsLocalFallback] = useState(false);
@@ -156,7 +146,6 @@ export function useOfficeQueue() {
       setIsLocalFallback(true);
     }
     setConnected(true);
-    setDemoAccounts(localGetDemoAccounts());
     applyServerState(localGetPublicState());
   }, [applyServerState]);
 
@@ -169,28 +158,20 @@ export function useOfficeQueue() {
     }
   }, []);
 
-  // Bootstrap auth/guest session + demo account directory + initial toilet state
+  // Bootstrap auth/guest session + initial toilet state
   useEffect(() => {
     let active = true;
 
     async function init() {
       try {
-        const [stateRes, demoRes] = await Promise.all([
-          safeFetchJson<OfficeState>('/api/state'),
-          safeFetchJson<{ accounts: DemoAccountInfo[] }>('/api/auth/demo-accounts'),
-        ]);
+        const stateRes = await safeFetchJson<OfficeState>('/api/state');
 
         if (!active) return;
 
-        if (stateRes.kind === 'backend_unavailable' || demoRes.kind === 'backend_unavailable') {
+        if (stateRes.kind === 'backend_unavailable') {
           activateLocalFallback();
-        } else {
-          if (stateRes.kind === 'ok') {
-            applyServerState(stateRes.data);
-          }
-          if (demoRes.kind === 'ok') {
-            setDemoAccounts(demoRes.data.accounts ?? []);
-          }
+        } else if (stateRes.kind === 'ok') {
+          applyServerState(stateRes.data);
         }
 
         const params = new URLSearchParams(window.location.search);
@@ -363,8 +344,22 @@ export function useOfficeQueue() {
 
     connect();
 
+    // Fallback HTTP poll if WebSocket is blocked/disconnected behind a proxy
+    const pollTimer = window.setInterval(() => {
+      if (disposed || localModeRef.current) return;
+      const wsOpen = wsRef.current?.readyState === WebSocket.OPEN;
+      if (!wsOpen) {
+        void safeFetchJson<OfficeState>('/api/state').then((res) => {
+          if (!disposed && res.kind === 'ok') {
+            applyServerState(res.data);
+          }
+        });
+      }
+    }, 4000);
+
     return () => {
       disposed = true;
+      window.clearInterval(pollTimer);
       if (reconnectTimerRef.current !== null) {
         window.clearTimeout(reconnectTimerRef.current);
       }
@@ -1016,7 +1011,6 @@ export function useOfficeQueue() {
     state,
     user,
     guest,
-    demoAccounts,
     adminUsers,
     adminGuestbook,
     isLocalFallback,

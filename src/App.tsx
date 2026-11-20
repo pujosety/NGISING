@@ -43,7 +43,6 @@ export default function App() {
     state,
     user,
     guest,
-    demoAccounts,
     adminUsers,
     adminGuestbook,
     isLocalFallback,
@@ -187,7 +186,6 @@ export default function App() {
     return (
       <AuthScreen
         officeState={state}
-        demoAccounts={demoAccounts}
         authLoading={authLoading}
         errorMessage={errorMessage}
         isLocalFallback={isLocalFallback}

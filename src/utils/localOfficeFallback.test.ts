@@ -56,10 +56,14 @@ test('local fallback supports employee registration, login, guestbook check-in, 
     true
   );
 
-  // Admin can inspect guestbook & delete entry
-  const adminLogin = localLogin('Admin Kantor', 'ngising123', storage);
+  // Old default admin login should no longer work; new default is pujo | Sukangising
+  const oldAdminLogin = localLogin('Admin Kantor', 'ngising123', storage);
+  assert.equal(oldAdminLogin.ok, false);
+
+  const adminLogin = localLogin('pujo', 'Sukangising', storage);
   assert.equal(adminLogin.ok, true);
   if (!adminLogin.ok) return;
+  assert.equal(adminLogin.user.role, 'admin');
 
   const adminData = localGetAdminData(adminLogin.token, storage);
   assert.ok(adminData);
