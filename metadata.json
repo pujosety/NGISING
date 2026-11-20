@@ -1,0 +1,6 @@
+{
+  "name": "BilikKantor",
+  "description": "Aplikasi pelacak antrean dan pencatatan penggunaan toilet kantor secara real-time untuk karyawan.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
