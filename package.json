@@ -1,11 +1,16 @@
 {
-  "name": "react-example",
+  "name": "ngising",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "main": "server.ts",
+  "engines": {
+    "node": ">=22.18.0"
+  },
   "scripts": {
     "dev": "tsx server.ts",
     "start": "node server.ts",
+    "start:tsx": "tsx server.ts",
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",

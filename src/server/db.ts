@@ -38,6 +38,7 @@ export interface PersistedDatabase {
 
 export interface DatabaseStore {
   mode: 'mysql' | 'json';
+  ping(): Promise<boolean>;
   load(): Promise<PersistedDatabase>;
   saveUsers(users: StoredUserRecord[]): Promise<void>;
   saveOffice(office: OfficeState): Promise<void>;
@@ -145,6 +146,10 @@ class JsonFileStore implements DatabaseStore {
     return fresh;
   }
 
+  async ping(): Promise<boolean> {
+    return true;
+  }
+
   async load(): Promise<PersistedDatabase> {
     return this.cache;
   }
@@ -187,9 +192,16 @@ class MySqlStore implements DatabaseStore {
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0,
+      connectTimeout: 10000,
       enableKeepAlive: true,
+      keepAliveInitialDelay: 10000,
       charset: 'utf8mb4',
     });
+  }
+
+  async ping(): Promise<boolean> {
+    await this.pool.query('SELECT 1');
+    return true;
   }
 
   async init(): Promise<void> {

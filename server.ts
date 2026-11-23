@@ -252,7 +252,18 @@ async function startServer(): Promise<void> {
   }, 5000);
 
   app.get('/api/health', (_req, res) => {
-    res.json({ ok: true, database: store.mode });
+    void store
+      .ping()
+      .then(() => {
+        res.json({ ok: true, database: store.mode });
+      })
+      .catch((err) => {
+        res.status(503).json({
+          ok: false,
+          database: store.mode,
+          error: err instanceof Error ? err.message : 'Database ping failed',
+        });
+      });
   });
 
   app.post('/api/auth/register', (req, res, next) => {
