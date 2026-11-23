@@ -1,0 +1,274 @@
+{
+  "authSecret": "50c5317e7dd2f93cda2b28236dfe11ff31f86849085ea3138ef482b9c171b020",
+  "users": [
+    {
+      "id": "emp-admin",
+      "email": "pujo@kantor.id",
+      "displayName": "pujo",
+      "department": "Operasional",
+      "role": "admin",
+      "isAnonymous": false,
+      "createdAt": 1795318488487,
+      "passwordHash": "7ce85261e2d82d69345f0183199ca8d1c2bedafd7ff329a5a94188856442e4caa198639323cf19e6606715d3cb71f2a765196d760dda6771e9c4f2a1622512d8",
+      "passwordSalt": "641af00dd6c5d2bdb7aa246daa3ae9c7"
+    },
+    {
+      "id": "emp-siti",
+      "email": "siti@kantor.id",
+      "displayName": "Siti Rahma",
+      "department": "Design",
+      "role": "employee",
+      "isAnonymous": false,
+      "createdAt": 1795318488487,
+      "passwordHash": "d7ef1743a95c50cfa697fcd6e8fd27e203da9c62fc81cea0fc6fbd57f77c41e55da068d7f5659a9272d8e3636f6d1e448590daad17551097edfa04823b4af1d1",
+      "passwordSalt": "ef89449853f65f0e4f48327961d8e2bd"
+    },
+    {
+      "id": "emp-dimas",
+      "email": "dimas@kantor.id",
+      "displayName": "Dimas Pratama",
+      "department": "Engineering",
+      "role": "employee",
+      "isAnonymous": false,
+      "createdAt": 1795318488487,
+      "passwordHash": "4618e202fea9ad7c141313fb30af6f445f58455f418cbc07b689d914d6a993bcc6b33b7136e84cf183ce179b1d2aa6a82cabff000a3028cea2eb7885fdab6fe5",
+      "passwordSalt": "6365ed840215f18e425a8b215de6bdb5"
+    },
+    {
+      "id": "emp-bagus",
+      "email": "bagus@kantor.id",
+      "displayName": "Bagus Saputra",
+      "department": "Product",
+      "role": "employee",
+      "isAnonymous": false,
+      "createdAt": 1795318488487,
+      "passwordHash": "6661c4b03bbaaa068e1b72de5d7c1fe7f9282eb6df1791599ebd3589b0f74ee82f4a01be52aaf487a0c2e1d94eec981e7081207dbb9368d882747d4b9463bbf6",
+      "passwordSalt": "51ee2b4031b7b2b4deb26bae1ea46b00"
+    },
+    {
+      "id": "emp-eko",
+      "email": "eko@kantor.id",
+      "displayName": "Eko Nugroho",
+      "department": "Operations",
+      "role": "employee",
+      "isAnonymous": false,
+      "createdAt": 1795318488487,
+      "passwordHash": "5cdfd21e0a0540480bd54146a948f4356f7fe3a710572c89bfa6a7a62d4aaa2b797ccd3f266202cf292e383df3f3caf4a9765c729620d3ab8abe0cfbf35d16a5",
+      "passwordSalt": "7bf044e1fc92bba680cb782227bedf99"
+    }
+  ],
+  "office": {
+    "toilet": {
+      "id": "toilet-utama",
+      "name": "Toilet Kantor",
+      "location": "Area Belakang",
+      "status": "occupied",
+      "occupant": {
+        "userId": "emp-dimas",
+        "displayName": "Dimas Pratama",
+        "department": "Engineering",
+        "isAnonymous": false,
+        "need": "pup",
+        "startedAt": 1795404626487
+      },
+      "reservedFor": null
+    },
+    "queue": [
+      {
+        "id": "q-seed-1",
+        "userId": "emp-bagus",
+        "displayName": "Bagus Saputra",
+        "department": "Product",
+        "isAnonymous": false,
+        "need": "pup",
+        "joinedAt": 1795404753487,
+        "status": "waiting",
+        "calledStallId": null,
+        "calledAt": null,
+        "expiresAt": null
+      }
+    ],
+    "history": [
+      {
+        "id": "hist-seed-8",
+        "stallId": "toilet-utama",
+        "stallName": "Toilet Kantor",
+        "userId": "emp-siti",
+        "displayName": "Siti Rahma",
+        "department": "Design",
+        "isAnonymous": false,
+        "need": "pup",
+        "startedAt": 1795402368487,
+        "endedAt": 1795402788487,
+        "durationMs": 420000
+      },
+      {
+        "id": "hist-seed-7",
+        "stallId": "toilet-utama",
+        "stallName": "Toilet Kantor",
+        "userId": "emp-eko",
+        "displayName": "Eko Nugroho",
+        "department": "Operations",
+        "isAnonymous": false,
+        "need": "pup",
+        "startedAt": 1795399248487,
+        "endedAt": 1795399788487,
+        "durationMs": 540000
+      },
+      {
+        "id": "hist-seed-6",
+        "stallId": "toilet-utama",
+        "stallName": "Toilet Kantor",
+        "userId": "emp-bagus",
+        "displayName": "Bagus Saputra",
+        "department": "Product",
+        "isAnonymous": false,
+        "need": "cepat",
+        "startedAt": 1795396968487,
+        "endedAt": 1795397088487,
+        "durationMs": 120000
+      },
+      {
+        "id": "hist-seed-5",
+        "stallId": "toilet-utama",
+        "stallName": "Toilet Kantor",
+        "userId": "emp-dimas",
+        "displayName": "Dimas Pratama",
+        "department": "Engineering",
+        "isAnonymous": false,
+        "need": "pup",
+        "startedAt": 1795394448487,
+        "endedAt": 1795395288487,
+        "durationMs": 840000
+      },
+      {
+        "id": "hist-seed-4",
+        "stallId": "toilet-utama",
+        "stallName": "Toilet Kantor",
+        "userId": "emp-siti",
+        "displayName": "Siti Rahma",
+        "department": "Design",
+        "isAnonymous": false,
+        "need": "cepat",
+        "startedAt": 1795392948487,
+        "endedAt": 1795393188487,
+        "durationMs": 240000
+      },
+      {
+        "id": "hist-seed-3",
+        "stallId": "toilet-utama",
+        "stallName": "Toilet Kantor",
+        "userId": "emp-eko",
+        "displayName": "Eko Nugroho",
+        "department": "Operations",
+        "isAnonymous": false,
+        "need": "pup",
+        "startedAt": 1795392120000,
+        "endedAt": 1795392600000,
+        "durationMs": 660000
+      },
+      {
+        "id": "hist-seed-2",
+        "stallId": "toilet-utama",
+        "stallName": "Toilet Kantor",
+        "userId": "emp-bagus",
+        "displayName": "Bagus Saputra",
+        "department": "Product",
+        "isAnonymous": false,
+        "need": "cepat",
+        "startedAt": 1795392420000,
+        "endedAt": 1795392600000,
+        "durationMs": 180000
+      },
+      {
+        "id": "hist-seed-1",
+        "stallId": "toilet-utama",
+        "stallName": "Toilet Kantor",
+        "userId": "emp-dimas",
+        "displayName": "Dimas Pratama",
+        "department": "Engineering",
+        "isAnonymous": false,
+        "need": "pup",
+        "startedAt": 1795392120000,
+        "endedAt": 1795392600000,
+        "durationMs": 480000
+      },
+      {
+        "id": "hist-week-1",
+        "stallId": "toilet-utama",
+        "stallName": "Toilet Kantor",
+        "userId": "emp-dimas",
+        "displayName": "Dimas Pratama",
+        "department": "Engineering",
+        "isAnonymous": false,
+        "need": "pup",
+        "startedAt": 1795342500000,
+        "endedAt": 1795343220000,
+        "durationMs": 720000
+      },
+      {
+        "id": "hist-week-2",
+        "stallId": "toilet-utama",
+        "stallName": "Toilet Kantor",
+        "userId": "emp-dimas",
+        "displayName": "Dimas Pratama",
+        "department": "Engineering",
+        "isAnonymous": false,
+        "need": "pup",
+        "startedAt": 1795270500000,
+        "endedAt": 1795271040000,
+        "durationMs": 540000
+      },
+      {
+        "id": "hist-week-3",
+        "stallId": "toilet-utama",
+        "stallName": "Toilet Kantor",
+        "userId": "emp-eko",
+        "displayName": "Eko Nugroho",
+        "department": "Operations",
+        "isAnonymous": false,
+        "need": "pup",
+        "startedAt": 1795346100000,
+        "endedAt": 1795346700000,
+        "durationMs": 600000
+      },
+      {
+        "id": "hist-week-4",
+        "stallId": "toilet-utama",
+        "stallName": "Toilet Kantor",
+        "userId": "emp-siti",
+        "displayName": "Siti Rahma",
+        "department": "Design",
+        "isAnonymous": false,
+        "need": "cepat",
+        "startedAt": 1795252500000,
+        "endedAt": 1795252740000,
+        "durationMs": 240000
+      },
+      {
+        "id": "hist-week-5",
+        "stallId": "toilet-utama",
+        "stallName": "Toilet Kantor",
+        "userId": "emp-bagus",
+        "displayName": "Bagus Saputra",
+        "department": "Product",
+        "isAnonymous": false,
+        "need": "pup",
+        "startedAt": 1795187700000,
+        "endedAt": 1795188360000,
+        "durationMs": 660000
+      }
+    ],
+    "guestbook": [
+      {
+        "id": "gb-seed-1",
+        "guestId": "guest-seed-1",
+        "guestName": "Hendra Kusuma",
+        "origin": "PT Nusantara · Meeting Klien",
+        "visitedAt": 1795401588487
+      }
+    ],
+    "onlineCount": 1,
+    "serverNow": 1795404888487
+  }
+}

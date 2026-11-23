@@ -1,0 +1,12 @@
+node_modules
+dist
+build
+coverage
+.git
+.env
+.env.*
+!.env.example
+*.log
+data/*.json
+public/assets/aistudio
+.aistudio
