@@ -523,50 +523,50 @@ export default function App() {
                     >
                       Aktivitas Terakhir Saya
                     </h3>
-                    <p className="mt-0.5 text-xs text-[#dbc08b]/80">
+                    <p className="mt-0.5 text-xs text-[#f3e4c0]/80">
                       Catatan pribadi khusus untuk akun {user.displayName}.
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setActiveTab('history')}
-                    className="text-xs font-bold text-[#dbc08b] hover:text-white hover:underline whitespace-nowrap cursor-pointer"
+                    className="text-xs font-bold text-[#f3e4c0] hover:text-white hover:underline whitespace-nowrap cursor-pointer"
                   >
                     Lihat Semua
                   </button>
                 </div>
 
                 {!personalStats || personalStats.recentSessions.length === 0 ? (
-                  <div className="px-6 py-8 text-center text-sm text-[#dbc08b]/60">
+                  <div className="px-6 py-8 text-center text-sm text-[#f3e4c0]/70">
                     Belum ada catatan sesi pribadimu hari ini.
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full border-collapse text-left text-sm">
                       <thead>
-                        <tr className="border-b border-[#c99f57]/15 bg-[#241407]/40 text-xs font-bold text-[#dbc08b]">
+                        <tr className="border-b border-[#e0b666]/20 bg-[#1f1106]/80 text-xs font-bold text-[#f3e4c0]">
                           <th className="px-5 py-2.5">Keperluan</th>
                           <th className="px-5 py-2.5 text-right">Mulai</th>
                           <th className="px-5 py-2.5 text-right">Selesai</th>
                           <th className="px-5 py-2.5 text-right">Durasi</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-[#c99f57]/10">
+                      <tbody className="divide-y divide-[#e0b666]/10">
                         {personalStats.recentSessions.map((item) => (
-                          <tr key={item.id} className="hover:bg-[#3e2610]/40 transition-colors">
+                          <tr key={item.id} className="hover:bg-[#3b220d]/40 transition-colors">
                             <td className="px-5 py-3">
                               <span
                                 className={`text-xs font-bold ${
-                                  item.need === 'pup' ? 'text-[#dbc08b]' : 'text-teal-400'
+                                  item.need === 'pup' ? 'text-[#f3e4c0]' : 'text-teal-300'
                                 }`}
                               >
                                 {item.need === 'pup' ? '💩 Pup (Santai)' : '⚡ Cepat (BAK)'}
                               </span>
                             </td>
-                            <td className="px-5 py-3 text-right font-mono text-xs tabular-nums text-[#e8d9b5]/80">
+                            <td className="px-5 py-3 text-right font-mono text-xs tabular-nums text-white/90">
                               {formatTimeOnly(item.startedAt)}
                             </td>
-                            <td className="px-5 py-3 text-right font-mono text-xs tabular-nums text-[#e8d9b5]/80">
+                            <td className="px-5 py-3 text-right font-mono text-xs tabular-nums text-white/90">
                               {formatTimeOnly(item.endedAt)}
                             </td>
                             <td className="px-5 py-3 text-right font-mono text-xs font-bold tabular-nums text-white">
@@ -593,37 +593,37 @@ export default function App() {
                       >
                         Leaderboard Mingguan
                       </h3>
-                      <p className="mt-0.5 text-xs text-[#dbc08b]/80">
+                      <p className="mt-0.5 text-xs text-[#f3e4c0]/80">
                         {weeklySummary?.weekRangeLabel ?? '7 hari terakhir'}
                       </p>
                     </div>
                     <button
                       type="button"
                       onClick={() => setActiveTab('stats')}
-                      className="text-xs font-bold text-[#dbc08b] hover:text-white hover:underline whitespace-nowrap cursor-pointer"
+                      className="text-xs font-bold text-[#f3e4c0] hover:text-white hover:underline whitespace-nowrap cursor-pointer"
                     >
                       Lihat Lengkap
                     </button>
                   </div>
 
                   {!weeklySummary || weeklySummary.entries.length === 0 ? (
-                    <div className="px-6 py-8 text-center text-sm text-[#dbc08b]/60">
+                    <div className="px-6 py-8 text-center text-sm text-[#f3e4c0]/70">
                       Belum ada sesi minggu ini.
                     </div>
                   ) : (
-                    <ol className="divide-y divide-[#c99f57]/10">
+                    <ol className="divide-y divide-[#e0b666]/10">
                       {weeklySummary.entries.slice(0, 3).map((entry, idx) => {
                         const RankIcon = idx === 0 ? Trophy : idx === 1 ? Medal : Award;
                         const rankColor =
                           idx === 0
                             ? 'text-amber-400'
                             : idx === 1
-                              ? 'text-slate-300'
-                              : 'text-[#c99f57]';
+                              ? 'text-slate-200'
+                              : 'text-[#e0b666]';
                         return (
                           <li
                             key={entry.userId}
-                            className="flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-[#3e2610]/30 transition-colors"
+                            className="flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-[#3b220d]/40 transition-colors"
                           >
                             <div className="flex items-center gap-3 min-w-0">
                               <RankIcon className={`h-4 w-4 shrink-0 ${rankColor}`} aria-hidden="true" />
@@ -633,7 +633,7 @@ export default function App() {
                                     ? `${user.displayName} (Kamu)`
                                     : entry.displayName}
                                 </p>
-                                <p className="text-xs text-[#dbc08b]/70 tabular-nums">
+                                <p className="text-xs text-[#f3e4c0]/80 tabular-nums">
                                   {entry.pupSessions} Pup <span aria-hidden="true">·</span>{' '}
                                   {entry.cepatSessions} Cepat
                                 </p>
@@ -643,7 +643,7 @@ export default function App() {
                               <p className="font-mono text-sm font-black tabular-nums text-white">
                                 {entry.totalSessions}x
                               </p>
-                              <p className="font-mono text-[11px] tabular-nums text-[#dbc08b]">
+                              <p className="font-mono text-[11px] tabular-nums text-[#f3e4c0]">
                                 {formatDuration(entry.totalDurationMs)}
                               </p>
                             </div>

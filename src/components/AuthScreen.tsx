@@ -132,14 +132,14 @@ export function AuthScreen({
             </motion.div>
 
             <h1 className="mt-4 font-display text-2xl sm:text-3xl font-black tracking-tight text-white">
-              Ngising <span className="text-[#dbc08b]">Office</span>
+              Ngising <span className="text-[#f3e4c0]">Office</span>
             </h1>
-            <p className="mt-1 text-xs sm:text-sm text-[#e8d9b5]/80">
+            <p className="mt-1 text-xs sm:text-sm text-[#fdfaf3]/90">
               Antrean & Ketersediaan Bilik Toilet Cerdas
             </p>
 
             {/* Live Bilik status glass pill */}
-            <div className="mt-4 inline-flex items-center gap-2 rounded-full glass-pill px-3.5 py-1.5 text-xs font-semibold">
+            <div className="mt-4 inline-flex items-center gap-2 rounded-full glass-pill px-4 py-1.5 text-xs font-bold text-white shadow-md">
               <span
                 className={`h-2.5 w-2.5 rounded-full ${
                   isMaintenance
@@ -149,20 +149,20 @@ export function AuthScreen({
                       : 'bg-emerald-400 animate-pulse'
                 }`}
               />
-              <span className="text-[#f5eedb]">
+              <span className="text-white font-bold">
                 {isMaintenance
                   ? 'Bilik Sedang Maintenance'
                   : isOccupied
                     ? 'Bilik Sedang Digunakan'
                     : 'Bilik Sedang Kosong'}
               </span>
-              <span className="text-[#dbc08b]/50">·</span>
-              <span className="text-[#dbc08b] font-mono">{queueCount} antre</span>
+              <span className="text-[#ebd096]/60">·</span>
+              <span className="text-[#f3e4c0] font-mono font-bold">{queueCount} antre</span>
             </div>
           </div>
 
           {/* Sliding Glass Mode Switcher */}
-          <div className="relative mt-6 flex rounded-2xl bg-[#241407]/70 p-1.5 border border-[#c99f57]/20 shadow-inner">
+          <div className="relative mt-6 flex rounded-2xl bg-[#1f1106]/80 p-1.5 border border-[#e0b666]/30 shadow-inner">
             {(
               [
                 { id: 'login', label: 'Masuk' },
@@ -181,14 +181,14 @@ export function AuthScreen({
                     onClearError();
                   }}
                   className={`relative flex-1 py-2 text-xs sm:text-sm font-bold transition-colors cursor-pointer text-center z-10 ${
-                    active ? 'text-white' : 'text-[#dbc08b]/70 hover:text-white'
+                    active ? 'text-white' : 'text-[#f3e4c0]/80 hover:text-white'
                   }`}
                 >
                   {active && (
                     <motion.div
                       layoutId="auth-tab-pill-glass"
                       transition={{ type: 'spring', stiffness: 450, damping: 32 }}
-                      className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#8c5d1d] to-[#ad7c2b] shadow-md border border-[#c99f57]/50"
+                      className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#a87222] to-[#c99335] shadow-md border border-[#e0b666]/60"
                     />
                   )}
                   <span className="relative z-20">{tab.label}</span>
@@ -204,19 +204,19 @@ export function AuthScreen({
                 <div>
                   <label
                     htmlFor="auth-identifier"
-                    className="block text-xs font-bold text-[#e8d9b5] mb-1.5"
+                    className="block text-xs font-bold text-[#fdfaf3] mb-1.5"
                   >
                     Nama atau Email
                   </label>
                   <div className="relative">
-                    <User className="absolute left-3.5 top-3 h-4 w-4 text-[#dbc08b]" />
+                    <User className="absolute left-3.5 top-3 h-4 w-4 text-[#e0b666]" />
                     <input
                       id="auth-identifier"
                       type="text"
                       value={identifier}
                       onChange={(e) => setIdentifier(e.target.value)}
                       placeholder="siti / siti@kantor.id"
-                      className="w-full min-h-[44px] rounded-xl border border-[#c99f57]/30 bg-[#241407]/60 py-2.5 pl-10 pr-3.5 text-sm text-white placeholder:text-[#dbc08b]/40 focus:border-[#dbc08b] focus:outline-none focus:ring-2 focus:ring-[#ad7c2b]/30 shadow-inner"
+                      className="w-full min-h-[44px] rounded-xl border border-[#e0b666]/40 bg-[#1f1106]/80 py-2.5 pl-10 pr-3.5 text-sm font-medium text-white placeholder:text-[#f3e4c0]/40 focus:border-[#f3e4c0] focus:outline-none focus:ring-2 focus:ring-[#c99335]/40 shadow-inner"
                     />
                   </div>
                 </div>
@@ -224,19 +224,19 @@ export function AuthScreen({
                 <div>
                   <label
                     htmlFor="auth-password"
-                    className="block text-xs font-bold text-[#e8d9b5] mb-1.5"
+                    className="block text-xs font-bold text-[#fdfaf3] mb-1.5"
                   >
                     Password
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-3.5 top-3 h-4 w-4 text-[#dbc08b]" />
+                    <Lock className="absolute left-3.5 top-3 h-4 w-4 text-[#e0b666]" />
                     <input
                       id="auth-password"
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full min-h-[44px] rounded-xl border border-[#c99f57]/30 bg-[#241407]/60 py-2.5 pl-10 pr-3.5 text-sm text-white placeholder:text-[#dbc08b]/40 focus:border-[#dbc08b] focus:outline-none focus:ring-2 focus:ring-[#ad7c2b]/30 shadow-inner"
+                      className="w-full min-h-[44px] rounded-xl border border-[#e0b666]/40 bg-[#1f1106]/80 py-2.5 pl-10 pr-3.5 text-sm font-medium text-white placeholder:text-[#f3e4c0]/40 focus:border-[#f3e4c0] focus:outline-none focus:ring-2 focus:ring-[#c99335]/40 shadow-inner"
                     />
                   </div>
                 </div>
@@ -246,7 +246,7 @@ export function AuthScreen({
                 <div>
                   <label
                     htmlFor="guest-name"
-                    className="block text-xs font-bold text-[#e8d9b5] mb-1.5"
+                    className="block text-xs font-bold text-[#fdfaf3] mb-1.5"
                   >
                     Nama Lengkap Tamu
                   </label>
@@ -256,14 +256,14 @@ export function AuthScreen({
                     value={guestName}
                     onChange={(e) => setGuestName(e.target.value)}
                     placeholder="Contoh: Rian (Vendor IT)"
-                    className="w-full min-h-[44px] rounded-xl border border-[#c99f57]/30 bg-[#241407]/60 py-2.5 px-3.5 text-sm text-white placeholder:text-[#dbc08b]/40 focus:border-[#dbc08b] focus:outline-none focus:ring-2 focus:ring-[#ad7c2b]/30 shadow-inner"
+                    className="w-full min-h-[44px] rounded-xl border border-[#e0b666]/40 bg-[#1f1106]/80 py-2.5 px-3.5 text-sm font-medium text-white placeholder:text-[#f3e4c0]/40 focus:border-[#f3e4c0] focus:outline-none focus:ring-2 focus:ring-[#c99335]/40 shadow-inner"
                   />
                 </div>
 
                 <div>
                   <label
                     htmlFor="guest-origin"
-                    className="block text-xs font-bold text-[#e8d9b5] mb-1.5"
+                    className="block text-xs font-bold text-[#fdfaf3] mb-1.5"
                   >
                     Asal / Keperluan (Opsional)
                   </label>
@@ -273,7 +273,7 @@ export function AuthScreen({
                     value={guestOrigin}
                     onChange={(e) => setGuestOrigin(e.target.value)}
                     placeholder="Meeting, Tamu Klien, dll."
-                    className="w-full min-h-[44px] rounded-xl border border-[#c99f57]/30 bg-[#241407]/60 py-2.5 px-3.5 text-sm text-white placeholder:text-[#dbc08b]/40 focus:border-[#dbc08b] focus:outline-none focus:ring-2 focus:ring-[#ad7c2b]/30 shadow-inner"
+                    className="w-full min-h-[44px] rounded-xl border border-[#e0b666]/40 bg-[#1f1106]/80 py-2.5 px-3.5 text-sm font-medium text-white placeholder:text-[#f3e4c0]/40 focus:border-[#f3e4c0] focus:outline-none focus:ring-2 focus:ring-[#c99335]/40 shadow-inner"
                   />
                 </div>
               </>
@@ -282,7 +282,7 @@ export function AuthScreen({
                 <div>
                   <label
                     htmlFor="reg-name"
-                    className="block text-xs font-bold text-[#e8d9b5] mb-1.5"
+                    className="block text-xs font-bold text-[#fdfaf3] mb-1.5"
                   >
                     Nama Panggilan / Lengkap
                   </label>
@@ -292,14 +292,14 @@ export function AuthScreen({
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="Contoh: Budi Santoso"
-                    className="w-full min-h-[44px] rounded-xl border border-[#c99f57]/30 bg-[#241407]/60 py-2.5 px-3.5 text-sm text-white placeholder:text-[#dbc08b]/40 focus:border-[#dbc08b] focus:outline-none focus:ring-2 focus:ring-[#ad7c2b]/30 shadow-inner"
+                    className="w-full min-h-[44px] rounded-xl border border-[#e0b666]/40 bg-[#1f1106]/80 py-2.5 px-3.5 text-sm font-medium text-white placeholder:text-[#f3e4c0]/40 focus:border-[#f3e4c0] focus:outline-none focus:ring-2 focus:ring-[#c99335]/40 shadow-inner"
                   />
                 </div>
 
                 <div>
                   <label
                     htmlFor="reg-password"
-                    className="block text-xs font-bold text-[#e8d9b5] mb-1.5"
+                    className="block text-xs font-bold text-[#fdfaf3] mb-1.5"
                   >
                     Buat Password (min. 6 karakter)
                   </label>
@@ -309,7 +309,7 @@ export function AuthScreen({
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Minimal 6 karakter"
-                    className="w-full min-h-[44px] rounded-xl border border-[#c99f57]/30 bg-[#241407]/60 py-2.5 px-3.5 text-sm text-white placeholder:text-[#dbc08b]/40 focus:border-[#dbc08b] focus:outline-none focus:ring-2 focus:ring-[#ad7c2b]/30 shadow-inner"
+                    className="w-full min-h-[44px] rounded-xl border border-[#e0b666]/40 bg-[#1f1106]/80 py-2.5 px-3.5 text-sm font-medium text-white placeholder:text-[#f3e4c0]/40 focus:border-[#f3e4c0] focus:outline-none focus:ring-2 focus:ring-[#c99335]/40 shadow-inner"
                   />
                 </div>
               </>
@@ -351,48 +351,6 @@ export function AuthScreen({
               )}
             </button>
           </form>
-
-          {/* Quick Demo Fill Buttons (Clean 3D Pill Style) */}
-          <div className="mt-6 border-t border-[#c99f57]/20 pt-4 text-center">
-            <span className="text-[11px] font-bold text-[#dbc08b]/70 block mb-2.5">
-              Akun Cepat (Klik untuk isi otomatis):
-            </span>
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setMode('login');
-                  setIdentifier('siti@kantor.id');
-                  setPassword('ngising123');
-                }}
-                className="glass-pill rounded-lg px-2.5 py-1 text-xs font-bold text-[#dbc08b] hover:text-white hover:border-[#c99f57] transition-all cursor-pointer"
-              >
-                👑 Siti (Admin)
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setMode('login');
-                  setIdentifier('budi@kantor.id');
-                  setPassword('ngising123');
-                }}
-                className="glass-pill rounded-lg px-2.5 py-1 text-xs font-bold text-[#dbc08b] hover:text-white hover:border-[#c99f57] transition-all cursor-pointer"
-              >
-                👤 Budi
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setMode('guest');
-                  setGuestName('Tamu Kantor');
-                  setGuestOrigin('Meeting');
-                }}
-                className="glass-pill rounded-lg px-2.5 py-1 text-xs font-bold text-[#dbc08b] hover:text-white hover:border-[#c99f57] transition-all cursor-pointer"
-              >
-                🏢 Mode Tamu
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </div>
