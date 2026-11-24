@@ -11,10 +11,8 @@ annotations:
     node_build_command: npm run build
     node_package_manager: npm
     node_package_name: ngising
-    node_remove_native_binaries: true
-    node_install_inputs:
-      - package.json
-      - package-lock.json
+    node_remove_native_binaries: false
+    node_install_requires_all_files: true
 
 scripts:
   install: npm install
