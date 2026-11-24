@@ -17,6 +17,7 @@ export const DEFAULT_CEPAT_MS = 3 * 60 * 1000;
 export const OVERTIME_THRESHOLD_MS = 15 * 60 * 1000;
 export const DAILY_SESSION_LIMIT = 10;
 export const WEEKLY_WINDOW_DAYS = 7;
+export const OFFICE_TIMEZONE_OFFSET_HOURS = 7; // WIB (UTC+7)
 
 export function formatDuration(ms: number): string {
   const safeSeconds = Math.max(0, Math.floor(ms / 1000));
@@ -183,10 +184,22 @@ export function promoteNextEligible(state: OfficeState, now: number): OfficeStat
   };
 }
 
-export function getTodayStartMs(now: number): number {
-  const startOfDay = new Date(now);
-  startOfDay.setHours(0, 0, 0, 0);
-  return startOfDay.getTime();
+export function getTodayStartMs(
+  now: number,
+  tzOffsetHours = OFFICE_TIMEZONE_OFFSET_HOURS
+): number {
+  const offsetMs = tzOffsetHours * 3600_000;
+  const localTime = new Date(now + offsetMs);
+  const utcMidnight = Date.UTC(
+    localTime.getUTCFullYear(),
+    localTime.getUTCMonth(),
+    localTime.getUTCDate(),
+    0,
+    0,
+    0,
+    0
+  );
+  return utcMidnight - offsetMs;
 }
 
 export function getDailyQuota(
@@ -229,7 +242,9 @@ export function occupyStall(
     return { ok: false, error: checked.error };
   }
 
-  const toilet = state.toilet;
+  // Pre-promote to ensure expired reservations are cleared and queue is up to date
+  const activeState = promoteNextEligible(state, now);
+  const toilet = activeState.toilet;
   if (toilet.status === 'maintenance') {
     return { ok: false, error: `${toilet.name} sedang dalam perawatan.` };
   }
@@ -250,7 +265,14 @@ export function occupyStall(
     };
   }
 
-  const quota = getDailyQuota(state, params.userId, now);
+  if (activeState.queue.length > 0 && activeState.queue[0].userId !== params.userId) {
+    return {
+      ok: false,
+      error: `Ada antrean aktif (${activeState.queue.length} orang). Silakan masuk antrean terlebih dahulu.`,
+    };
+  }
+
+  const quota = getDailyQuota(activeState, params.userId, now);
   if (quota.remaining <= 0) {
     return {
       ok: false,
@@ -273,13 +295,13 @@ export function occupyStall(
     },
   };
 
-  const nextQueue = state.queue.filter((q) => q.userId !== params.userId);
+  const nextQueue = activeState.queue.filter((q) => q.userId !== params.userId);
 
   return {
     ok: true,
     state: promoteNextEligible(
       {
-        ...state,
+        ...activeState,
         toilet: nextToilet,
         queue: nextQueue,
         serverNow: now,
@@ -363,6 +385,14 @@ export function joinQueue(
 
   if (state.toilet.occupant?.userId === params.userId) {
     return { ok: false, error: 'Kamu sedang berada di dalam toilet.' };
+  }
+
+  if (
+    state.toilet.reservedFor &&
+    state.toilet.reservedFor.expiresAt > now &&
+    state.toilet.reservedFor.userId === params.userId
+  ) {
+    return { ok: false, error: 'Giliranmu sudah tiba! Silakan langsung masuk ke bilik toilet.' };
   }
 
   if (state.queue.some((q) => q.userId === params.userId)) {
@@ -513,12 +543,10 @@ export function prioritizeQueueEntry(
     return { ok: true, state };
   }
 
-  const waitingOnly = state.queue.filter((q) => q.id !== queueId);
-  const calledIdx = waitingOnly.findIndex((q) => q.status === 'called');
-  const nextQueue =
-    calledIdx !== -1
-      ? [waitingOnly[0], target, ...waitingOnly.slice(1)]
-      : [target, ...waitingOnly];
+  const otherEntries = state.queue.filter((q) => q.id !== queueId);
+  const called = otherEntries.find((q) => q.status === 'called');
+  const uncalled = otherEntries.filter((q) => q.status !== 'called');
+  const nextQueue = called ? [called, target, ...uncalled] : [target, ...uncalled];
 
   return {
     ok: true,

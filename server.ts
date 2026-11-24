@@ -235,20 +235,27 @@ async function startServer(): Promise<void> {
     });
   });
 
-  // Periodic expiration check for called turn (every 5s)
+  // Periodic check for expired reservations and pending promotions (every 2s)
   setInterval(() => {
     void withDbLock(async () => {
       const now = Date.now();
-      const hadExpiredCall = db.office.queue.some(
-        (q) => q.status === 'called' && q.expiresAt !== null && q.expiresAt <= now
-      );
-      if (hadExpiredCall) {
+      const hasExpiredCall =
+        Boolean(db.office.toilet.reservedFor && db.office.toilet.reservedFor.expiresAt <= now) ||
+        db.office.queue.some(
+          (q) => q.status === 'called' && q.expiresAt !== null && q.expiresAt <= now
+        );
+      const canPromote =
+        db.office.toilet.status === 'available' &&
+        db.office.toilet.reservedFor === null &&
+        db.office.queue.some((q) => q.status === 'waiting');
+
+      if (hasExpiredCall || canPromote) {
         await commitOfficeState(promoteNextEligible(db.office, now));
       }
     }).catch((err) => {
       console.error('Periodic queue promotion failed:', err);
     });
-  }, 5000);
+  }, 2000);
 
   app.get('/api/health', (_req, res) => {
     void store
@@ -490,9 +497,14 @@ async function startServer(): Promise<void> {
     void withDbLock(async () => {
       const now = Date.now();
       const promoted = promoteNextEligible(db.office, now);
-      if (promoted.queue.length !== db.office.queue.length) {
-        db.office = promoted;
-        await store.saveOffice(promoted);
+      const hasChanged =
+        promoted.queue.length !== db.office.queue.length ||
+        promoted.toilet.status !== db.office.toilet.status ||
+        promoted.toilet.reservedFor?.userId !== db.office.toilet.reservedFor?.userId ||
+        promoted.toilet.occupant?.userId !== db.office.toilet.occupant?.userId ||
+        promoted.queue.some((q, i) => q.status !== db.office.queue[i]?.status);
+      if (hasChanged) {
+        await commitOfficeState(promoted);
       }
       res.json(getPublicState());
     }).catch(next);

@@ -550,3 +550,132 @@ test('computeWeeklyLeaderboard aggregates last 7 days by session count and exclu
   const office = computeOfficeStats(history, now);
   assert.equal(office.weeklyLeaderboard[0].userId, 'emp-dimas');
 });
+
+test('line-cutting prevention: occupyStall blocks non-queued users when people are waiting in queue', () => {
+  const now = 1_700_000_000_000;
+  // Toilet is occupied by Dimas
+  const base = makeSingleToiletState(now);
+
+  // User A (Siti) joins queue
+  const qA = joinQueue(
+    base,
+    { userId: 'user-a', displayName: 'User A', department: 'Ops', isAnonymous: false, need: 'pup' },
+    now + 1000
+  );
+  assert.equal(qA.ok, true);
+  if (!qA.ok) return;
+
+  // Dimas finishes and leaves
+  const rel = releaseStall(qA.state, { userId: 'emp-dimas' }, now + 60_000);
+  assert.equal(rel.ok, true);
+  if (!rel.ok) return;
+
+  // User A is now called and toilet is reserved for User A
+  assert.equal(rel.state.toilet.status, 'available');
+  assert.equal(rel.state.toilet.reservedFor?.userId, 'user-a');
+
+  // Random intruder (User B) tries to occupyStall directly without being in queue
+  const intruder = occupyStall(
+    rel.state,
+    { userId: 'user-b', displayName: 'User B', department: 'Marketing', isAnonymous: false, need: 'cepat' },
+    now + 65_000
+  );
+  assert.equal(intruder.ok, false);
+  if (!intruder.ok) {
+    assert.match(intruder.error, /menunggu giliran antrean #1|antrean aktif/i);
+  }
+
+  // User A cannot join queue again while called/reserved
+  const doubleQueue = joinQueue(
+    rel.state,
+    { userId: 'user-a', displayName: 'User A', department: 'Ops', isAnonymous: false, need: 'cepat' },
+    now + 66_000
+  );
+  assert.equal(doubleQueue.ok, false);
+  if (!doubleQueue.ok) {
+    assert.match(doubleQueue.error, /giliranmu sudah tiba|sudah terdaftar/i);
+  }
+
+  // User A occupies successfully
+  const userAOccupy = occupyStall(
+    rel.state,
+    { userId: 'user-a', displayName: 'User A', department: 'Ops', isAnonymous: false, need: 'pup' },
+    now + 70_000
+  );
+  assert.equal(userAOccupy.ok, true);
+  if (!userAOccupy.ok) return;
+  assert.equal(userAOccupy.state.toilet.status, 'occupied');
+  assert.equal(userAOccupy.state.toilet.occupant?.userId, 'user-a');
+});
+
+test('auto-expiration chained promotion: when reservation expires, next waiting person is called', () => {
+  const now = 1_700_000_000_000;
+  const base = makeSingleToiletState(now);
+
+  // User 1 joins queue
+  const q1 = joinQueue(
+    base,
+    { userId: 'user-1', displayName: 'User 1', department: 'Ops', isAnonymous: false, need: 'pup' },
+    now + 1000
+  );
+  assert.equal(q1.ok, true);
+  if (!q1.ok) return;
+
+  // User 2 joins queue
+  const q2 = joinQueue(
+    q1.state,
+    { userId: 'user-2', displayName: 'User 2', department: 'Dev', isAnonymous: false, need: 'cepat' },
+    now + 2000
+  );
+  assert.equal(q2.ok, true);
+  if (!q2.ok) return;
+
+  // Dimas releases -> User 1 is called
+  const rel = releaseStall(q2.state, { userId: 'emp-dimas' }, now + 60_000);
+  assert.equal(rel.ok, true);
+  if (!rel.ok) return;
+  assert.equal(rel.state.toilet.reservedFor?.userId, 'user-1');
+  assert.equal(rel.state.queue[0].userId, 'user-1');
+  assert.equal(rel.state.queue[0].status, 'called');
+  assert.equal(rel.state.queue[1].userId, 'user-2');
+  assert.equal(rel.state.queue[1].status, 'waiting');
+
+  // User 1 times out (exceeds CLAIM_WINDOW_MS) -> promoteNextEligible should drop User 1 and call User 2
+  const timeoutMs = now + 60_000 + CLAIM_WINDOW_MS + 1000;
+  const chained = promoteNextEligible(rel.state, timeoutMs);
+  assert.equal(chained.queue.length, 1);
+  assert.equal(chained.queue[0].userId, 'user-2');
+  assert.equal(chained.queue[0].status, 'called');
+  assert.equal(chained.toilet.reservedFor?.userId, 'user-2');
+});
+
+test('prioritizeQueueEntry maintains called status of active user while elevating targeted waiting user', () => {
+  const now = 1_700_000_000_000;
+  const base = makeSingleToiletState(now);
+
+  const q1 = joinQueue(base, { userId: 'u1', displayName: 'U1', department: 'Ops', isAnonymous: false, need: 'pup' }, now + 100);
+  if (!q1.ok) return;
+  const q2 = joinQueue(q1.state, { userId: 'u2', displayName: 'U2', department: 'Ops', isAnonymous: false, need: 'pup' }, now + 200);
+  if (!q2.ok) return;
+  const q3 = joinQueue(q2.state, { userId: 'u3', displayName: 'U3', department: 'Ops', isAnonymous: false, need: 'pup' }, now + 300);
+  if (!q3.ok) return;
+
+  // Release -> u1 is called
+  const rel = releaseStall(q3.state, { userId: 'emp-dimas' }, now + 60_000);
+  if (!rel.ok) return;
+  assert.equal(rel.state.queue[0].userId, 'u1');
+  assert.equal(rel.state.queue[0].status, 'called');
+
+  // Prioritize u3 -> u3 should become #2 in queue (immediately after the currently called u1)
+  const u3Id = rel.state.queue[2].id;
+  const prio = prioritizeQueueEntry(rel.state, u3Id, now + 61_000);
+  assert.equal(prio.ok, true);
+  if (!prio.ok) return;
+
+  assert.equal(prio.state.queue[0].userId, 'u1');
+  assert.equal(prio.state.queue[0].status, 'called');
+  assert.equal(prio.state.queue[1].userId, 'u3');
+  assert.equal(prio.state.queue[1].status, 'waiting');
+  assert.equal(prio.state.queue[2].userId, 'u2');
+  assert.equal(prio.state.queue[2].status, 'waiting');
+});

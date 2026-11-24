@@ -480,10 +480,13 @@ class MySqlStore implements DatabaseStore {
       serverNow: now,
     };
     const promoted = promoteNextEligible(rawOffice, now);
-    if (
+    const hasChanged =
       promoted.queue.length !== rawOffice.queue.length ||
-      promoted.toilet.reservedFor?.userId !== rawOffice.toilet.reservedFor?.userId
-    ) {
+      promoted.toilet.status !== rawOffice.toilet.status ||
+      promoted.toilet.reservedFor?.userId !== rawOffice.toilet.reservedFor?.userId ||
+      promoted.toilet.occupant?.userId !== rawOffice.toilet.occupant?.userId ||
+      promoted.queue.some((q, i) => q.status !== rawOffice.queue[i]?.status);
+    if (hasChanged) {
       await this.saveOffice(promoted);
     }
 
