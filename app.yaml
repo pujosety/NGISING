@@ -1,0 +1,18 @@
+kind: wasmer.io/App.v0
+name: ngising
+owner: pujosety
+app_id: da_nkPI5tJUq8De
+enableDatabase: true
+
+annotations:
+  anybuild.run/provider: node
+  anybuild.run/config:
+    node_server: express
+    node_build_command: npm run build
+    node_package_manager: npm
+    node_package_name: ngising
+
+scripts:
+  install: npm install
+  build: npm run build
+  start: node dist/server.js

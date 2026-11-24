@@ -41,8 +41,7 @@ import type {
   UserRole,
 } from './src/shared/types.ts';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const ROOT_DIR = process.cwd();
 
 interface ActorIdentity {
   kind: 'user' | 'guest';
@@ -822,12 +821,11 @@ async function startServer(): Promise<void> {
     res.status(500).json({ error: 'Terjadi kesalahan pada server database.' });
   });
 
-  const distDir = path.join(__dirname, 'dist');
+  const distDir = path.join(ROOT_DIR, 'dist');
+  const hasDistIndex = fs.existsSync(path.join(distDir, 'index.html'));
   const isProd =
     process.env.NODE_ENV === 'production' ||
-    (process.env.npm_lifecycle_event !== 'dev' &&
-      fs.existsSync(path.join(distDir, 'index.html')) &&
-      process.env.NODE_ENV !== 'development');
+    (process.env.npm_lifecycle_event !== 'dev' && hasDistIndex && process.env.NODE_ENV !== 'development');
 
   if (!isProd) {
     const { createServer: createViteServer } = await import('vite');
