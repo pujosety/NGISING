@@ -143,27 +143,19 @@ export function GuestWorkspace({
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl flex-1 space-y-6 px-4 py-6 sm:px-8 lg:py-8">
-        <section className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="flex items-center gap-1.5 text-xs font-semibold text-teal-700">
-              <BookOpenCheck className="h-4 w-4" aria-hidden="true" />
-              <span>Terdaftar di Buku Tamu ({guest.origin})</span>
-            </p>
-            <h2 className="mt-1 font-display text-xl font-bold text-slate-900">
-              Halo, {guest.displayName}
-            </h2>
-            <p className="mt-0.5 text-xs text-slate-500">
-              Kamu dapat memantau ketersediaan toilet kantor dan mengambil antrean secara langsung tanpa login akun.
-            </p>
+      <main className="mx-auto w-full max-w-5xl flex-1 space-y-4 px-4 py-5 sm:px-8 lg:py-6">
+        <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/90 bg-white px-4 py-3 shadow-2xs">
+          <div className="flex items-center gap-2 min-w-0">
+            <BookOpenCheck className="h-4 w-4 text-teal-600 shrink-0" aria-hidden="true" />
+            <span className="text-xs font-bold text-slate-800 truncate">
+              Tamu: {guest.displayName} ({guest.origin})
+            </span>
           </div>
           {dailyQuota && (
-            <div className="text-left sm:text-right shrink-0">
-              <p className="text-xs font-medium text-slate-500">Kuota Harian</p>
-              <p className="font-mono text-lg font-bold tabular-nums text-slate-900">
-                {dailyQuota.used} / {dailyQuota.limit}
-              </p>
-            </div>
+            <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 shrink-0">
+              <span className="text-[11px] text-slate-500">Kuota Sisa:</span>
+              <span className="font-mono font-bold text-slate-900">{dailyQuota.remaining}/10</span>
+            </span>
           )}
         </section>
 

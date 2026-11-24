@@ -357,48 +357,11 @@ export function StallCard({
         )}
       </div>
 
-      {/* Daily Ngising Quota Bar (Max 10x / day) with Mascot Tip */}
-      <div className="mt-4 rounded-xl border border-slate-200 bg-white p-3.5 shadow-xs">
-        <div className="flex items-center justify-between gap-2 text-xs">
-          <span className="font-semibold text-slate-700 flex items-center gap-1.5">
-            <span>Kuota Ngising Harian</span>
-            <span className="text-[10px] rounded bg-slate-100 px-1.5 py-0.5 font-bold text-slate-500">
-              Maks 10x
-            </span>
-          </span>
-          <span
-            className={`font-mono font-extrabold tabular-nums ${
-              quotaExhausted ? 'text-red-600' : 'text-slate-900'
-            }`}
-          >
-            {quota.used} / {quota.limit}{' '}
-            <span className="font-sans font-normal text-slate-500">
-              (sisa {quota.remaining}x)
-            </span>
-          </span>
-        </div>
-
-        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
-          <motion.div
-            className={`h-full rounded-full transition-all ${
-              quotaExhausted
-                ? 'bg-red-500'
-                : quota.used >= 8
-                  ? 'bg-amber-500'
-                  : 'bg-gradient-to-r from-teal-500 to-emerald-500'
-            }`}
-            initial={{ width: 0 }}
-            animate={{ width: `${quotaPct}%` }}
-            transition={{ type: 'spring', stiffness: 260, damping: 24 }}
-          />
-        </div>
-      </div>
-
       {/* Need Selector + Primary Action */}
-      <div className="mt-5 border-t border-slate-100 pt-4 space-y-3.5">
+      <div className="mt-4 border-t border-slate-100 pt-3.5 space-y-3">
         {!isOccupiedByMe && !isMaintenance && !quotaExhausted && (
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <span className="text-xs font-semibold text-slate-700">Pilih Keperluan:</span>
+          <div className="flex flex-wrap items-center justify-between gap-2.5">
+            <span className="text-xs font-bold text-slate-700">Keperluanmu:</span>
             <div
               role="group"
               aria-label="Pilih keperluan toilet"
