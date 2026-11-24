@@ -180,6 +180,34 @@ class SoundEngine {
     }
   }
 
+  // Persona 5 snappy menu cursor hover tick
+  playHover() {
+    if (!this.enabled) return;
+    try {
+      const ctx = this.getContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(1400, now);
+      osc.frequency.exponentialRampToValueAtTime(900, now + 0.03);
+
+      gain.gain.setValueAtTime(0.025, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.04);
+    } catch {
+      // Ignore audio failure
+    }
+  }
+
   // Playful mascot bounce toot sound (funny brass pop)
   playMascotToot() {
     if (!this.enabled) return;

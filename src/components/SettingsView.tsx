@@ -35,7 +35,7 @@ export function SettingsView({
     setFormError(null);
     const ok = await onUpdateProfile({
       displayName: displayName.trim(),
-      department: user.department,
+      department: '',
       isAnonymous,
     });
     if (ok) {
@@ -63,11 +63,6 @@ export function SettingsView({
             </h3>
             <p className="mt-0.5 text-xs font-bold text-slate-400 uppercase">
               Peran: <span className="text-[#e60012] font-black">{user.role === 'admin' ? '👑 ADMIN KANTOR' : 'KARYAWAN'}</span>
-              {user.department ? (
-                <>
-                  {' '}<span aria-hidden="true">·</span> {user.department}
-                </>
-              ) : null}
             </p>
           </div>
           {user.role === 'admin' && onOpenAdminPanel && (

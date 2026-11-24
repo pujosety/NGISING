@@ -506,9 +506,6 @@ export function AdminPanelView({
                           {account.displayName}
                           {isSelf ? ' (Kamu)' : ''}
                         </p>
-                        {account.department && (
-                          <p className="text-xs text-slate-500">{account.department}</p>
-                        )}
                       </td>
                       <td className="px-5 py-3">
                         <span

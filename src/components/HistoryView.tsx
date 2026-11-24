@@ -236,9 +236,6 @@ export function HistoryView({ history, currentUserId }: HistoryViewProps) {
                     <tr key={item.id} className="hover:bg-black/30 transition-colors">
                       <td className="px-5 py-3.5">
                         <p className="font-black uppercase text-white">{displayName}</p>
-                        {item.department ? (
-                          <p className="text-xs font-bold text-slate-400 uppercase">{item.department}</p>
-                        ) : null}
                       </td>
                       <td className="px-5 py-3.5">
                         <span

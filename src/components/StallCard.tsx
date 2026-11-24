@@ -234,14 +234,6 @@ export function StallCard({
                         )}
                   </p>
                   <p className="mt-0.5 text-xs text-slate-300 font-bold">
-                    {toilet.occupant.department ? (
-                      <>
-                        <span className="text-white">
-                          {toilet.occupant.department}
-                        </span>{' '}
-                        ·{' '}
-                      </>
-                    ) : null}
                     <span className="text-[#e60012]">
                       {toilet.occupant.need === 'pup' ? 'MISI PUP 💩' : 'MISI CEPAT (BAK) ⚡'}
                     </span>

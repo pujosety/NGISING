@@ -15,6 +15,7 @@ import { motion } from 'motion/react';
 import { useState } from 'react';
 import type { UserAccount } from '../shared/types.ts';
 import { isAndroidOrNative } from '../utils/platform.ts';
+import { soundEffects } from '../utils/soundEffects.ts';
 
 export type WorkspaceTab = 'dashboard' | 'history' | 'stats' | 'account' | 'admin' | 'display';
 
@@ -150,19 +151,44 @@ export function Sidebar({
               <button
                 key={item.id}
                 type="button"
-                onClick={() => onSelectTab(item.id)}
+                onClick={() => {
+                  soundEffects.playPop();
+                  onSelectTab(item.id);
+                }}
+                onMouseEnter={() => {
+                  soundEffects.playHover();
+                }}
                 title={isCollapsed ? item.label : undefined}
-                className={`relative flex w-full items-center py-2.5 text-xs font-black tracking-wider transition-all cursor-pointer transform skew-x-[-6deg] border-2 ${
-                  isCollapsed ? 'justify-center px-2' : 'justify-between px-3.5'
+                className={`group relative flex w-full items-center py-2.5 text-xs font-black tracking-wider transition-all duration-150 cursor-pointer transform border-2 ${
+                  isCollapsed ? 'justify-center px-2' : 'justify-between px-3'
                 } ${
                   isActive
-                    ? 'bg-[#e60012] text-white border-white shadow-[4px_4px_0px_#000000] translate-x-1'
-                    : 'bg-[#151518] text-slate-300 border-[#2e2e38] hover:border-[#e60012] hover:text-white hover:bg-[#1f1f24] hover:translate-x-1'
+                    ? 'bg-[#e60012] text-white border-white shadow-[4px_4px_0px_#000000,5px_5px_0px_#ffffff] translate-x-1.5 skew-x-[-8deg]'
+                    : 'bg-[#151518] text-slate-300 border-[#2e2e38] skew-x-[-6deg] hover:skew-x-[-9deg] hover:translate-x-2 hover:bg-white hover:text-black hover:border-black hover:shadow-[5px_5px_0px_#e60012]'
                 }`}
               >
-                <div className="relative flex items-center gap-2.5 z-10 transform skew-x-[6deg]">
-                  <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-white' : 'text-[#e60012]'}`} />
-                  {!isCollapsed && <span className="uppercase">{item.label}</span>}
+                <div className="relative flex items-center gap-2 z-10 transform skew-x-[6deg] min-w-0">
+                  {!isCollapsed && (
+                    <span
+                      className={`text-[10px] font-mono font-black transition-all duration-150 shrink-0 ${
+                        isActive
+                          ? 'text-white'
+                          : 'text-[#e60012] opacity-0 -translate-x-1.5 group-hover:opacity-100 group-hover:translate-x-0'
+                      }`}
+                    >
+                      ▶
+                    </span>
+                  )}
+                  <Icon
+                    className={`h-4 w-4 shrink-0 transition-colors ${
+                      isActive ? 'text-white' : 'text-[#e60012] group-hover:text-black'
+                    }`}
+                  />
+                  {!isCollapsed && (
+                    <span className="uppercase truncate transition-colors">
+                      {item.label}
+                    </span>
+                  )}
                   {isCollapsed && item.id === 'dashboard' && queueCount > 0 && (
                     <span className="absolute -top-1.5 -right-2 flex h-4 min-w-[16px] items-center justify-center bg-white border border-black px-1 text-[9px] font-mono font-black text-black shadow-md">
                       {queueCount}
@@ -170,7 +196,13 @@ export function Sidebar({
                   )}
                 </div>
                 {!isCollapsed && item.id === 'dashboard' && queueCount > 0 && (
-                  <span className="transform skew-x-[6deg] font-mono text-xs font-black tabular-nums text-black bg-white border border-black px-1.5 py-0.5 z-10">
+                  <span
+                    className={`transform skew-x-[6deg] font-mono text-xs font-black tabular-nums border px-1.5 py-0.5 z-10 shrink-0 ${
+                      isActive
+                        ? 'text-black bg-white border-black'
+                        : 'text-white bg-[#e60012] border-white group-hover:bg-black group-hover:text-white'
+                    }`}
+                  >
                     {queueCount}
                   </span>
                 )}
@@ -214,7 +246,7 @@ export function Sidebar({
                   {user.displayName}
                 </p>
                 <p className="truncate text-xs font-bold text-[#e60012] uppercase">
-                  {user.role === 'admin' ? '👑 PHANTOM ADMIN' : user.department || 'PHANTOM THIEF'}
+                  {user.role === 'admin' ? '👑 PHANTOM ADMIN' : 'KARYAWAN KANTOR'}
                   {user.isAnonymous ? ' · MASKED' : ''}
                 </p>
                 <button
@@ -266,11 +298,14 @@ export function Sidebar({
             <button
               key={item.id}
               type="button"
-              onClick={() => onSelectTab(item.id)}
-              className={`flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1 text-[10px] font-black tracking-tight transition-all cursor-pointer transform ${
+              onClick={() => {
+                soundEffects.playPop();
+                onSelectTab(item.id);
+              }}
+              className={`flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1 text-[10px] font-black tracking-tight transition-all duration-150 cursor-pointer transform ${
                 isActive
-                  ? 'bg-[#e60012] text-white skew-x-[-6deg] shadow-md'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-[#e60012] text-white skew-x-[-6deg] shadow-[0_0_12px_rgba(230,0,18,0.7)] scale-105'
+                  : 'text-slate-400 hover:text-white active:scale-95 active:text-white'
               }`}
             >
               <div className="relative transform skew-x-[6deg]">

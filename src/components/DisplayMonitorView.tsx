@@ -290,11 +290,6 @@ export function DisplayMonitorView({
                           : 'SESEORANG'}
                       </span>
                     </p>
-                    {toilet?.occupant?.department && (
-                      <p className="text-white/90 text-xs sm:text-sm font-mono mt-1 font-bold uppercase">
-                        DIVISI: {toilet.occupant.department}
-                      </p>
-                    )}
                     {isOvertime && (
                       <div className="mt-4 inline-flex items-center gap-2 border-2 border-white bg-black px-3.5 py-1.5 font-mono text-xs font-black text-[#ff4d4d] shadow-[3px_3px_0px_#000000]">
                         <span>DURASI MELEBIHI 15 MENIT · MOHON KERJASAMA!</span>
@@ -413,7 +408,6 @@ export function DisplayMonitorView({
                           </p>
                           <p className="text-[10px] font-bold text-slate-400 uppercase">
                             {entry.need === 'pup' ? 'BAB (SANTAI) 💩' : 'BAK (CEPAT) ⚡'}
-                            {entry.department ? ` · ${entry.department}` : ''}
                           </p>
                         </div>
                       </div>

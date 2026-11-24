@@ -68,11 +68,12 @@
     background: #151518;
     border: 2px solid #2e2e38;
     box-shadow: 6px 6px 0px #000000, 7px 7px 0px #e60012;
-    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
   .p5-card:hover {
-    border-color: #e60012;
-    box-shadow: 8px 8px 0px #000000, 9px 9px 0px #e60012;
+    border-color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 8px 8px 0px #000000, 10px 10px 0px #e60012;
   }
 
   .p5-card-red {
@@ -95,24 +96,50 @@
   }
 
   /* Persona 5 Kinetic Action Buttons */
-  .p5-btn-red {
+  .p5-btn-red, .p5-btn-black, .p5-btn-white {
     position: relative;
-    background: #e60012;
-    color: #ffffff;
+    overflow: hidden;
     font-weight: 900;
     text-transform: uppercase;
+    transition: all 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transform: skewX(-4deg);
+  }
+  .p5-btn-red::before, .p5-btn-black::before, .p5-btn-white::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -120%;
+    width: 60%;
+    height: 200%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.4),
+      transparent
+    );
+    transform: skewX(-25deg);
+    pointer-events: none;
+    transition: none;
+  }
+  .p5-btn-red:hover::before, .p5-btn-black:hover::before, .p5-btn-white:hover::before {
+    left: 150%;
+    transition: left 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .p5-btn-red {
+    background: #e60012;
+    color: #ffffff;
     border: 2px solid #ffffff;
     box-shadow: 4px 4px 0px #000000;
-    transition: all 0.12s cubic-bezier(0.2, 0.8, 0.2, 1);
-    transform: skewX(-4deg);
   }
   .p5-btn-red > * {
     transform: skewX(4deg);
   }
   .p5-btn-red:hover {
     background: #ff1f34;
-    transform: skewX(-4deg) translate(-2px, -2px);
-    box-shadow: 6px 6px 0px #000000;
+    border-color: #ffffff;
+    transform: skewX(-4deg) translate(-3px, -3px);
+    box-shadow: 6px 6px 0px #000000, 8px 8px 0px #ffffff;
   }
   .p5-btn-red:active {
     transform: skewX(-4deg) translate(2px, 2px);
@@ -124,24 +151,19 @@
   }
 
   .p5-btn-black {
-    position: relative;
     background: #000000;
     color: #ffffff;
-    font-weight: 900;
-    text-transform: uppercase;
     border: 2px solid #ffffff;
     box-shadow: 4px 4px 0px #e60012;
-    transition: all 0.12s cubic-bezier(0.2, 0.8, 0.2, 1);
-    transform: skewX(-4deg);
   }
   .p5-btn-black > * {
     transform: skewX(4deg);
   }
   .p5-btn-black:hover {
-    background: #1a1a20;
-    border-color: #e60012;
-    transform: skewX(-4deg) translate(-2px, -2px);
-    box-shadow: 6px 6px 0px #e60012;
+    background: #151518;
+    border-color: #ffffff;
+    transform: skewX(-4deg) translate(-3px, -3px);
+    box-shadow: 6px 6px 0px #000000, 8px 8px 0px #e60012;
   }
   .p5-btn-black:active {
     transform: skewX(-4deg) translate(2px, 2px);
@@ -153,23 +175,20 @@
   }
 
   .p5-btn-white {
-    position: relative;
     background: #ffffff;
     color: #000000;
-    font-weight: 900;
-    text-transform: uppercase;
     border: 2px solid #e60012;
     box-shadow: 4px 4px 0px #000000;
-    transition: all 0.12s cubic-bezier(0.2, 0.8, 0.2, 1);
-    transform: skewX(-4deg);
   }
   .p5-btn-white > * {
     transform: skewX(4deg);
   }
   .p5-btn-white:hover {
-    background: #f0f0f5;
-    transform: skewX(-4deg) translate(-2px, -2px);
-    box-shadow: 6px 6px 0px #e60012;
+    background: #ffffff;
+    color: #e60012;
+    border-color: #000000;
+    transform: skewX(-4deg) translate(-3px, -3px);
+    box-shadow: 6px 6px 0px #000000, 8px 8px 0px #e60012;
   }
   .p5-btn-white:active {
     transform: skewX(-4deg) translate(2px, 2px);
@@ -178,6 +197,15 @@
   .p5-btn-white:focus-visible {
     outline: none;
     box-shadow: 0 0 0 2px #0c0c0e, 0 0 0 4px #ffffff, 6px 6px 0px #e60012;
+  }
+
+  /* Persona 5 Interactive Table Row */
+  .p5-interactive-row {
+    transition: all 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .p5-interactive-row:hover {
+    background-color: rgba(230, 0, 18, 0.15) !important;
+    transform: translateX(4px);
   }
 
   /* Persona Skewed Badges */

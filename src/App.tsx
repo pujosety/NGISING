@@ -1,4 +1,5 @@
 import { AlertCircle, Award, EyeOff, Medal, RefreshCw, Trophy, Wifi, WifiOff } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AdminPanelView } from './components/AdminPanelView.tsx';
 import { AuthScreen } from './components/AuthScreen.tsx';
@@ -421,8 +422,17 @@ export default function App() {
 
           {!toilet ? (
             <div className="h-64 animate-pulse border-2 border-white bg-black shadow-[4px_4px_0px_#000000]" />
-          ) : safeActiveTab === 'dashboard' ? (
-            <div className="space-y-4">
+          ) : (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={safeActiveTab}
+                initial={{ opacity: 0, x: 20, skewX: -2 }}
+                animate={{ opacity: 1, x: 0, skewX: 0 }}
+                exit={{ opacity: 0, x: -20, skewX: 2 }}
+                transition={{ duration: 0.2, ease: [0.2, 0.9, 0.2, 1] }}
+              >
+                {safeActiveTab === 'dashboard' ? (
+                  <div className="space-y-4">
               {/* Compact Quick Status Bar in Persona 5 panel */}
               <div className="p5-panel flex flex-wrap items-center justify-between gap-3 p-3.5 sm:p-4 bg-black border-2 border-white shadow-[4px_4px_0px_#000000]">
                 <div className="flex items-center gap-2.5 min-w-0">
@@ -687,7 +697,7 @@ export default function App() {
             />
           ) : (
             <SettingsView
-              key={`${user.id}-${user.displayName}-${user.department}-${user.isAnonymous}`}
+              key={`${user.id}-${user.displayName}-${user.isAnonymous}`}
               user={user}
               busy={busy}
               onUpdateProfile={updateProfile}
@@ -695,6 +705,9 @@ export default function App() {
               onLogout={logout}
             />
           )}
+        </motion.div>
+      </AnimatePresence>
+    )}
         </main>
       </div>
     </div>

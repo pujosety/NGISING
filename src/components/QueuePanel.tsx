@@ -258,12 +258,6 @@ export function QueuePanel({
                           )}
                         </p>
                         <p className="truncate text-xs text-slate-300 font-bold flex items-center gap-1.5">
-                          {entry.department ? (
-                            <>
-                              <span>{entry.department}</span>
-                              <span>·</span>
-                            </>
-                          ) : null}
                           <span className={entry.need === 'pup' ? 'text-[#ff4d4d]' : 'text-amber-300'}>
                             {entry.need === 'pup' ? 'PUP 💩' : 'CEPAT ⚡'}
                           </span>

@@ -167,9 +167,6 @@ export function StatsView({ history, user, now }: StatsViewProps) {
                       <h3 className="mt-1.5 font-display text-lg font-black uppercase text-white">
                         {entry.userId === user.id ? `${user.displayName} (KAMU)` : entry.displayName}
                       </h3>
-                      {entry.department ? (
-                        <p className="text-xs font-bold text-slate-400 uppercase">{entry.department}</p>
-                      ) : null}
                     </div>
                     {isFirst && <PoopMascot mood="called" size={48} interactive={true} />}
                   </div>
@@ -231,9 +228,6 @@ export function StatsView({ history, user, now }: StatsViewProps) {
                         <p className="font-black uppercase text-white">
                           {row.userId === user.id ? `${user.displayName} (KAMU)` : row.displayName}
                         </p>
-                        {row.department ? (
-                          <p className="text-xs font-bold text-slate-400 uppercase">{row.department}</p>
-                        ) : null}
                       </td>
                       <td className="px-5 py-3.5 text-right font-mono text-xs font-black tabular-nums text-white">
                         {row.totalSessions}
