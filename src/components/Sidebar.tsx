@@ -14,6 +14,7 @@ import {
 import { motion } from 'motion/react';
 import { useState } from 'react';
 import type { UserAccount } from '../shared/types.ts';
+import { isAndroidOrNative } from '../utils/platform.ts';
 
 export type WorkspaceTab = 'dashboard' | 'history' | 'stats' | 'account' | 'admin' | 'display';
 
@@ -67,13 +68,18 @@ export function Sidebar({
     });
   };
 
+  const isAndroid = isAndroidOrNative();
+  const filteredBaseItems = isAndroid
+    ? BASE_NAV_ITEMS.filter((item) => item.id !== 'display')
+    : BASE_NAV_ITEMS;
+
   const navItems =
     user.role === 'admin'
       ? [
-          ...BASE_NAV_ITEMS,
+          ...filteredBaseItems,
           { id: 'admin' as const, label: 'Admin Panel', shortLabel: 'Admin', icon: ShieldCheck },
         ]
-      : BASE_NAV_ITEMS;
+      : filteredBaseItems;
 
   return (
     <>

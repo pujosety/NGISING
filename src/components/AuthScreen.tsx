@@ -10,6 +10,7 @@ import {
 import { motion } from 'motion/react';
 import { useState, type FormEvent } from 'react';
 import type { OfficeState } from '../shared/types.ts';
+import { isAndroidOrNative } from '../utils/platform.ts';
 import { PoopMiniIcon } from './PoopAnimations.tsx';
 
 interface AuthScreenProps {
@@ -100,8 +101,8 @@ export function AuthScreen({
       <div className="pointer-events-none absolute -bottom-32 -right-24 h-[30rem] w-[30rem] rounded-full bg-[radial-gradient(circle,#6f4717,transparent_70%)] opacity-35 blur-3xl" />
 
       <div className="relative z-10 w-full max-w-md">
-        {/* Top TV Monitor quick button */}
-        {onOpenDisplay && (
+        {/* Top TV Monitor quick button (hidden on Android/native) */}
+        {onOpenDisplay && !isAndroidOrNative() && (
           <div className="mb-4 flex justify-end">
             <button
               type="button"
