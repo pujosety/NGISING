@@ -7,7 +7,6 @@ import { GuestWorkspace } from './components/GuestWorkspace.tsx';
 import { HistoryView } from './components/HistoryView.tsx';
 import {
   PoopInteractionBurst,
-  PoopMascot,
   type PoopBurstEvent,
   type PoopBurstKind,
 } from './components/PoopAnimations.tsx';

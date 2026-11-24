@@ -21,6 +21,7 @@ import {
   getPublicDisplayName,
 } from '../shared/queueLogic.ts';
 import type { OfficeState } from '../shared/types.ts';
+import { PoopMascot, type PoopMascotMood } from './PoopAnimations.tsx';
 
 interface DisplayMonitorViewProps {
   officeState: OfficeState | null;
@@ -108,6 +109,15 @@ export function DisplayMonitorView({
   const isOvertime = isOccupied && elapsedMs >= OVERTIME_THRESHOLD_MS;
   const reserveRemainingMs =
     isReserved && toilet?.reservedFor ? Math.max(0, toilet.reservedFor.expiresAt - now) : 0;
+
+  let monitorMood: PoopMascotMood = 'ready';
+  if (isMaintenance) {
+    monitorMood = 'maintenance';
+  } else if (isReserved) {
+    monitorMood = 'called';
+  } else if (isOccupied) {
+    monitorMood = toilet?.occupant?.need === 'pup' ? 'ngeden' : 'cepat';
+  }
 
   // Format real-time wall clock
   const timeString = new Date(now).toLocaleTimeString('id-ID', {
@@ -330,89 +340,9 @@ export function DisplayMonitorView({
                 )}
               </div>
 
-              {/* Persona Comic SVG Poop Visual */}
+              {/* Persona Comic Mascot Visual */}
               <div className="shrink-0 flex items-center justify-center p-3">
-                <motion.svg
-                  animate={{
-                    y: isOccupied ? [0, -4, 0] : [0, -8, 0],
-                    rotate: isOccupied ? [-2, 2, -2] : [-4, 4, -4],
-                  }}
-                  transition={{
-                    repeat: Infinity,
-                    duration: isOccupied ? 2 : 3.5,
-                    ease: 'easeInOut',
-                  }}
-                  viewBox="0 0 120 120"
-                  className="h-28 w-28 sm:h-36 sm:w-36 lg:h-44 lg:w-44 drop-shadow-[6px_6px_0px_#000000]"
-                >
-                  <defs>
-                    <filter id="p5shadow">
-                      <feDropShadow dx="3" dy="3" stdDeviation="0" floodColor="#000000" floodOpacity="1" />
-                    </filter>
-                  </defs>
-
-                  {/* Poop Body Shapes with comic black outline */}
-                  <g stroke="#000000" strokeWidth="3.5" strokeLinejoin="round" strokeLinecap="round">
-                    {/* Bottom tier */}
-                    <path
-                      d="M 22 96 C 20 80, 100 80, 98 96 C 96 108, 24 108, 22 96 Z"
-                      fill={isOccupied ? '#e60012' : '#ffffff'}
-                    />
-                    {/* Middle tier */}
-                    <path
-                      d="M 30 76 C 26 62, 94 62, 90 76 C 88 88, 32 88, 30 76 Z"
-                      fill={isOccupied ? '#e60012' : '#ffffff'}
-                    />
-                    {/* Upper swirl */}
-                    <path
-                      d="M 40 56 C 36 40, 84 40, 80 56 C 76 66, 44 66, 40 56 Z"
-                      fill={isOccupied ? '#e60012' : '#ffffff'}
-                    />
-                    {/* Top curly swirl */}
-                    <path
-                      d="M 50 38 C 45 22, 68 18, 62 30 C 58 38, 52 38, 50 38 Z"
-                      fill={isOccupied ? '#e60012' : '#ffffff'}
-                    />
-                  </g>
-
-                  {/* Persona Style Comic Eyes */}
-                  {isOccupied ? (
-                    // Straining Eyes
-                    <>
-                      <circle cx="48" cy="68" r="5" fill="#ffffff" stroke="#000000" strokeWidth="2.5" />
-                      <circle cx="49" cy="68" r="2.5" fill="#000000" />
-                      <circle cx="72" cy="68" r="5" fill="#ffffff" stroke="#000000" strokeWidth="2.5" />
-                      <circle cx="71" cy="68" r="2.5" fill="#000000" />
-                      {/* Comic sweat drop */}
-                      <motion.path
-                        animate={{ opacity: [0.3, 1, 0.3], y: [0, 3, 0] }}
-                        transition={{ repeat: Infinity, duration: 1.2 }}
-                        d="M 84 54 C 82 50, 88 50, 86 54 C 85 56, 83 56, 84 54 Z"
-                        fill="#ffffff"
-                        stroke="#000000"
-                        strokeWidth="2"
-                      />
-                    </>
-                  ) : (
-                    // Happy Persona Eyes
-                    <>
-                      <circle cx="46" cy="66" r="6" fill="#000000" />
-                      <circle cx="48" cy="64" r="2" fill="#ffffff" />
-
-                      <circle cx="74" cy="66" r="6" fill="#000000" />
-                      <circle cx="76" cy="64" r="2" fill="#ffffff" />
-
-                      {/* Smile */}
-                      <path
-                        d="M 50 76 Q 60 88 70 76"
-                        stroke="#000000"
-                        strokeWidth="3.5"
-                        strokeLinecap="round"
-                        fill="none"
-                      />
-                    </>
-                  )}
-                </motion.svg>
+                <PoopMascot mood={monitorMood} size={150} interactive={true} />
               </div>
             </div>
 

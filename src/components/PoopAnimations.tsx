@@ -18,16 +18,16 @@ export interface PoopBurstEvent {
 }
 
 export const FUN_TOILET_QUOTES = [
-  'Jangan ditahan bro, nanti jadi batu ginjal! 🚽',
-  'Bilik toilet: zona bebas chat Slack & revisi klien! 🧘',
-  'Fokus, tarik nafas dalam, dorong perlahan... 💨',
-  'Plung! Satu beban pikiran terlepas ke alam semesta! ✨',
-  'Ngising hening, pikiran jernih, coding makin lancar! 💻',
-  'Pencet lagi kalau mau denger suara merdu! 🎺',
-  'Jangan main reels kelamaan ya, yang antre udah gelisah! ⏰',
-  'Nikmat kebebasan hakiki setelah meeting 3 jam! 🧻',
-  'Tetap tenang walau perut sedang bergejolak hebat! ⚡',
-  'Ingat siram sampai tuntas dan cuci tangan bersih! 🧼',
+  'TAKE YOUR TURN! Jangan ditahan bro! 🚽',
+  'BILIK TOILET: ZONA BEBAS SLACK & REVISI! 🧘',
+  'FOKUS, NAFAS DALAM, DORONG PERLAHAN... 💨',
+  'PLUNG! SATU BEBAN HIDUP TERLEPAS! ✨',
+  'NGISING HENING, CODING MAKIN LANCAR! 💻',
+  'ALL-OUT FLUSH! SIRAM SAMPAI BERSIH! 🎺',
+  'JANGAN MAIN REELS LAMA-LAMA YA BRO! ⏰',
+  'NIKMAT LEGA SETELAH MEETING 3 JAM! 🧻',
+  'TETAP TENANG SAAT PERUT BERGELAK! ⚡',
+  'CUCI TANGAN BERSIH DENGAN SABUN! 🧼',
 ];
 
 export function PoopMiniIcon({ className = 'h-5 w-5' }: { className?: string }) {
@@ -38,23 +38,21 @@ export function PoopMiniIcon({ className = 'h-5 w-5' }: { className?: string }) 
       className={className}
       aria-hidden="true"
     >
+      {/* Persona Comic Mini Swirl */}
       <path
-        d="M20.5 6C20.5 6 24.5 9.5 23 13C26.5 13.5 28.5 16.5 27.5 19.5C31 20.5 33 23.5 32 27C33.5 28.5 33.5 32 30.5 33.5C27.5 35 12.5 35 9.5 33.5C6.5 32 6.5 28.5 8 27C7 23.5 9 20.5 12.5 19.5C11.5 16.5 13.5 13.5 17 13C15.5 9.8 20.5 6 20.5 6Z"
-        fill="#8B5A2B"
-        stroke="#5C3816"
-        strokeWidth="2"
+        d="M20 5C20 5 24 8.5 22.5 12C26 12.5 28.5 15.5 27.5 18.5C31 19.5 33 23 31.8 26.5C33.5 28.5 33 32 30 33.5C26.5 35 13.5 35 10 33.5C7 32 6.5 28.5 8.2 26.5C7 23 9 19.5 12.5 18.5C11.5 15.5 14 12.5 17.5 12C16 8.5 20 5 20 5Z"
+        fill="#e60012"
+        stroke="#000000"
+        strokeWidth="2.5"
         strokeLinejoin="round"
       />
-      <circle cx="16" cy="24" r="1.7" fill="#FFFDF9" />
-      <circle cx="24" cy="24" r="1.7" fill="#FFFDF9" />
-      <circle cx="16.2" cy="24.2" r="0.9" fill="#2A180B" />
-      <circle cx="24.2" cy="24.2" r="0.9" fill="#2A180B" />
+      {/* Phantom Mini Mask */}
       <path
-        d="M17.5 27.5C18.8 28.8 21.2 28.8 22.5 27.5"
-        stroke="#2A180B"
-        strokeWidth="1.6"
-        strokeLinecap="round"
+        d="M12 21 C15 19 19 21 20 22 C21 21 25 19 28 21 C29 23 27 26 24 26 C21 26 20 23 16 26 C13 26 11 23 12 21 Z"
+        fill="#000000"
       />
+      <circle cx="16" cy="22.5" r="1.2" fill="#ffffff" />
+      <circle cx="24" cy="22.5" r="1.2" fill="#ffffff" />
     </svg>
   );
 }
@@ -80,24 +78,24 @@ export function PoopMascot({
   const isMaintenance = mood === 'maintenance';
 
   const bodyAnimate = isNgeden
-    ? { rotate: [-4, 4, -4], scale: [1, 1.05, 0.98, 1] }
+    ? { rotate: [-5, 5, -5], scale: [1, 1.08, 0.96, 1] }
     : isCalled
-      ? { y: [0, -8, 0], scale: [1, 1.07, 1] }
+      ? { y: [0, -9, 0], scale: [1, 1.1, 1] }
       : isCepat
-        ? { y: [0, -5, 0], x: [-2, 2, -2] }
+        ? { y: [0, -6, 0], x: [-3, 3, -3] }
         : isExhausted
-          ? { y: [0, 1.5, 0], opacity: [0.88, 1, 0.88] }
-          : { y: [0, -3.5, 0], rotate: [0, -1.5, 1.5, 0] };
+          ? { y: [0, 2, 0], opacity: [0.85, 1, 0.85] }
+          : { y: [0, -4, 0], rotate: [0, -2, 2, 0] };
 
   const bodyDuration = isNgeden
-    ? 0.55
+    ? 0.45
     : isCalled
-      ? 0.7
+      ? 0.6
       : isCepat
-        ? 0.65
+        ? 0.55
         : isExhausted
-          ? 2.8
-          : 2.2;
+          ? 2.5
+          : 2.0;
 
   const handleClick = () => {
     if (!interactive) return;
@@ -116,56 +114,66 @@ export function PoopMascot({
     }, 3200);
   };
 
+  const bodyColor = isMaintenance
+    ? '#2e2e38'
+    : isNgeden
+      ? '#e60012'
+      : isExhausted
+        ? '#1e1e24'
+        : isCalled
+          ? '#e60012'
+          : '#ffffff';
+
   return (
     <div
       className={`relative inline-flex items-center justify-center shrink-0 select-none ${className}`}
       style={{ width: size, height: size }}
       aria-hidden="true"
     >
-      {/* Interactive Speech Bubble */}
+      {/* Persona 5 Comic Calling Card Speech Bubble */}
       <AnimatePresence>
         {activeQuote && (
           <motion.div
             initial={{ opacity: 0, y: 8, scale: 0.85 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.9 }}
-            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-40 min-w-[170px] max-w-[240px] pointer-events-none"
+            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 z-50 min-w-[190px] max-w-[260px] pointer-events-none"
           >
-            <div className="relative rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-950 shadow-md">
-              <p className="leading-snug text-center">{activeQuote}</p>
+            <div className="relative border-2 border-white bg-black p-3 text-xs font-black uppercase text-white shadow-[4px_4px_0px_#e60012] transform skew-x-[-4deg]">
+              <p className="leading-snug text-center transform skew-x-[4deg]">{activeQuote}</p>
               {/* Bubble Arrow */}
-              <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px w-2 h-2 bg-amber-50 border-r border-b border-amber-200 rotate-45" />
+              <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px w-3 h-3 bg-black border-r-2 border-b-2 border-white rotate-45" />
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Floating extra details depending on mood */}
+      {/* Floating Action Details */}
       {isNgeden && (
         <motion.span
-          className="absolute -right-1 top-1 text-[11px] font-bold text-sky-500"
-          animate={{ y: [0, 6, 0], opacity: [0.4, 1, 0.4] }}
-          transition={{ duration: 0.9, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute -right-2 top-0 text-sm font-black text-[#e60012]"
+          animate={{ y: [0, 6, 0], scale: [1, 1.25, 1] }}
+          transition={{ duration: 0.7, repeat: Infinity, ease: 'easeInOut' }}
         >
-          💧
+          🔥
         </motion.span>
       )}
 
       {isExhausted && (
         <motion.span
-          className="absolute -top-1 right-0 font-mono text-[10px] font-bold text-slate-400"
+          className="absolute -top-2 right-0 font-mono text-xs font-black text-slate-400"
           animate={{ y: [0, -6], opacity: [0.3, 1, 0] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'easeOut' }}
+          transition={{ duration: 1.8, repeat: Infinity, ease: 'easeOut' }}
         >
-          zZz
+          ZZZ
         </motion.span>
       )}
 
       {isCalled && (
         <motion.span
-          className="absolute -top-1.5 -right-1 text-xs"
-          animate={{ rotate: [-15, 15, -15], scale: [0.95, 1.15, 0.95] }}
-          transition={{ duration: 0.6, repeat: Infinity }}
+          className="absolute -top-2 -right-1 text-sm font-black"
+          animate={{ rotate: [-20, 20, -20], scale: [1, 1.3, 1] }}
+          transition={{ duration: 0.5, repeat: Infinity }}
         >
           ✨
         </motion.span>
@@ -175,22 +183,22 @@ export function PoopMascot({
         type="button"
         tabIndex={interactive ? 0 : -1}
         onClick={handleClick}
-        title={interactive ? 'Klik Si Plop untuk sapaan! 💩' : undefined}
+        title={interactive ? 'Klik Phantom Plop! 💩' : undefined}
         className={`w-full h-full p-0 bg-transparent border-0 flex items-center justify-center outline-none ${
           interactive
-            ? 'cursor-pointer hover:brightness-105 active:scale-95 transition-all'
+            ? 'cursor-pointer hover:brightness-110 active:scale-95 transition-all'
             : 'pointer-events-none'
         }`}
-        whileHover={interactive ? { scale: 1.08, rotate: [0, -3, 3, 0] } : undefined}
+        whileHover={interactive ? { scale: 1.1, rotate: [-3, 3, 0] } : undefined}
         whileTap={interactive ? { scale: 0.88 } : undefined}
       >
         <motion.svg
           viewBox="0 0 64 64"
           fill="none"
-          className="w-full h-full"
+          className="w-full h-full drop-shadow-[3px_3px_0px_#000000]"
           animate={
             clicked
-              ? { scale: [1, 1.25, 0.88, 1.05, 1], rotate: [-8, 8, -4, 4, 0] }
+              ? { scale: [1, 1.3, 0.85, 1.1, 1], rotate: [-10, 10, -5, 5, 0] }
               : bodyAnimate
           }
           transition={{
@@ -199,77 +207,95 @@ export function PoopMascot({
             ease: 'easeInOut',
           }}
         >
-          {/* Base soft shadow */}
-          <ellipse cx="32" cy="56" rx="18" ry="3.5" fill="#E2E8F0" />
+          {/* Solid Comic Ground Shadow */}
+          <ellipse cx="32" cy="56" rx="20" ry="4" fill="#000000" />
 
-          {/* Swirled poop body */}
+          {/* Smooth Swirled Body with Thick Ink Border */}
           <path
-            d="M33 9C33 9 39.5 14.5 37 20C43 20.8 46.5 25.5 44.8 30.5C50.5 32 53.5 37 51.8 42.5C54.2 45 54 50.5 49 52.5C44 54.5 20 54.5 15 52.5C10 50.5 9.8 45 12.2 42.5C10.5 37 13.5 32 19.2 30.5C17.5 25.5 21 20.8 27 20C24.5 15 33 9 33 9Z"
-            fill={isMaintenance ? '#94A3B8' : isExhausted ? '#A17C5B' : '#8B5A2B'}
-            stroke={isMaintenance ? '#475569' : '#5C3816'}
-            strokeWidth="2.4"
+            d="M32 7C32 7 38.5 12.5 36 18C42 18.8 45.8 23.5 44 28.5C50 30 53 35.5 51 41C54 44 53.5 49.5 48.5 52C43.5 54 20.5 54 15.5 52C10.5 49.5 10 44 13 41C11 35.5 14 30 20 28.5C18.2 23.5 22 18.8 28 18C25.5 12.5 32 7 32 7Z"
+            fill={bodyColor}
+            stroke="#000000"
+            strokeWidth="3.2"
             strokeLinejoin="round"
           />
 
-          {/* Highlight ridge */}
+          {/* Comic Ridge Lines */}
           <path
-            d="M21 35.5C24.5 33.8 39.5 33.8 43 35.5"
-            stroke={isMaintenance ? '#CBD5E1' : '#A87442'}
-            strokeWidth="2"
+            d="M20 37C24.5 34.5 39.5 34.5 44 37"
+            stroke="#000000"
+            strokeWidth="2.4"
             strokeLinecap="round"
           />
           <path
-            d="M24 25.5C27 24.3 37 24.3 40 25.5"
-            stroke={isMaintenance ? '#CBD5E1' : '#A87442'}
-            strokeWidth="1.8"
+            d="M24 26C27.5 24.5 36.5 24.5 40 26"
+            stroke="#000000"
+            strokeWidth="2.2"
             strokeLinecap="round"
           />
 
-          {/* Rosy cheeks */}
-          {!isMaintenance && (
-            <>
-              <ellipse cx="21" cy="43.5" rx="2.8" ry="1.6" fill="#F59E0B" fillOpacity="0.45" />
-              <ellipse cx="43" cy="43.5" rx="2.8" ry="1.6" fill="#F59E0B" fillOpacity="0.45" />
-            </>
-          )}
+          {/* Persona Phantom Thief Domino Mask */}
+          <path
+            d="M17 32C22 27 30 31 32 34C34 31 42 27 47 32C50 37 47 42 41 43C36 44 34 39 32 39C30 39 28 44 23 43C17 42 14 37 17 32Z"
+            fill="#000000"
+            stroke="#ffffff"
+            strokeWidth="1.2"
+          />
 
-          {/* Facial expressions */}
+          {/* Expressive Mask Eyes */}
           {isNgeden ? (
             <>
-              {/* >< straining eyes */}
-              <path d="M22 37L26.5 39.5L22 42" stroke="#2A180B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M42 37L37.5 39.5L42 42" stroke="#2A180B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-              {/* wavy clenched mouth */}
-              <path d="M27 46.5Q29.5 44.5 32 46.5T37 46.5" stroke="#2A180B" strokeWidth="2" strokeLinecap="round" />
+              {/* Intense Flaming Slanted Eyes */}
+              <polygon points="21,34 27,37 22,39" fill="#ffffff" />
+              <polygon points="43,34 37,37 42,39" fill="#ffffff" />
+              {/* Clenched Gritted Teeth Mouth */}
+              <path
+                d="M26 47L38 47"
+                stroke="#000000"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              />
+              <path
+                d="M29 45V49M32 45V49M35 45V49"
+                stroke="#000000"
+                strokeWidth="1.8"
+              />
             </>
           ) : isExhausted ? (
             <>
-              {/* sleepy closed eyes */}
-              <path d="M21 40Q24 42.5 27 40" stroke="#2A180B" strokeWidth="2.1" strokeLinecap="round" />
-              <path d="M37 40Q40 42.5 43 40" stroke="#2A180B" strokeWidth="2.1" strokeLinecap="round" />
-              <circle cx="32" cy="46.5" r="2" fill="#2A180B" />
+              {/* Swirly Knockout Eyes */}
+              <circle cx="24" cy="35" r="2.8" stroke="#ffffff" strokeWidth="1.6" fill="none" />
+              <circle cx="40" cy="35" r="2.8" stroke="#ffffff" strokeWidth="1.6" fill="none" />
+              <circle cx="32" cy="46" r="2" fill="#000000" />
             </>
           ) : isMaintenance ? (
             <>
-              <circle cx="24.5" cy="39.5" r="2.5" fill="#1E293B" />
-              <circle cx="39.5" cy="39.5" r="2.5" fill="#1E293B" />
-              <path d="M27 46H37" stroke="#1E293B" strokeWidth="2" strokeLinecap="round" />
+              {/* Serious Goggle Eyes */}
+              <rect x="21" y="32" width="7" height="6" fill="#ffffff" rx="1.5" />
+              <rect x="36" y="32" width="7" height="6" fill="#ffffff" rx="1.5" />
+              <circle cx="24.5" cy="35" r="1.5" fill="#000000" />
+              <circle cx="39.5" cy="35" r="1.5" fill="#000000" />
+              <path d="M27 46H37" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" />
             </>
           ) : (
             <>
-              {/* bright cute eyes */}
-              <circle cx="24.5" cy="39.5" r="3" fill="#FFFDF9" />
-              <circle cx="39.5" cy="39.5" r="3" fill="#FFFDF9" />
-              <circle cx="25" cy="39.8" r="1.6" fill="#2A180B" />
-              <circle cx="40" cy="39.8" r="1.6" fill="#2A180B" />
+              {/* Sharp Confident Phantom Eyes with Gleam */}
+              <ellipse cx="24" cy="35" rx="3.5" ry="4.2" fill="#ffffff" />
+              <ellipse cx="40" cy="35" rx="3.5" ry="4.2" fill="#ffffff" />
+              <circle cx="24.5" cy="35.5" r="2" fill="#000000" />
+              <circle cx="39.5" cy="35.5" r="2" fill="#000000" />
+              {/* White Star Gleams */}
+              <circle cx="23" cy="33.5" r="1" fill="#ffffff" />
+              <circle cx="38" cy="33.5" r="1" fill="#ffffff" />
+
+              {/* Bold Smirk */}
               <path
                 d={
                   isCalled
-                    ? 'M26 44.5C28.5 49 35.5 49 38 44.5'
-                    : 'M27.5 45C29.5 47.5 34.5 47.5 36.5 45'
+                    ? 'M25 45C28 49 36 49 39 45'
+                    : 'M26 45.5C29 48 35 48 38 45.5'
                 }
-                stroke="#2A180B"
-                strokeWidth="2.1"
+                stroke="#000000"
+                strokeWidth="2.5"
                 strokeLinecap="round"
               />
             </>
@@ -282,38 +308,33 @@ export function PoopMascot({
 
 const BURST_PARTICLES = [
   { x: -90, y: -65, rot: -30, delay: 0, emoji: '💩' },
-  { x: -55, y: -95, rot: 20, delay: 0.03, emoji: '✨' },
-  { x: -18, y: -80, rot: -15, delay: 0.01, emoji: '🧻' },
-  { x: 24, y: -92, rot: 25, delay: 0.04, emoji: '💧' },
-  { x: 68, y: -72, rot: -20, delay: 0.02, emoji: '✨' },
-  { x: 95, y: -45, rot: 32, delay: 0.05, emoji: '🎉' },
-  { x: -75, y: -30, rot: -35, delay: 0.06, emoji: '🫧' },
+  { x: -55, y: -95, rot: 20, delay: 0.03, emoji: '🔥' },
+  { x: -18, y: -80, rot: -15, delay: 0.01, emoji: '⚡' },
+  { x: 24, y: -92, rot: 25, delay: 0.04, emoji: '✨' },
+  { x: 68, y: -72, rot: -20, delay: 0.02, emoji: '🎯' },
+  { x: 95, y: -45, rot: 32, delay: 0.05, emoji: '👑' },
+  { x: -75, y: -30, rot: -35, delay: 0.06, emoji: '🌊' },
 ];
 
-const BURST_LABELS: Record<PoopBurstKind, { text: string; tone: string; icon: string }> = {
+const BURST_LABELS: Record<PoopBurstKind, { text: string; icon: string }> = {
   occupy: {
-    text: 'Plop! Timer Ngising Dimulai!',
-    tone: 'border-teal-500 bg-gradient-to-r from-teal-600 to-emerald-600 text-white shadow-teal-500/25',
+    text: 'ALL-OUT IN! TIMER NGISING DIMULAI!',
     icon: '💩',
   },
   release: {
-    text: 'Plung! Lega Banget!',
-    tone: 'border-amber-500 bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-amber-500/25',
-    icon: '✨',
+    text: 'MISSION COMPLETE! LEGA BANGET!',
+    icon: '🌊',
   },
   queue: {
-    text: 'Nomor Antrean Diamankan!',
-    tone: 'border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-slate-900/25',
+    text: 'TARGET ACQUIRED! ANTREAN DIAMANKAN!',
     icon: '⏳',
   },
   leave: {
-    text: 'Antrean Dibatalkan',
-    tone: 'border-slate-300 bg-white text-slate-800 shadow-slate-200',
+    text: 'ANTREAN DIBATALKAN!',
     icon: '👋',
   },
   quota_full: {
-    text: 'Kuota 10/10 Hari Ini Habis!',
-    tone: 'border-red-500 bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-red-500/25',
+    text: 'KUOTA 10/10 HABIS! ISTIRAHAT DULU!',
     icon: '🛑',
   },
 };
@@ -323,7 +344,7 @@ export function PoopInteractionBurst({ event }: { event: PoopBurstEvent | null }
 
   return (
     <div
-      className="pointer-events-none fixed inset-x-0 bottom-24 z-50 flex flex-col items-center justify-center lg:bottom-12"
+      className="pointer-events-none fixed inset-x-0 bottom-24 z-50 flex flex-col items-center justify-center lg:bottom-12 select-none"
       aria-live="polite"
     >
       <AnimatePresence mode="wait">
@@ -360,10 +381,10 @@ export function PoopInteractionBurst({ event }: { event: PoopBurstEvent | null }
               ))}
 
             <div
-              className={`inline-flex items-center gap-2.5 rounded-2xl border px-5 py-3 text-sm font-bold shadow-xl backdrop-blur-sm ${cfg.tone}`}
+              className="inline-flex items-center gap-2.5 border-2 border-white bg-[#e60012] px-6 py-3.5 text-sm font-black uppercase text-white shadow-[6px_6px_0px_#000000] transform skew-x-[-4deg]"
             >
-              <span className="text-base">{cfg.icon}</span>
-              <span>{cfg.text}</span>
+              <span className="text-lg transform skew-x-[4deg]">{cfg.icon}</span>
+              <span className="transform skew-x-[4deg] tracking-wider">{cfg.text}</span>
             </div>
           </motion.div>
         )}
