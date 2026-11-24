@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bebas Neue", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
@@ -40,6 +40,7 @@
 
   h1, h2, h3, .font-display {
     font-family: var(--font-display);
+    letter-spacing: 0.04em;
     color: #ffffff;
   }
 
@@ -117,6 +118,10 @@
     transform: skewX(-4deg) translate(2px, 2px);
     box-shadow: 1px 1px 0px #000000;
   }
+  .p5-btn-red:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px #0c0c0e, 0 0 0 4px #ffffff, 6px 6px 0px #000000;
+  }
 
   .p5-btn-black {
     position: relative;
@@ -142,6 +147,10 @@
     transform: skewX(-4deg) translate(2px, 2px);
     box-shadow: 1px 1px 0px #e60012;
   }
+  .p5-btn-black:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px #0c0c0e, 0 0 0 4px #e60012, 6px 6px 0px #ffffff;
+  }
 
   .p5-btn-white {
     position: relative;
@@ -165,6 +174,10 @@
   .p5-btn-white:active {
     transform: skewX(-4deg) translate(2px, 2px);
     box-shadow: 1px 1px 0px #000000;
+  }
+  .p5-btn-white:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px #0c0c0e, 0 0 0 4px #ffffff, 6px 6px 0px #e60012;
   }
 
   /* Persona Skewed Badges */
