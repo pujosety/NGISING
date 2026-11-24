@@ -54,7 +54,7 @@ export function Sidebar({
 
   return (
     <>
-      <aside className="hidden lg:flex lg:w-60 lg:shrink-0 lg:flex-col lg:border-r lg:border-slate-200 lg:bg-white">
+      <aside className="hidden lg:flex lg:sticky lg:top-0 lg:h-screen lg:w-60 lg:shrink-0 lg:flex-col lg:border-r lg:border-slate-200 lg:bg-white lg:overflow-y-auto z-30">
         <div className="flex h-16 items-center justify-between border-b border-slate-200 px-5">
           <div className="flex items-center gap-2.5">
             <img src="/app-logo.png" alt="Ngising Logo" className="h-8 w-8 rounded-lg object-contain shadow-xs" />
@@ -96,7 +96,7 @@ export function Sidebar({
           })}
         </nav>
 
-        <div className="border-t border-slate-200 p-4 space-y-3">
+        <div className="border-t border-slate-200 p-4 space-y-3 shrink-0">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-500">Suara Notifikasi</span>
             <button
