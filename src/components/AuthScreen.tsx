@@ -4,11 +4,13 @@ import {
   Lock,
   LogIn,
   Tv,
+  User,
   UserPlus,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState, type FormEvent } from 'react';
 import type { OfficeState } from '../shared/types.ts';
+import { PoopMiniIcon } from './PoopAnimations.tsx';
 
 interface AuthScreenProps {
   officeState: OfficeState | null;
@@ -60,289 +62,298 @@ export function AuthScreen({
         return;
       }
       await onLogin(identifier.trim(), password);
-      return;
-    }
-
-    if (mode === 'guest') {
-      if (guestName.trim().length < 2) {
-        setLocalError('Nama tamu minimal 2 karakter.');
+    } else if (mode === 'register') {
+      if (!displayName.trim() || !password) {
+        setLocalError('Nama lengkap dan password wajib diisi.');
         return;
       }
-      if (guestOrigin.trim().length < 2) {
-        setLocalError('Asal instansi atau keperluan wajib diisi.');
+      if (password.length < 6) {
+        setLocalError('Password minimal 6 karakter.');
+        return;
+      }
+      await onRegister({
+        displayName: displayName.trim(),
+        password,
+      });
+    } else {
+      if (!guestName.trim()) {
+        setLocalError('Nama tamu wajib diisi.');
         return;
       }
       await onGuestCheckIn({
         guestName: guestName.trim(),
-        origin: guestOrigin.trim(),
+        origin: guestOrigin.trim() || 'Tamu Kantor',
       });
-      return;
     }
-
-    if (displayName.trim().length < 2) {
-      setLocalError('Nama minimal 2 karakter.');
-      return;
-    }
-    if (password.length < 4) {
-      setLocalError('Password minimal 4 karakter.');
-      return;
-    }
-    await onRegister({
-      displayName: displayName.trim(),
-      password,
-    });
   };
 
+  const toilet = officeState?.toilet;
+  const isOccupied = toilet?.status === 'occupied' && toilet.occupant !== null;
+  const isMaintenance = toilet?.status === 'maintenance';
+  const queueCount = officeState?.queue.length ?? 0;
   const activeError = localError || errorMessage;
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-4 py-8 sm:px-6">
-      {/* Top right shortcut to TV mode */}
-      {onOpenDisplay && (
-        <div className="fixed top-4 right-4 z-10">
-          <button
-            type="button"
-            onClick={onOpenDisplay}
-            className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-slate-200 bg-white/90 px-3.5 py-1.5 text-xs font-bold text-slate-700 backdrop-blur-md hover:bg-slate-100 hover:text-slate-900 transition-all shadow-2xs cursor-pointer active:scale-95"
-          >
-            <Tv className="h-3.5 w-3.5 text-teal-600" />
-            <span>Mode Layar TV</span>
-          </button>
-        </div>
-      )}
+    <div className="relative flex min-h-screen items-center justify-center p-4 sm:p-6 overflow-hidden">
+      {/* Dynamic 3D ambient orbs in brown & amber */}
+      <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-[radial-gradient(circle,#ad7c2b,transparent_70%)] opacity-30 blur-3xl animate-float-3d" />
+      <div className="pointer-events-none absolute -bottom-32 -right-24 h-[30rem] w-[30rem] rounded-full bg-[radial-gradient(circle,#6f4717,transparent_70%)] opacity-35 blur-3xl" />
 
-      {/* Main Centered Card */}
-      <div className="w-full max-w-md">
-        {/* Brand Header */}
-        <div className="mb-6 text-center">
-          <img
-            src="/app-logo.png"
-            alt="Ngising Logo"
-            className="mx-auto h-16 w-16 rounded-2xl object-contain shadow-md shadow-slate-200"
-          />
-          <h1 className="mt-3 font-display text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
-            Ngising
-          </h1>
-          <p className="mt-1 text-xs text-slate-500">
-            Pelacak Antrean Toilet Kantor Real-Time
-          </p>
-        </div>
-
-        {/* Auth Card Container */}
-        <div className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-sm">
-          {/* Segmented Mode Toggle with Sliding Animation */}
-          <div
-            role="tablist"
-            aria-label="Pilih mode akses"
-            className="relative grid grid-cols-3 gap-1 rounded-2xl bg-slate-100/90 p-1 text-xs font-bold"
-          >
+      <div className="relative z-10 w-full max-w-md">
+        {/* Top TV Monitor quick button */}
+        {onOpenDisplay && (
+          <div className="mb-4 flex justify-end">
             <button
               type="button"
-              role="tab"
-              aria-selected={mode === 'login'}
-              onClick={() => {
-                setMode('login');
-                setLocalError(null);
-                onClearError();
-              }}
-              className={`relative z-10 min-h-[38px] rounded-xl transition-colors text-center cursor-pointer select-none ${
-                mode === 'login' ? 'text-slate-900 font-extrabold' : 'text-slate-500 hover:text-slate-900'
-              }`}
+              onClick={onOpenDisplay}
+              className="glass-pill inline-flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-bold text-[#dbc08b] hover:text-white hover:border-[#c99f57] transition-all cursor-pointer shadow-lg active:scale-95"
             >
-              {mode === 'login' && (
-                <motion.div
-                  layoutId="auth-tab-pill"
-                  transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                  className="absolute inset-0 rounded-xl bg-white shadow-xs"
-                />
-              )}
-              <span className="relative z-10">Masuk</span>
+              <Tv className="h-3.5 w-3.5 text-[#c99f57]" />
+              <span>Buka Layar Monitor TV</span>
             </button>
+          </div>
+        )}
 
-            <button
-              type="button"
-              role="tab"
-              aria-selected={mode === 'register'}
-              onClick={() => {
-                setMode('register');
-                setLocalError(null);
-                onClearError();
-              }}
-              className={`relative z-10 min-h-[38px] rounded-xl transition-colors text-center cursor-pointer select-none ${
-                mode === 'register' ? 'text-slate-900 font-extrabold' : 'text-slate-500 hover:text-slate-900'
-              }`}
+        {/* Main 3D Glassmorphism Card */}
+        <div className="glass-card rounded-3xl p-6 sm:p-8 backdrop-blur-2xl">
+          {/* Header with 3D Mascot */}
+          <div className="text-center">
+            <motion.div
+              animate={{ y: [0, -6, 0], rotate: [0, 2, -2, 0] }}
+              transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
+              className="inline-flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-[#8c5d1d] to-[#3e2610] shadow-2xl border border-[#c99f57]/30 glow-poop p-2"
             >
-              {mode === 'register' && (
-                <motion.div
-                  layoutId="auth-tab-pill"
-                  transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                  className="absolute inset-0 rounded-xl bg-white shadow-xs"
-                />
-              )}
-              <span className="relative z-10">Daftar</span>
-            </button>
+              <img
+                src="/app-logo.png"
+                alt="Ngising Mascot"
+                className="h-16 w-16 object-contain drop-shadow-md"
+              />
+            </motion.div>
 
-            <button
-              type="button"
-              role="tab"
-              aria-selected={mode === 'guest'}
-              onClick={() => {
-                setMode('guest');
-                setLocalError(null);
-                onClearError();
-              }}
-              className={`relative z-10 min-h-[38px] rounded-xl transition-colors text-center cursor-pointer select-none ${
-                mode === 'guest' ? 'text-slate-900 font-extrabold' : 'text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              {mode === 'guest' && (
-                <motion.div
-                  layoutId="auth-tab-pill"
-                  transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                  className="absolute inset-0 rounded-xl bg-white shadow-xs"
-                />
-              )}
-              <span className="relative z-10">Tamu</span>
-            </button>
+            <h1 className="mt-4 font-display text-2xl sm:text-3xl font-black tracking-tight text-white">
+              Ngising <span className="text-[#dbc08b]">Office</span>
+            </h1>
+            <p className="mt-1 text-xs sm:text-sm text-[#e8d9b5]/80">
+              Antrean & Ketersediaan Bilik Toilet Cerdas
+            </p>
+
+            {/* Live Bilik status glass pill */}
+            <div className="mt-4 inline-flex items-center gap-2 rounded-full glass-pill px-3.5 py-1.5 text-xs font-semibold">
+              <span
+                className={`h-2.5 w-2.5 rounded-full ${
+                  isMaintenance
+                    ? 'bg-amber-400'
+                    : isOccupied
+                      ? 'bg-rose-500 animate-pulse'
+                      : 'bg-emerald-400 animate-pulse'
+                }`}
+              />
+              <span className="text-[#f5eedb]">
+                {isMaintenance
+                  ? 'Bilik Sedang Maintenance'
+                  : isOccupied
+                    ? 'Bilik Sedang Digunakan'
+                    : 'Bilik Sedang Kosong'}
+              </span>
+              <span className="text-[#dbc08b]/50">·</span>
+              <span className="text-[#dbc08b] font-mono">{queueCount} antre</span>
+            </div>
+          </div>
+
+          {/* Sliding Glass Mode Switcher */}
+          <div className="relative mt-6 flex rounded-2xl bg-[#241407]/70 p-1.5 border border-[#c99f57]/20 shadow-inner">
+            {(
+              [
+                { id: 'login', label: 'Masuk' },
+                { id: 'register', label: 'Daftar' },
+                { id: 'guest', label: 'Tamu' },
+              ] as const
+            ).map((tab) => {
+              const active = mode === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => {
+                    setMode(tab.id);
+                    setLocalError(null);
+                    onClearError();
+                  }}
+                  className={`relative flex-1 py-2 text-xs sm:text-sm font-bold transition-colors cursor-pointer text-center z-10 ${
+                    active ? 'text-white' : 'text-[#dbc08b]/70 hover:text-white'
+                  }`}
+                >
+                  {active && (
+                    <motion.div
+                      layoutId="auth-tab-pill-glass"
+                      transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+                      className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#8c5d1d] to-[#ad7c2b] shadow-md border border-[#c99f57]/50"
+                    />
+                  )}
+                  <span className="relative z-20">{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="mt-5 space-y-4">
-            {mode === 'guest' ? (
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            {mode === 'login' ? (
               <>
                 <div>
-                  <label htmlFor="guest-name" className="block text-xs font-bold text-slate-700">
-                    Nama Anda
+                  <label
+                    htmlFor="auth-identifier"
+                    className="block text-xs font-bold text-[#e8d9b5] mb-1.5"
+                  >
+                    Nama atau Email
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3.5 top-3 h-4 w-4 text-[#dbc08b]" />
+                    <input
+                      id="auth-identifier"
+                      type="text"
+                      value={identifier}
+                      onChange={(e) => setIdentifier(e.target.value)}
+                      placeholder="siti / siti@kantor.id"
+                      className="w-full min-h-[44px] rounded-xl border border-[#c99f57]/30 bg-[#241407]/60 py-2.5 pl-10 pr-3.5 text-sm text-white placeholder:text-[#dbc08b]/40 focus:border-[#dbc08b] focus:outline-none focus:ring-2 focus:ring-[#ad7c2b]/30 shadow-inner"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="auth-password"
+                    className="block text-xs font-bold text-[#e8d9b5] mb-1.5"
+                  >
+                    Password
+                  </label>
+                  <div className="relative">
+                    <Lock className="absolute left-3.5 top-3 h-4 w-4 text-[#dbc08b]" />
+                    <input
+                      id="auth-password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full min-h-[44px] rounded-xl border border-[#c99f57]/30 bg-[#241407]/60 py-2.5 pl-10 pr-3.5 text-sm text-white placeholder:text-[#dbc08b]/40 focus:border-[#dbc08b] focus:outline-none focus:ring-2 focus:ring-[#ad7c2b]/30 shadow-inner"
+                    />
+                  </div>
+                </div>
+              </>
+            ) : mode === 'guest' ? (
+              <>
+                <div>
+                  <label
+                    htmlFor="guest-name"
+                    className="block text-xs font-bold text-[#e8d9b5] mb-1.5"
+                  >
+                    Nama Lengkap Tamu
                   </label>
                   <input
                     id="guest-name"
                     type="text"
                     value={guestName}
                     onChange={(e) => setGuestName(e.target.value)}
-                    placeholder="Contoh: Budi"
-                    className="mt-1.5 w-full min-h-[44px] rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                    placeholder="Contoh: Rian (Vendor IT)"
+                    className="w-full min-h-[44px] rounded-xl border border-[#c99f57]/30 bg-[#241407]/60 py-2.5 px-3.5 text-sm text-white placeholder:text-[#dbc08b]/40 focus:border-[#dbc08b] focus:outline-none focus:ring-2 focus:ring-[#ad7c2b]/30 shadow-inner"
                   />
                 </div>
+
                 <div>
-                  <label htmlFor="guest-origin" className="block text-xs font-bold text-slate-700">
-                    Asal / Keperluan
+                  <label
+                    htmlFor="guest-origin"
+                    className="block text-xs font-bold text-[#e8d9b5] mb-1.5"
+                  >
+                    Asal / Keperluan (Opsional)
                   </label>
                   <input
                     id="guest-origin"
                     type="text"
                     value={guestOrigin}
                     onChange={(e) => setGuestOrigin(e.target.value)}
-                    placeholder="Contoh: Tamu Meeting / Klien"
-                    className="mt-1.5 w-full min-h-[44px] rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                    placeholder="Meeting, Tamu Klien, dll."
+                    className="w-full min-h-[44px] rounded-xl border border-[#c99f57]/30 bg-[#241407]/60 py-2.5 px-3.5 text-sm text-white placeholder:text-[#dbc08b]/40 focus:border-[#dbc08b] focus:outline-none focus:ring-2 focus:ring-[#ad7c2b]/30 shadow-inner"
                   />
-                </div>
-              </>
-            ) : mode === 'register' ? (
-              <>
-                <div>
-                  <label htmlFor="auth-name" className="block text-xs font-bold text-slate-700">
-                    Nama Lengkap
-                  </label>
-                  <input
-                    id="auth-name"
-                    type="text"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="Contoh: Siti Rahma"
-                    className="mt-1.5 w-full min-h-[44px] rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="auth-password" className="block text-xs font-bold text-slate-700">
-                    Buat Password
-                  </label>
-                  <div className="relative mt-1.5">
-                    <Lock
-                      className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
-                      aria-hidden="true"
-                    />
-                    <input
-                      id="auth-password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Minimal 4 karakter"
-                      className="w-full min-h-[44px] rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
-                    />
-                  </div>
                 </div>
               </>
             ) : (
               <>
                 <div>
-                  <label htmlFor="auth-identifier" className="block text-xs font-bold text-slate-700">
-                    Nama atau Email
+                  <label
+                    htmlFor="reg-name"
+                    className="block text-xs font-bold text-[#e8d9b5] mb-1.5"
+                  >
+                    Nama Panggilan / Lengkap
                   </label>
                   <input
-                    id="auth-identifier"
+                    id="reg-name"
                     type="text"
-                    value={identifier}
-                    onChange={(e) => setIdentifier(e.target.value)}
-                    placeholder="Contoh: siti@kantor.id"
-                    className="mt-1.5 w-full min-h-[44px] rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="Contoh: Budi Santoso"
+                    className="w-full min-h-[44px] rounded-xl border border-[#c99f57]/30 bg-[#241407]/60 py-2.5 px-3.5 text-sm text-white placeholder:text-[#dbc08b]/40 focus:border-[#dbc08b] focus:outline-none focus:ring-2 focus:ring-[#ad7c2b]/30 shadow-inner"
                   />
                 </div>
+
                 <div>
-                  <label htmlFor="auth-password" className="block text-xs font-bold text-slate-700">
-                    Password
+                  <label
+                    htmlFor="reg-password"
+                    className="block text-xs font-bold text-[#e8d9b5] mb-1.5"
+                  >
+                    Buat Password (min. 6 karakter)
                   </label>
-                  <div className="relative mt-1.5">
-                    <Lock
-                      className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
-                      aria-hidden="true"
-                    />
-                    <input
-                      id="auth-password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Masukkan password"
-                      className="w-full min-h-[44px] rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
-                    />
-                  </div>
+                  <input
+                    id="reg-password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Minimal 6 karakter"
+                    className="w-full min-h-[44px] rounded-xl border border-[#c99f57]/30 bg-[#241407]/60 py-2.5 px-3.5 text-sm text-white placeholder:text-[#dbc08b]/40 focus:border-[#dbc08b] focus:outline-none focus:ring-2 focus:ring-[#ad7c2b]/30 shadow-inner"
+                  />
                 </div>
               </>
             )}
 
             {activeError && (
-              <p role="alert" className="flex items-center gap-2 rounded-xl bg-red-50 p-2.5 text-xs font-semibold text-red-700 border border-red-200">
-                <AlertCircle className="h-4 w-4 shrink-0 text-red-600" aria-hidden="true" />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                role="alert"
+                className="flex items-center gap-2 rounded-xl bg-rose-950/60 p-3 text-xs font-semibold text-rose-200 border border-rose-500/40"
+              >
+                <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />
                 <span>{activeError}</span>
-              </p>
+              </motion.div>
             )}
 
+            {/* 3D Poop Button */}
             <button
               type="submit"
               disabled={authLoading}
-              className="inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-teal-700/20 hover:bg-teal-800 disabled:opacity-60 transition-all cursor-pointer active:scale-98"
+              className="btn-3d-poop w-full min-h-[48px] rounded-xl py-3 px-4 text-sm font-extrabold text-white flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
             >
               {mode === 'login' ? (
                 <>
-                  <LogIn className="h-4 w-4" aria-hidden="true" />
+                  <LogIn className="h-4 w-4" />
                   <span>{authLoading ? 'Memproses...' : 'Masuk Sekarang'}</span>
                 </>
               ) : mode === 'guest' ? (
                 <>
-                  <BookOpenCheck className="h-4 w-4" aria-hidden="true" />
+                  <BookOpenCheck className="h-4 w-4" />
                   <span>{authLoading ? 'Menyimpan...' : 'Lanjut Sebagai Tamu'}</span>
                 </>
               ) : (
                 <>
-                  <UserPlus className="h-4 w-4" aria-hidden="true" />
-                  <span>{authLoading ? 'Mendaftar...' : 'Daftar & Masuk'}</span>
+                  <UserPlus className="h-4 w-4" />
+                  <span>{authLoading ? 'Mendaftarkan...' : 'Daftar & Masuk'}</span>
                 </>
               )}
             </button>
           </form>
 
-          {/* Quick Demo Credentials shortcut for testing */}
-          <div className="mt-5 border-t border-slate-100 pt-4 text-center">
-            <span className="text-[11px] font-semibold text-slate-400 block mb-2">
+          {/* Quick Demo Fill Buttons (Clean 3D Pill Style) */}
+          <div className="mt-6 border-t border-[#c99f57]/20 pt-4 text-center">
+            <span className="text-[11px] font-bold text-[#dbc08b]/70 block mb-2.5">
               Akun Cepat (Klik untuk isi otomatis):
             </span>
             <div className="flex flex-wrap items-center justify-center gap-2">
@@ -353,7 +364,7 @@ export function AuthScreen({
                   setIdentifier('siti@kantor.id');
                   setPassword('ngising123');
                 }}
-                className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                className="glass-pill rounded-lg px-2.5 py-1 text-xs font-bold text-[#dbc08b] hover:text-white hover:border-[#c99f57] transition-all cursor-pointer"
               >
                 👑 Siti (Admin)
               </button>
@@ -364,7 +375,7 @@ export function AuthScreen({
                   setIdentifier('budi@kantor.id');
                   setPassword('ngising123');
                 }}
-                className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                className="glass-pill rounded-lg px-2.5 py-1 text-xs font-bold text-[#dbc08b] hover:text-white hover:border-[#c99f57] transition-all cursor-pointer"
               >
                 👤 Budi
               </button>
@@ -375,7 +386,7 @@ export function AuthScreen({
                   setGuestName('Tamu Kantor');
                   setGuestOrigin('Meeting');
                 }}
-                className="rounded-lg border border-teal-200 bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-800 hover:bg-teal-100 transition-colors cursor-pointer"
+                className="glass-pill rounded-lg px-2.5 py-1 text-xs font-bold text-[#dbc08b] hover:text-white hover:border-[#c99f57] transition-all cursor-pointer"
               >
                 🏢 Mode Tamu
               </button>

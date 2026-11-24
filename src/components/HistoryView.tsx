@@ -58,21 +58,23 @@ export function HistoryView({ history, currentUserId }: HistoryViewProps) {
     const link = document.createElement('a');
     link.href = url;
     link.download = `riwayat-ngising-${scope}-${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
 
+  const totalSessions = filtered.length;
+  const totalDurationMs = filtered.reduce((acc, curr) => acc + curr.durationMs, 0);
+
   return (
     <div className="space-y-6">
+      {/* Header and Summary stats card */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="font-display text-lg font-bold text-slate-900">
-            Riwayat & Log Penggunaan
+          <h2 className="font-display text-2xl sm:text-3xl font-black text-white">
+            Riwayat Sesi
           </h2>
-          <p className="mt-0.5 text-sm text-slate-500">
-            Catatan sesi pribadimu maupun log seluruh karyawan di Toilet Kantor.
+          <p className="mt-1 text-xs sm:text-sm text-[#dbc08b]/80">
+            Audit dan transparansi penggunaan bilik toilet secara real-time.
           </p>
         </div>
 
@@ -80,39 +82,75 @@ export function HistoryView({ history, currentUserId }: HistoryViewProps) {
           type="button"
           onClick={handleExportCsv}
           disabled={filtered.length === 0}
-          className="inline-flex min-h-[40px] items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-50 transition-colors whitespace-nowrap self-start sm:self-auto"
+          className="btn-3d-poop inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold text-white shadow-md disabled:opacity-50 cursor-pointer self-start sm:self-auto"
         >
-          <Download className="h-4 w-4 text-slate-600" aria-hidden="true" />
+          <Download className="h-4 w-4" />
           <span>Ekspor CSV</span>
         </button>
       </div>
 
-      {/* Scope & Filter Toolbar */}
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-wrap items-center gap-3">
+      {/* KPI Highlight Cards in Glassmorphism */}
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="glass-card rounded-2xl p-4 border border-[#c99f57]/20">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-[#dbc08b]/70 block">
+            Total Sesi
+          </span>
+          <p className="mt-1 font-mono text-2xl sm:text-3xl font-black text-white tabular-nums">
+            {totalSessions}
+          </p>
+        </div>
+        <div className="glass-card rounded-2xl p-4 border border-[#c99f57]/20">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-[#dbc08b]/70 block">
+            Total Waktu
+          </span>
+          <p className="mt-1 font-mono text-2xl sm:text-3xl font-black text-white tabular-nums">
+            {formatDuration(totalDurationMs)}
+          </p>
+        </div>
+        <div className="glass-card rounded-2xl p-4 border border-[#c99f57]/20">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-[#dbc08b]/70 block">
+            Rata-rata / Sesi
+          </span>
+          <p className="mt-1 font-mono text-2xl sm:text-3xl font-black text-white tabular-nums">
+            {totalSessions > 0 ? formatDuration(Math.round(totalDurationMs / totalSessions)) : '0m'}
+          </p>
+        </div>
+        <div className="glass-card rounded-2xl p-4 border border-[#c99f57]/20">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-[#dbc08b]/70 block">
+            Sesi Pup / Santai
+          </span>
+          <p className="mt-1 font-mono text-2xl sm:text-3xl font-black text-[#dbc08b] tabular-nums">
+            {filtered.filter((f) => f.need === 'pup').length}
+          </p>
+        </div>
+      </div>
+
+      {/* Search and Filters */}
+      <div className="glass-card rounded-2xl p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border border-[#c99f57]/25">
+        <div className="flex flex-wrap items-center gap-2.5">
           <div
             role="group"
-            aria-label="Pilih cakupan riwayat"
-            className="inline-flex items-center gap-1 rounded-lg bg-slate-100 p-1"
+            aria-label="Filter cakupan riwayat"
+            className="inline-flex items-center gap-1 rounded-xl bg-[#241407]/70 p-1 border border-[#c99f57]/20"
           >
             <button
               type="button"
               onClick={() => setScope('mine')}
-              className={`rounded-md px-3.5 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap ${
+              className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                 scope === 'mine'
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-gradient-to-r from-[#8c5d1d] to-[#ad7c2b] text-white shadow-sm'
+                  : 'text-[#dbc08b]/70 hover:text-white'
               }`}
             >
-              Riwayat Saya
+              Catatan Saya
             </button>
             <button
               type="button"
               onClick={() => setScope('all')}
-              className={`rounded-md px-3.5 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap ${
+              className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                 scope === 'all'
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-gradient-to-r from-[#8c5d1d] to-[#ad7c2b] text-white shadow-sm'
+                  : 'text-[#dbc08b]/70 hover:text-white'
               }`}
             >
               Semua Karyawan
@@ -122,23 +160,23 @@ export function HistoryView({ history, currentUserId }: HistoryViewProps) {
           <div
             role="group"
             aria-label="Filter jenis keperluan"
-            className="inline-flex items-center gap-1 rounded-lg bg-slate-100 p-1"
+            className="inline-flex items-center gap-1 rounded-xl bg-[#241407]/70 p-1 border border-[#c99f57]/20"
           >
             {(
               [
                 { id: 'all', label: 'Semua' },
-                { id: 'pup', label: 'Pup' },
-                { id: 'cepat', label: 'Cepat' },
+                { id: 'pup', label: 'Pup 💩' },
+                { id: 'cepat', label: 'Cepat ⚡' },
               ] as const
             ).map((tab) => (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => setNeedFilter(tab.id)}
-                className={`rounded-md px-3.5 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap ${
+                className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                   needFilter === tab.id
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-gradient-to-r from-[#8c5d1d] to-[#ad7c2b] text-white shadow-sm'
+                    : 'text-[#dbc08b]/70 hover:text-white'
                 }`}
               >
                 {tab.label}
@@ -149,7 +187,7 @@ export function HistoryView({ history, currentUserId }: HistoryViewProps) {
 
         <div className="relative flex-1 max-w-sm">
           <Search
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+            className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#dbc08b]"
             aria-hidden="true"
           />
           <input
@@ -157,67 +195,67 @@ export function HistoryView({ history, currentUserId }: HistoryViewProps) {
             aria-label="Cari riwayat karyawan"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari nama karyawan atau divisi..."
-            className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+            placeholder="Cari nama atau divisi..."
+            className="w-full rounded-xl border border-[#c99f57]/30 bg-[#241407]/60 py-2 pl-10 pr-3.5 text-xs text-white placeholder:text-[#dbc08b]/40 focus:border-[#dbc08b] focus:outline-none focus:ring-2 focus:ring-[#ad7c2b]/30 shadow-inner"
           />
         </div>
       </div>
 
-      {/* Data Table */}
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      {/* Glass Data Table */}
+      <div className="glass-card overflow-hidden rounded-3xl border border-[#c99f57]/20">
         {filtered.length === 0 ? (
           <div className="px-6 py-12 text-center">
-            <p className="text-sm font-semibold text-slate-700">
+            <p className="text-sm font-bold text-white">
               {scope === 'mine'
                 ? 'Kamu belum memiliki catatan sesi yang cocok'
                 : 'Tidak ada catatan yang cocok'}
             </p>
-            <p className="mt-1 text-xs text-slate-500">
-              Coba ubah filter atau mulai gunakan Toilet Kantor dari halaman Dashboard Saya.
+            <p className="mt-1 text-xs text-[#dbc08b]/70">
+              Coba ubah filter atau gunakan bilik toilet dari dashboard.
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-left text-sm">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50/70 text-xs font-semibold text-slate-600">
-                  <th className="px-4 py-3">Karyawan</th>
-                  <th className="px-4 py-3">Keperluan</th>
-                  <th className="px-4 py-3 text-right">Mulai</th>
-                  <th className="px-4 py-3 text-right">Selesai</th>
-                  <th className="px-4 py-3 text-right">Durasi</th>
+                <tr className="border-b border-[#c99f57]/20 bg-[#241407]/60 text-xs font-bold text-[#dbc08b]">
+                  <th className="px-4 py-3.5">Karyawan</th>
+                  <th className="px-4 py-3.5">Keperluan</th>
+                  <th className="px-4 py-3.5 text-right">Mulai</th>
+                  <th className="px-4 py-3.5 text-right">Selesai</th>
+                  <th className="px-4 py-3.5 text-right">Durasi</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-[#c99f57]/10">
                 {filtered.map((item) => {
                   const isMe = item.userId === currentUserId;
                   const displayName = isMe
                     ? `${item.displayName} (Kamu)`
                     : getPublicDisplayName(item.displayName, item.isAnonymous, item.userId);
                   return (
-                    <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="px-4 py-3">
-                        <p className="font-medium text-slate-900">{displayName}</p>
+                    <tr key={item.id} className="hover:bg-[#3e2610]/30 transition-colors">
+                      <td className="px-4 py-3.5">
+                        <p className="font-bold text-white">{displayName}</p>
                         {item.department ? (
-                          <p className="text-xs text-slate-500">{item.department}</p>
+                          <p className="text-xs text-[#dbc08b]/70">{item.department}</p>
                         ) : null}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3.5">
                         <span
-                          className={`text-xs font-semibold ${
-                            item.need === 'pup' ? 'text-amber-700' : 'text-teal-700'
+                          className={`text-xs font-bold ${
+                            item.need === 'pup' ? 'text-[#dbc08b]' : 'text-teal-400'
                           }`}
                         >
-                          {item.need === 'pup' ? 'Pup' : 'Cepat'}
+                          {item.need === 'pup' ? '💩 Pup' : '⚡ Cepat'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right font-mono text-xs tabular-nums text-slate-600">
+                      <td className="px-4 py-3.5 text-right font-mono text-xs tabular-nums text-[#e8d9b5]/80">
                         {formatTimeOnly(item.startedAt)}
                       </td>
-                      <td className="px-4 py-3 text-right font-mono text-xs tabular-nums text-slate-600">
+                      <td className="px-4 py-3.5 text-right font-mono text-xs tabular-nums text-[#e8d9b5]/80">
                         {formatTimeOnly(item.endedAt)}
                       </td>
-                      <td className="px-4 py-3 text-right font-mono text-xs font-semibold tabular-nums text-slate-900">
+                      <td className="px-4 py-3.5 text-right font-mono text-xs font-black tabular-nums text-white">
                         {formatDuration(item.durationMs)}
                       </td>
                     </tr>
