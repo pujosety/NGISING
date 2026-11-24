@@ -1,18 +1,14 @@
 import {
   AlertCircle,
   BookOpenCheck,
-  CheckCircle2,
-  Clock,
   Lock,
   LogIn,
   Tv,
   UserPlus,
-  Wrench,
 } from 'lucide-react';
+import { motion } from 'motion/react';
 import { useState, type FormEvent } from 'react';
-import { formatDuration, getPublicDisplayName } from '../shared/queueLogic.ts';
 import type { OfficeState } from '../shared/types.ts';
-import { PoopMascot, PoopMiniIcon } from './PoopAnimations.tsx';
 
 interface AuthScreenProps {
   officeState: OfficeState | null;
@@ -53,12 +49,6 @@ export function AuthScreen({
   const [guestOrigin, setGuestOrigin] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
 
-  const toilet = officeState?.toilet ?? null;
-  const isOccupied = toilet?.status === 'occupied' && toilet.occupant !== null;
-  const isMaintenance = toilet?.status === 'maintenance';
-  const elapsedMs =
-    isOccupied && toilet?.occupant ? Math.max(0, now - toilet.occupant.startedAt) : 0;
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLocalError(null);
@@ -66,7 +56,7 @@ export function AuthScreen({
 
     if (mode === 'login') {
       if (!identifier.trim() || !password) {
-        setLocalError('Nama dan password wajib diisi.');
+        setLocalError('Nama/email dan password wajib diisi.');
         return;
       }
       await onLogin(identifier.trim(), password);
@@ -79,7 +69,7 @@ export function AuthScreen({
         return;
       }
       if (guestOrigin.trim().length < 2) {
-        setLocalError('Asal instansi atau tujuan kunjungan wajib diisi.');
+        setLocalError('Asal instansi atau keperluan wajib diisi.');
         return;
       }
       await onGuestCheckIn({
@@ -90,7 +80,7 @@ export function AuthScreen({
     }
 
     if (displayName.trim().length < 2) {
-      setLocalError('Nama karyawan minimal 2 karakter.');
+      setLocalError('Nama minimal 2 karakter.');
       return;
     }
     if (password.length < 4) {
@@ -106,136 +96,45 @@ export function AuthScreen({
   const activeError = localError || errorMessage;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
-      <header className="border-b border-slate-200 bg-white px-6 py-3.5 pt-safe">
-        <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <img src="/app-logo.png" alt="Ngising Logo" className="h-9 w-9 rounded-xl object-contain shadow-xs" />
-            <div>
-              <span className="font-display text-xl font-extrabold tracking-tight text-slate-900 block leading-tight">
-                Ngising
-              </span>
-              <span className="text-[10px] font-medium text-slate-500 hidden sm:block">
-                Pelacak Antrean Toilet Kantor
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {onOpenDisplay && (
-              <button
-                type="button"
-                onClick={onOpenDisplay}
-                className="inline-flex min-h-[36px] items-center gap-1.5 rounded-xl border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-bold text-teal-800 hover:bg-teal-100 transition-colors shadow-2xs cursor-pointer"
-              >
-                <Tv className="h-3.5 w-3.5 text-teal-700" />
-                <span>Layar Monitor (TV)</span>
-              </button>
-            )}
-            <span className="hidden sm:inline text-xs font-semibold text-slate-500">
-              Real-Time Monitor
-            </span>
-          </div>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-4 py-8 sm:px-6">
+      {/* Top right shortcut to TV mode */}
+      {onOpenDisplay && (
+        <div className="fixed top-4 right-4 z-10">
+          <button
+            type="button"
+            onClick={onOpenDisplay}
+            className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-slate-200 bg-white/90 px-3.5 py-1.5 text-xs font-bold text-slate-700 backdrop-blur-md hover:bg-slate-100 hover:text-slate-900 transition-all shadow-2xs cursor-pointer active:scale-95"
+          >
+            <Tv className="h-3.5 w-3.5 text-teal-600" />
+            <span>Mode Layar TV</span>
+          </button>
         </div>
-      </header>
+      )}
 
-      <main className="mx-auto grid w-full max-w-5xl flex-1 grid-cols-1 gap-8 px-4 py-10 sm:px-6 lg:grid-cols-12 lg:items-center">
-        {/* Left Editorial Summary & Live 1-Toilet Preview */}
-        <section className="space-y-6 lg:col-span-6">
-          <div>
-            <h1 className="font-display text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl text-balance">
-              Satu toilet kantor, antrean tertib tanpa bolak-balik ngecek.
-            </h1>
-            <p className="mt-3 text-base leading-relaxed text-slate-600">
-              Karyawan bisa masuk ke dashboard pribadi untuk memantau status toilet, sementara tamu atau customer cukup mengisi Buku Tamu tanpa perlu membuat akun.
-            </p>
-          </div>
+      {/* Main Centered Card */}
+      <div className="w-full max-w-md">
+        {/* Brand Header */}
+        <div className="mb-6 text-center">
+          <img
+            src="/app-logo.png"
+            alt="Ngising Logo"
+            className="mx-auto h-16 w-16 rounded-2xl object-contain shadow-md shadow-slate-200"
+          />
+          <h1 className="mt-3 font-display text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+            Ngising
+          </h1>
+          <p className="mt-1 text-xs text-slate-500">
+            Pelacak Antrean Toilet Kantor Real-Time
+          </p>
+        </div>
 
-          {toilet && (
-            <div className="rounded-xl border border-slate-200 bg-white p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs font-medium text-slate-500">Status Saat Ini</p>
-                  <h2 className="mt-1 font-display text-lg font-bold text-slate-900">
-                    {toilet.name}
-                  </h2>
-                  <p className="text-xs text-slate-500">
-                    {toilet.location} <span aria-hidden="true">·</span>{' '}
-                    {officeState?.queue.length ?? 0} orang dalam antrean
-                  </p>
-                </div>
-
-                {isMaintenance ? (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600">
-                    <Wrench className="h-4 w-4" aria-hidden="true" />
-                    <span>Perawatan</span>
-                  </span>
-                ) : isOccupied ? (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700">
-                    <Clock className="h-4 w-4" aria-hidden="true" />
-                    <span>Terisi</span>
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
-                    <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-                    <span>Tersedia</span>
-                  </span>
-                )}
-              </div>
-
-              <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
-                {isOccupied && toilet.occupant ? (
-                  <>
-                    <div className="flex items-center gap-3 min-w-0">
-                      <PoopMascot
-                        mood={toilet.occupant.need === 'pup' ? 'ngeden' : 'cepat'}
-                        size={42}
-                      />
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-slate-900">
-                          {getPublicDisplayName(
-                            toilet.occupant.displayName,
-                            toilet.occupant.isAnonymous,
-                            toilet.occupant.userId
-                          )}
-                        </p>
-                        <p className="text-xs text-slate-500">
-                          {toilet.occupant.department ? (
-                            <>
-                              {toilet.occupant.department} <span aria-hidden="true">·</span>{' '}
-                            </>
-                          ) : null}
-                          {toilet.occupant.need === 'pup' ? 'Pup' : 'Cepat'}
-                        </p>
-                      </div>
-                    </div>
-                    <p className="font-mono text-2xl font-bold tabular-nums text-slate-900 shrink-0">
-                      {formatDuration(elapsedMs)}
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex items-center gap-3">
-                      <PoopMascot mood={isMaintenance ? 'maintenance' : 'ready'} size={42} />
-                      <p className="text-sm font-medium text-slate-700">
-                        {isMaintenance ? 'Sedang dibersihkan' : 'Toilet sedang kosong'}
-                      </p>
-                    </div>
-                    <p className="font-mono text-2xl font-bold tabular-nums text-emerald-700 shrink-0">
-                      00:00
-                    </p>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
-        </section>
-
-        {/* Right Login / Register / Guestbook Card */}
-        <section className="rounded-xl border border-slate-200 bg-white p-6 sm:p-7 lg:col-span-6">
+        {/* Auth Card Container */}
+        <div className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-sm">
+          {/* Segmented Mode Toggle with Sliding Animation */}
           <div
             role="tablist"
-            aria-label="Pilih mode akses akun"
-            className="grid grid-cols-3 gap-1 rounded-lg bg-slate-100 p-1"
+            aria-label="Pilih mode akses"
+            className="relative grid grid-cols-3 gap-1 rounded-2xl bg-slate-100/90 p-1 text-xs font-bold"
           >
             <button
               type="button"
@@ -246,14 +145,20 @@ export function AuthScreen({
                 setLocalError(null);
                 onClearError();
               }}
-              className={`min-h-[38px] rounded-md px-2.5 py-1.5 text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
-                mode === 'login'
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+              className={`relative z-10 min-h-[38px] rounded-xl transition-colors text-center cursor-pointer select-none ${
+                mode === 'login' ? 'text-slate-900 font-extrabold' : 'text-slate-500 hover:text-slate-900'
               }`}
             >
-              Masuk Akun
+              {mode === 'login' && (
+                <motion.div
+                  layoutId="auth-tab-pill"
+                  transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                  className="absolute inset-0 rounded-xl bg-white shadow-xs"
+                />
+              )}
+              <span className="relative z-10">Masuk</span>
             </button>
+
             <button
               type="button"
               role="tab"
@@ -263,14 +168,20 @@ export function AuthScreen({
                 setLocalError(null);
                 onClearError();
               }}
-              className={`min-h-[38px] rounded-md px-2.5 py-1.5 text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
-                mode === 'register'
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+              className={`relative z-10 min-h-[38px] rounded-xl transition-colors text-center cursor-pointer select-none ${
+                mode === 'register' ? 'text-slate-900 font-extrabold' : 'text-slate-500 hover:text-slate-900'
               }`}
             >
-              Daftar Baru
+              {mode === 'register' && (
+                <motion.div
+                  layoutId="auth-tab-pill"
+                  transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                  className="absolute inset-0 rounded-xl bg-white shadow-xs"
+                />
+              )}
+              <span className="relative z-10">Daftar</span>
             </button>
+
             <button
               type="button"
               role="tab"
@@ -280,90 +191,70 @@ export function AuthScreen({
                 setLocalError(null);
                 onClearError();
               }}
-              className={`min-h-[38px] rounded-md px-2.5 py-1.5 text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
-                mode === 'guest'
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+              className={`relative z-10 min-h-[38px] rounded-xl transition-colors text-center cursor-pointer select-none ${
+                mode === 'guest' ? 'text-slate-900 font-extrabold' : 'text-slate-500 hover:text-slate-900'
               }`}
             >
-              Buku Tamu
+              {mode === 'guest' && (
+                <motion.div
+                  layoutId="auth-tab-pill"
+                  transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                  className="absolute inset-0 rounded-xl bg-white shadow-xs"
+                />
+              )}
+              <span className="relative z-10">Tamu</span>
             </button>
           </div>
 
-          {isLocalFallback && (
-            <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-xs leading-relaxed text-amber-900">
-              Hosting statis terdeteksi tanpa server backend aktif. Aplikasi berjalan dengan penyimpanan browser lokal (data tersimpan di perangkat ini).
-            </p>
-          )}
-
+          {/* Form */}
           <form onSubmit={handleSubmit} className="mt-5 space-y-4">
             {mode === 'guest' ? (
               <>
-                <p className="text-xs leading-relaxed text-slate-600">
-                  Tamu atau customer tidak perlu membuat akun, cukup isi Buku Tamu sebelum memakai atau mengantre toilet.
-                </p>
                 <div>
-                  <label htmlFor="guest-name" className="block text-xs font-medium text-slate-700">
-                    Nama Tamu
+                  <label htmlFor="guest-name" className="block text-xs font-bold text-slate-700">
+                    Nama Anda
                   </label>
                   <input
                     id="guest-name"
                     type="text"
                     value={guestName}
                     onChange={(e) => setGuestName(e.target.value)}
-                    placeholder="Contoh: Budi Santoso"
-                    className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                    placeholder="Contoh: Budi"
+                    className="mt-1.5 w-full min-h-[44px] rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
                   />
                 </div>
                 <div>
-                  <label htmlFor="guest-origin" className="block text-xs font-medium text-slate-700">
-                    Asal Instansi / Tujuan Kunjungan
+                  <label htmlFor="guest-origin" className="block text-xs font-bold text-slate-700">
+                    Asal / Keperluan
                   </label>
                   <input
                     id="guest-origin"
                     type="text"
                     value={guestOrigin}
                     onChange={(e) => setGuestOrigin(e.target.value)}
-                    placeholder="Contoh: PT Maju Jaya / Meeting"
-                    className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                    placeholder="Contoh: Tamu Meeting / Klien"
+                    className="mt-1.5 w-full min-h-[44px] rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
                   />
                 </div>
               </>
-            ) : (
+            ) : mode === 'register' ? (
               <>
-                {mode === 'register' ? (
-                  <div>
-                    <label htmlFor="auth-name" className="block text-xs font-medium text-slate-700">
-                      Nama
-                    </label>
-                    <input
-                      id="auth-name"
-                      type="text"
-                      value={displayName}
-                      onChange={(e) => setDisplayName(e.target.value)}
-                      placeholder="Contoh: Rina Wijaya"
-                      className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
-                    />
-                  </div>
-                ) : (
-                  <div>
-                    <label htmlFor="auth-identifier" className="block text-xs font-medium text-slate-700">
-                      Nama atau Email
-                    </label>
-                    <input
-                      id="auth-identifier"
-                      type="text"
-                      value={identifier}
-                      onChange={(e) => setIdentifier(e.target.value)}
-                      placeholder="Contoh: Siti Rahma"
-                      className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
-                    />
-                  </div>
-                )}
-
                 <div>
-                  <label htmlFor="auth-password" className="block text-xs font-medium text-slate-700">
-                    Password
+                  <label htmlFor="auth-name" className="block text-xs font-bold text-slate-700">
+                    Nama Lengkap
+                  </label>
+                  <input
+                    id="auth-name"
+                    type="text"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="Contoh: Siti Rahma"
+                    className="mt-1.5 w-full min-h-[44px] rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="auth-password" className="block text-xs font-bold text-slate-700">
+                    Buat Password
                   </label>
                   <div className="relative mt-1.5">
                     <Lock
@@ -376,7 +267,42 @@ export function AuthScreen({
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Minimal 4 karakter"
-                      className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-9 pr-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                      className="w-full min-h-[44px] rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                    />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <label htmlFor="auth-identifier" className="block text-xs font-bold text-slate-700">
+                    Nama atau Email
+                  </label>
+                  <input
+                    id="auth-identifier"
+                    type="text"
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
+                    placeholder="Contoh: siti@kantor.id"
+                    className="mt-1.5 w-full min-h-[44px] rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="auth-password" className="block text-xs font-bold text-slate-700">
+                    Password
+                  </label>
+                  <div className="relative mt-1.5">
+                    <Lock
+                      className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                      aria-hidden="true"
+                    />
+                    <input
+                      id="auth-password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Masukkan password"
+                      className="w-full min-h-[44px] rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
                     />
                   </div>
                 </div>
@@ -384,8 +310,8 @@ export function AuthScreen({
             )}
 
             {activeError && (
-              <p role="alert" className="flex items-center gap-2 text-xs font-medium text-red-600">
-                <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <p role="alert" className="flex items-center gap-2 rounded-xl bg-red-50 p-2.5 text-xs font-semibold text-red-700 border border-red-200">
+                <AlertCircle className="h-4 w-4 shrink-0 text-red-600" aria-hidden="true" />
                 <span>{activeError}</span>
               </p>
             )}
@@ -393,28 +319,70 @@ export function AuthScreen({
             <button
               type="submit"
               disabled={authLoading}
-              className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-60 transition-colors"
+              className="inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-teal-700/20 hover:bg-teal-800 disabled:opacity-60 transition-all cursor-pointer active:scale-98"
             >
               {mode === 'login' ? (
                 <>
                   <LogIn className="h-4 w-4" aria-hidden="true" />
-                  <span>{authLoading ? 'Memproses...' : 'Masuk ke Dashboard Saya'}</span>
+                  <span>{authLoading ? 'Memproses...' : 'Masuk Sekarang'}</span>
                 </>
               ) : mode === 'guest' ? (
                 <>
                   <BookOpenCheck className="h-4 w-4" aria-hidden="true" />
-                  <span>{authLoading ? 'Menyimpan...' : 'Isi Buku Tamu & Lanjut'}</span>
+                  <span>{authLoading ? 'Menyimpan...' : 'Lanjut Sebagai Tamu'}</span>
                 </>
               ) : (
                 <>
                   <UserPlus className="h-4 w-4" aria-hidden="true" />
-                  <span>{authLoading ? 'Mendaftar...' : 'Buat Akun Ngising'}</span>
+                  <span>{authLoading ? 'Mendaftar...' : 'Daftar & Masuk'}</span>
                 </>
               )}
             </button>
           </form>
-        </section>
-      </main>
+
+          {/* Quick Demo Credentials shortcut for testing */}
+          <div className="mt-5 border-t border-slate-100 pt-4 text-center">
+            <span className="text-[11px] font-semibold text-slate-400 block mb-2">
+              Akun Cepat (Klik untuk isi otomatis):
+            </span>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setMode('login');
+                  setIdentifier('siti@kantor.id');
+                  setPassword('ngising123');
+                }}
+                className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                👑 Siti (Admin)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMode('login');
+                  setIdentifier('budi@kantor.id');
+                  setPassword('ngising123');
+                }}
+                className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                👤 Budi
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMode('guest');
+                  setGuestName('Tamu Kantor');
+                  setGuestOrigin('Meeting');
+                }}
+                className="rounded-lg border border-teal-200 bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-800 hover:bg-teal-100 transition-colors cursor-pointer"
+              >
+                🏢 Mode Tamu
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
