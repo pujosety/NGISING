@@ -1,19 +1,16 @@
 import {
-  BellRing,
+  ArrowLeft,
   Clock,
   DoorClosed,
   DoorOpen,
   Expand,
-  Flame,
   Minimize,
   QrCode,
-  Sparkles,
   Tv,
   Wifi,
+  WifiOff,
   Wrench,
-  Zap,
 } from 'lucide-react';
-import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import {
   OVERTIME_THRESHOLD_MS,
@@ -22,20 +19,20 @@ import {
   getPublicDisplayName,
 } from '../shared/queueLogic.ts';
 import type { OfficeState } from '../shared/types.ts';
-import { PoopMascot } from './PoopAnimations.tsx';
 
 interface DisplayMonitorViewProps {
   officeState: OfficeState | null;
   now: number;
   connected: boolean;
   lastSyncedAt: number;
+  onExit?: () => void;
 }
 
 export function DisplayMonitorView({
   officeState,
   now,
   connected,
-  lastSyncedAt,
+  onExit,
 }: DisplayMonitorViewProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -83,116 +80,124 @@ export function DisplayMonitorView({
   const dateString = new Date(now).toLocaleDateString('id-ID', {
     weekday: 'long',
     day: 'numeric',
-    month: 'long',
+    month: 'short',
     year: 'numeric',
   });
 
   return (
-    <div className="relative flex min-h-[85vh] flex-col justify-between overflow-hidden rounded-3xl border border-slate-200/90 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-950 p-6 sm:p-10 text-white shadow-2xl">
-      {/* Top Header Bar: Screen Title, Wall Clock & Fullscreen Control */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-6">
-        <div className="flex items-center gap-3.5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-500/20 text-teal-400 ring-1 ring-teal-500/40">
-            <Tv className="h-6 w-6" aria-hidden="true" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-                Ngising TV Monitor
-              </span>
-              <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[11px] font-bold text-emerald-400 ring-1 ring-emerald-500/40 flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
-                <span>LIVE SCREEN</span>
-              </span>
+    <div className="flex h-full w-full flex-col justify-between bg-[#0B0F17] text-slate-100 p-4 sm:p-8 select-none font-sans overflow-y-auto">
+      {/* Top Bar: Clean brutalist header */}
+      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
+        <div className="flex items-center gap-3">
+          {onExit && (
+            <button
+              type="button"
+              onClick={onExit}
+              className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:border-slate-500 hover:text-white transition-colors cursor-pointer"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Kembali</span>
+            </button>
+          )}
+
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800 border border-slate-700 text-teal-400">
+              <Tv className="h-4 w-4" aria-hidden="true" />
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">
-              {toilet?.location || 'Toilet Kantor Lantai 2'} · Layar Monitor Publik
-            </p>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="font-mono text-sm sm:text-base font-bold tracking-tight text-white uppercase">
+                  MONITOR BILIK
+                </h1>
+                <span className="rounded bg-teal-500/10 px-1.5 py-0.5 font-mono text-[10px] font-bold tracking-wider text-teal-400 border border-teal-500/20">
+                  LIVE
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 font-mono">
+                {toilet?.location || 'TOILET LANTAI 2'} · {toilet?.name || 'BILIK UTAMA'}
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="text-right">
-            <p className="font-mono text-2xl sm:text-3xl font-extrabold tracking-wider text-teal-400 tabular-nums">
-              {timeString}{' '}
-              <span className="text-xs font-sans font-medium text-slate-400">WIB</span>
+        {/* Clock & Fullscreen Control */}
+        <div className="flex items-center gap-3">
+          <div className="border border-slate-800 bg-slate-900/80 px-3 py-1.5 rounded-lg text-right">
+            <span className="font-mono text-lg sm:text-2xl font-bold tracking-widest text-slate-100 tabular-nums">
+              {timeString}
+            </span>
+            <span className="ml-1 text-[11px] font-mono font-medium text-slate-500">WIB</span>
+            <p className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">
+              {dateString}
             </p>
-            <p className="text-xs text-slate-400">{dateString}</p>
           </div>
 
           <button
             type="button"
             onClick={toggleFullscreen}
-            title={isFullscreen ? 'Keluar Fullscreen' : 'Layar Penuh (Fullscreen)'}
-            className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/15 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white transition-all cursor-pointer shadow-lg active:scale-95"
+            title={isFullscreen ? 'Keluar Layar Penuh' : 'Layar Penuh (Fullscreen)'}
+            className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-700 bg-slate-800/80 text-slate-300 hover:border-slate-500 hover:text-white transition-colors cursor-pointer active:scale-95"
           >
             {isFullscreen ? (
-              <Minimize className="h-5 w-5" />
+              <Minimize className="h-4 w-4" />
             ) : (
-              <Expand className="h-5 w-5" />
+              <Expand className="h-4 w-4" />
             )}
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* Main Giant Status Stage */}
-      <div className="my-8 grid grid-cols-1 gap-8 lg:grid-cols-12 items-center">
-        {/* Left: Giant Toilet Lamp & Current Occupancy Box */}
-        <div className="lg:col-span-7">
+      {/* Main Grid: Left Status + Right Queue */}
+      <main className="my-6 grid grid-cols-1 gap-6 lg:grid-cols-12 flex-1 items-stretch">
+        {/* Left Column (7 cols): Massive High-Legibility Status Card */}
+        <div className="lg:col-span-7 flex flex-col">
           <div
-            className={`relative overflow-hidden rounded-3xl border p-8 sm:p-12 shadow-2xl transition-all duration-500 ${
+            className={`flex flex-1 flex-col justify-between rounded-2xl border p-6 sm:p-10 transition-colors ${
               isMaintenance
-                ? 'border-slate-700 bg-slate-900/90 text-slate-300 ring-1 ring-slate-800'
+                ? 'border-slate-700 bg-slate-900 text-slate-300'
                 : isOccupied
                   ? isOvertime
-                    ? 'border-red-500/50 bg-gradient-to-br from-red-950/60 via-slate-900 to-slate-950 ring-2 ring-red-500/30'
-                    : 'border-amber-500/50 bg-gradient-to-br from-amber-950/50 via-slate-900 to-slate-950 ring-2 ring-amber-500/30'
+                    ? 'border-red-600 bg-red-950/40 text-red-100'
+                    : 'border-rose-600 bg-rose-950/30 text-rose-100'
                   : isReserved
-                    ? 'border-teal-500/50 bg-gradient-to-br from-teal-950/60 via-slate-900 to-slate-950 ring-2 ring-teal-500/40 animate-pulse'
-                    : 'border-emerald-500/50 bg-gradient-to-br from-emerald-950/50 via-slate-900 to-slate-950 ring-2 ring-emerald-500/30'
+                    ? 'border-teal-500 bg-teal-950/40 text-teal-100'
+                    : 'border-emerald-600 bg-emerald-950/30 text-emerald-100'
             }`}
           >
-            {/* Header Lamp & Plaque */}
-            <div className="flex items-center justify-between gap-4">
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-semibold text-slate-300">
-                {isOccupied ? (
-                  <DoorClosed className="h-4 w-4 text-amber-400" />
-                ) : (
-                  <DoorOpen className="h-4 w-4 text-emerald-400" />
-                )}
-                <span>{toilet?.name || 'Bilik Utama'}</span>
-              </span>
-
+            {/* Top Indicator Header */}
+            <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-4">
               <div className="flex items-center gap-2">
-                <span className="relative flex h-3 w-3">
-                  <span
-                    className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                      isMaintenance
-                        ? 'bg-slate-400'
-                        : isOccupied
-                          ? 'bg-amber-400 animate-ping'
-                          : isReserved
-                            ? 'bg-teal-400 animate-ping'
-                            : 'bg-emerald-400 animate-ping'
-                    }`}
-                  />
-                  <span
-                    className={`relative inline-flex rounded-full h-3 w-3 ${
-                      isMaintenance
-                        ? 'bg-slate-500'
-                        : isOccupied
-                          ? 'bg-amber-500'
-                          : isReserved
-                            ? 'bg-teal-500'
-                            : 'bg-emerald-500'
-                    }`}
-                  />
+                {isMaintenance ? (
+                  <Wrench className="h-5 w-5 text-amber-400" />
+                ) : isOccupied ? (
+                  <DoorClosed className="h-5 w-5 text-rose-400" />
+                ) : (
+                  <DoorOpen className="h-5 w-5 text-emerald-400" />
+                )}
+                <span className="font-mono text-xs font-bold uppercase tracking-wider text-slate-300">
+                  STATUS BILIK
                 </span>
-                <span className="font-mono text-xs font-extrabold uppercase tracking-widest text-slate-300">
+              </div>
+
+              <div className="flex items-center gap-2 font-mono text-xs font-bold uppercase">
+                <span
+                  className={`h-2.5 w-2.5 rounded-full ${
+                    isMaintenance
+                      ? 'bg-amber-400'
+                      : isOccupied
+                        ? 'bg-rose-500 animate-pulse'
+                        : isReserved
+                          ? 'bg-teal-400 animate-pulse'
+                          : 'bg-emerald-500'
+                  }`}
+                />
+                <span>
                   {isMaintenance
                     ? 'MAINTENANCE'
                     : isOccupied
-                      ? 'IN USE'
+                      ? isOvertime
+                        ? 'OVERTIME'
+                        : 'IN USE'
                       : isReserved
                         ? 'CALLED'
                         : 'VACANT'}
@@ -200,133 +205,117 @@ export function DisplayMonitorView({
               </div>
             </div>
 
-            {/* Giant Main Display Text */}
-            <div className="mt-8">
+            {/* Middle: Massive Visual Status */}
+            <div className="my-8 text-center sm:text-left">
               {isMaintenance ? (
-                <div className="space-y-3">
-                  <div className="inline-flex items-center gap-2 text-slate-400">
-                    <Wrench className="h-8 w-8 text-slate-400 animate-spin" />
-                    <span className="text-sm font-semibold uppercase tracking-wider">
-                      Sedang Dibersihkan
-                    </span>
-                  </div>
-                  <h3 className="font-display text-4xl sm:text-6xl font-black text-slate-200">
-                    PERAWATAN
-                  </h3>
-                  <p className="text-base text-slate-400 max-w-md">
-                    Bilik sedang dibersihkan dan disterilkan oleh tim operasional kantor.
+                <div>
+                  <h2 className="font-mono text-4xl sm:text-6xl font-black uppercase tracking-tight text-amber-400">
+                    SEDANG PERBAIKAN
+                  </h2>
+                  <p className="mt-3 text-sm sm:text-base text-slate-400 font-mono">
+                    Bilik sementara tidak dapat digunakan untuk pembersihan rutin.
                   </p>
                 </div>
-              ) : isOccupied && toilet?.occupant ? (
-                <div className="space-y-4">
-                  <span className="text-sm font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
-                    <Flame className="h-4 w-4 animate-bounce" />
-                    <span>Toilet Sedang Terisi</span>
-                  </span>
-                  <h3 className="font-display text-4xl sm:text-6xl font-black text-white truncate tracking-tight">
-                    {getPublicDisplayName(
-                      toilet.occupant.displayName,
-                      toilet.occupant.isAnonymous,
-                      toilet.occupant.userId
-                    )}
-                  </h3>
-                  <p className="text-sm text-slate-300">
-                    {toilet.occupant.department ? (
-                      <span className="font-semibold text-slate-200">
-                        Divisi {toilet.occupant.department} ·{' '}
+              ) : isOccupied ? (
+                <div>
+                  <div className="inline-block rounded bg-rose-500/20 px-3 py-1 font-mono text-xs font-bold uppercase tracking-wider text-rose-300 border border-rose-500/30 mb-3">
+                    {toilet?.occupant?.need === 'pup' ? 'BAB / Pup' : 'BAK / Cepat'}
+                  </div>
+                  <h2 className="font-mono text-5xl sm:text-7xl lg:text-8xl font-black tracking-tight text-white tabular-nums">
+                    {formatDuration(elapsedMs)}
+                  </h2>
+                  <p className="mt-4 font-mono text-base sm:text-xl font-bold text-slate-200">
+                    Sedang Dipakai:{' '}
+                    <span className="text-rose-400">
+                      {toilet?.occupant
+                        ? getPublicDisplayName(
+                            toilet.occupant.displayName,
+                            toilet.occupant.isAnonymous,
+                            toilet.occupant.userId
+                          )
+                        : 'Seseorang'}
+                    </span>
+                    {toilet?.occupant?.department && (
+                      <span className="text-slate-400 text-sm font-normal ml-2">
+                        ({toilet.occupant.department})
                       </span>
-                    ) : null}
-                    <span>
-                      {toilet.occupant.need === 'pup'
-                        ? 'Misi Pup 💩 (Santai)'
-                        : 'Misi Cepat ⚡ (BAK)'}
-                    </span>
-                  </p>
-
-                  {/* Giant Running Timer */}
-                  <div className="mt-6 flex flex-wrap items-baseline gap-4 rounded-2xl border border-white/10 bg-black/40 px-6 py-4 backdrop-blur-md">
-                    <span className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-                      Durasi Berjalan:
-                    </span>
-                    <span
-                      className={`font-mono text-5xl sm:text-7xl font-black tabular-nums tracking-tight ${
-                        isOvertime ? 'text-red-400 animate-pulse' : 'text-amber-400'
-                      }`}
-                    >
-                      {formatDuration(elapsedMs)}
-                    </span>
-                  </div>
-                </div>
-              ) : isReserved && toilet?.reservedFor ? (
-                <div className="space-y-4">
-                  <span className="text-sm font-bold uppercase tracking-wider text-teal-400 flex items-center gap-2">
-                    <BellRing className="h-4 w-4 animate-bounce" />
-                    <span>Giliran Tiba! Bilik Siap</span>
-                  </span>
-                  <h3 className="font-display text-4xl sm:text-6xl font-black text-teal-300 truncate tracking-tight">
-                    {getPublicDisplayName(
-                      toilet.reservedFor.displayName,
-                      toilet.reservedFor.isAnonymous,
-                      toilet.reservedFor.userId
                     )}
-                  </h3>
-                  <p className="text-sm text-teal-200">
-                    Silakan segera masuk sebelum batas reservasi berakhir.
                   </p>
-
-                  <div className="mt-6 flex flex-wrap items-baseline gap-4 rounded-2xl border border-teal-500/30 bg-teal-950/50 px-6 py-4">
-                    <span className="text-xs font-semibold uppercase tracking-widest text-teal-400">
-                      Batas Waktu Masuk:
-                    </span>
-                    <span className="font-mono text-5xl sm:text-7xl font-black tabular-nums text-teal-300">
-                      {formatDuration(reserveRemainingMs)}
-                    </span>
+                  {isOvertime && (
+                    <div className="mt-4 inline-flex items-center gap-2 rounded border border-red-500/40 bg-red-500/10 px-3 py-1.5 font-mono text-xs font-bold text-red-300">
+                      <span>DURASI MELEBIHI 15 MENIT · MOHON PENGERTIAN</span>
+                    </div>
+                  )}
+                </div>
+              ) : isReserved ? (
+                <div>
+                  <div className="inline-block rounded bg-teal-500/20 px-3 py-1 font-mono text-xs font-bold uppercase tracking-wider text-teal-300 border border-teal-500/30 mb-3">
+                    GILIRAN DIPANGGIL
                   </div>
+                  <h2 className="font-mono text-5xl sm:text-7xl lg:text-8xl font-black tracking-tight text-teal-400 tabular-nums">
+                    {formatDuration(reserveRemainingMs)}
+                  </h2>
+                  <p className="mt-4 font-mono text-base sm:text-xl font-bold text-slate-200">
+                    Menunggu:{' '}
+                    <span className="text-teal-300">
+                      {toilet?.reservedFor
+                        ? getPublicDisplayName(
+                            toilet.reservedFor.displayName,
+                            false,
+                            toilet.reservedFor.userId
+                          )
+                        : 'Pemenang Antrean'}
+                    </span>
+                  </p>
+                  <p className="mt-1 text-xs text-teal-400/80 font-mono">
+                    Silakan segera masuk sebelum waktu reservasi habis.
+                  </p>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  <span className="text-sm font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-2">
-                    <Sparkles className="h-4 w-4" />
-                    <span>Toilet Bersih & Siap</span>
-                  </span>
-                  <h3 className="font-display text-4xl sm:text-6xl font-black text-emerald-400 tracking-tight">
-                    KOSONG / TERSEDIA
-                  </h3>
-                  <p className="text-lg text-slate-300 max-w-lg">
-                    Bilik toilet sedang kosong. Silakan masuk atau buka aplikasi untuk menyalakan timer sesi!
+                <div>
+                  <h2 className="font-mono text-5xl sm:text-7xl lg:text-8xl font-black uppercase tracking-tight text-emerald-400">
+                    KOSONG
+                  </h2>
+                  <p className="mt-4 font-mono text-base sm:text-xl font-bold text-slate-200">
+                    Bilik toilet siap digunakan sekarang.
                   </p>
-                  <div className="mt-6 inline-flex items-center gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-950/40 px-6 py-3 text-emerald-300 font-mono text-xl font-bold">
-                    <span>READY TO USE 🚽</span>
-                  </div>
+                  <p className="mt-1 text-xs sm:text-sm text-slate-400 font-mono">
+                    Silakan masuk dan tap &quot;Saya di Dalam&quot; di aplikasi ponsel.
+                  </p>
                 </div>
               )}
+            </div>
+
+            {/* Bottom Meta Bar inside Status Card */}
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4 text-xs font-mono text-slate-400">
+              <span>{toilet?.name || 'Bilik Utama'}</span>
+              <span>Kapasitas: 1 Orang</span>
             </div>
           </div>
         </div>
 
-        {/* Right: Live Queue List & Scan-to-Join Card */}
-        <div className="lg:col-span-5 space-y-6">
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-md">
-            <div className="flex items-center justify-between border-b border-white/10 pb-4">
-              <div>
-                <h4 className="font-display text-lg font-bold text-white flex items-center gap-2">
-                  <span>Antrean Menunggu</span>
-                  <span className="rounded-full bg-teal-500/20 px-2 py-0.5 font-mono text-xs font-bold text-teal-400">
-                    {queue.length}
-                  </span>
-                </h4>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Daftar rekan kantor yang menunggu giliran
-                </p>
+        {/* Right Column (5 cols): Clean Tabular Queue List */}
+        <div className="lg:col-span-5 flex flex-col gap-4">
+          {/* Queue Box */}
+          <div className="flex flex-1 flex-col rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-xs font-bold uppercase tracking-wider text-slate-300">
+                  ANTREAN BERIKUTNYA
+                </span>
+                <span className="rounded bg-slate-800 px-2 py-0.5 font-mono text-xs font-bold text-teal-400 border border-slate-700">
+                  {queue.length}
+                </span>
               </div>
+              <span className="font-mono text-[11px] text-slate-500">ESTIMASI</span>
             </div>
 
-            <div className="mt-4 space-y-2.5 max-h-[320px] overflow-y-auto pr-1">
+            <div className="mt-3 flex-1 space-y-2 overflow-y-auto pr-1">
               {queue.length === 0 ? (
-                <div className="py-8 text-center text-slate-400">
-                  <p className="text-sm font-bold text-slate-300">Tidak ada antrean</p>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Bilik sepi, siapa saja bisa langsung masuk!
+                <div className="flex h-44 flex-col items-center justify-center text-center text-slate-500 font-mono text-xs">
+                  <p className="font-bold text-slate-400">TIDAK ADA ANTREAN</p>
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    Bilik saat ini bebas dari antrean.
                   </p>
                 </div>
               ) : (
@@ -339,43 +328,42 @@ export function DisplayMonitorView({
                       ? 0
                       : estimateWaitMinutes(toilet, queue, history, Math.max(0, waitingIndex), now);
 
-                  const rankColor =
-                    idx === 0
-                      ? 'bg-amber-400 text-slate-950'
-                      : idx === 1
-                        ? 'bg-slate-300 text-slate-950'
-                        : idx === 2
-                          ? 'bg-amber-700 text-white'
-                          : 'bg-white/10 text-slate-300';
-
                   return (
                     <div
                       key={entry.id}
-                      className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/30 p-3.5 transition-all"
+                      className="flex items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-900/90 px-3 py-2.5 font-mono text-xs"
                     >
-                      <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex items-center gap-2.5 min-w-0">
                         <span
-                          className={`flex h-7 w-7 items-center justify-center rounded-xl font-mono text-xs font-black shrink-0 ${rankColor}`}
+                          className={`flex h-6 w-6 items-center justify-center rounded font-bold text-xs shrink-0 ${
+                            idx === 0
+                              ? 'bg-amber-500 text-slate-950'
+                              : 'bg-slate-800 text-slate-300 border border-slate-700'
+                          }`}
                         >
-                          #{idx + 1}
+                          {idx + 1}
                         </span>
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-bold text-white">
+                          <p className="truncate font-bold text-slate-200">
                             {getPublicDisplayName(
                               entry.displayName,
                               entry.isAnonymous,
                               entry.userId
                             )}
                           </p>
-                          <p className="text-[11px] text-slate-400">
-                            {entry.department ? `${entry.department} · ` : ''}
-                            {entry.need === 'pup' ? 'Pup 💩' : 'Cepat ⚡'}
+                          <p className="text-[10px] text-slate-400">
+                            {entry.need === 'pup' ? 'BAB (Santai)' : 'BAK (Cepat)'}
+                            {entry.department ? ` · ${entry.department}` : ''}
                           </p>
                         </div>
                       </div>
 
                       <div className="text-right shrink-0">
-                        <span className="font-mono text-xs font-bold text-teal-400">
+                        <span
+                          className={`font-bold ${
+                            entry.status === 'called' ? 'text-teal-400' : 'text-slate-300'
+                          }`}
+                        >
                           {entry.status === 'called' ? 'DIPANGGIL' : `~${estMin} mnt`}
                         </span>
                       </div>
@@ -386,41 +374,46 @@ export function DisplayMonitorView({
             </div>
           </div>
 
-          {/* Quick Join Info Card with QR hint */}
-          <div className="rounded-3xl border border-teal-500/20 bg-gradient-to-r from-teal-950/40 to-slate-900 p-5 backdrop-blur-md flex items-center justify-between gap-4">
+          {/* Join Callout Box */}
+          <div className="rounded-xl border border-slate-800 bg-slate-900/80 p-4 font-mono text-xs flex items-center justify-between gap-4">
             <div className="min-w-0">
-              <p className="text-xs font-bold uppercase tracking-wider text-teal-400 flex items-center gap-1.5">
-                <QrCode className="h-4 w-4" />
-                <span>Mau Masuk Antrean?</span>
-              </p>
-              <p className="mt-1 font-mono text-sm sm:text-base font-extrabold text-white truncate">
-                ngising.gwk.id
-              </p>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Buka di browser HP Anda untuk ambil nomor antrean
+              <span className="text-[10px] font-bold uppercase tracking-wider text-teal-400 flex items-center gap-1">
+                <QrCode className="h-3.5 w-3.5" />
+                <span>AKSES DARI PONSEL</span>
+              </span>
+              <p className="text-sm font-bold text-white mt-0.5 truncate">ngising.gwk.id</p>
+              <p className="text-[11px] text-slate-400">
+                Buka website untuk ambil antrean atau cek status
               </p>
             </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-500 text-slate-950 font-bold shrink-0 shadow-lg">
-              <span className="text-xl">📱</span>
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-slate-300 shrink-0 font-bold">
+              WEB
             </div>
           </div>
         </div>
-      </div>
+      </main>
 
-      {/* Footer Status Bar: Auto-Refresh heartbeat */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-4 text-xs text-slate-400">
+      {/* Footer: Diagnostic Bar */}
+      <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-800/80 pt-3 font-mono text-[11px] text-slate-400">
         <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span>
-            {connected ? 'Live Sync Wasmer Edge Terhubung' : 'Sedang Menghubungkan...'}
-          </span>
-          <span className="text-slate-600">·</span>
-          <span>{officeState?.onlineCount ?? 1} perangkat aktif</span>
+          {connected ? (
+            <span className="flex items-center gap-1.5 text-emerald-400">
+              <Wifi className="h-3 w-3" />
+              <span>LIVE SYNC AKTIF</span>
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5 text-rose-400">
+              <WifiOff className="h-3 w-3" />
+              <span>TERPUTUS</span>
+            </span>
+          )}
+          <span>·</span>
+          <span>ONLINE: {officeState?.onlineCount ?? 1} USER</span>
         </div>
         <div>
-          <span>Antigravity Smart Office System · Ngising v1.1</span>
+          <span>NGISING OFFICE MONITOR · V1.2</span>
         </div>
-      </div>
+      </footer>
     </div>
   );
 }

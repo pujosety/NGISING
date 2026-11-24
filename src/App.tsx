@@ -289,6 +289,20 @@ export default function App() {
     myPersonalStatusColor = 'text-slate-500';
   }
 
+  if (safeActiveTab === 'display') {
+    return (
+      <div className="fixed inset-0 z-50 flex h-screen w-screen flex-col bg-[#0B0F17] text-slate-100 overflow-hidden select-none">
+        <DisplayMonitorView
+          officeState={state}
+          now={now}
+          connected={connected}
+          lastSyncedAt={lastSyncedAt}
+          onExit={() => setActiveTab('dashboard')}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900">
       <PoopInteractionBurst event={burstEvent} />
@@ -641,13 +655,6 @@ export default function App() {
                 </section>
               </div>
             </div>
-          ) : safeActiveTab === 'display' ? (
-            <DisplayMonitorView
-              officeState={state}
-              now={now}
-              connected={connected}
-              lastSyncedAt={lastSyncedAt}
-            />
           ) : safeActiveTab === 'history' ? (
             <HistoryView history={history} currentUserId={user.id} />
           ) : safeActiveTab === 'stats' ? (
