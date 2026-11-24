@@ -12,6 +12,7 @@ import {
   Wrench,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import QRCode from 'qrcode';
 import {
   OVERTIME_THRESHOLD_MS,
   estimateWaitMinutes,
@@ -35,6 +36,22 @@ export function DisplayMonitorView({
   onExit,
 }: DisplayMonitorViewProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string>('');
+
+  useEffect(() => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://ngising.gwk.id';
+    QRCode.toDataURL(origin, {
+      margin: 1,
+      width: 140,
+      color: {
+        dark: '#000000',
+        light: '#ffffff',
+      },
+      errorCorrectionLevel: 'M',
+    })
+      .then((url) => setQrDataUrl(url))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -374,20 +391,31 @@ export function DisplayMonitorView({
             </div>
           </div>
 
-          {/* Join Callout Box */}
-          <div className="rounded-xl border border-slate-800 bg-slate-900/80 p-4 font-mono text-xs flex items-center justify-between gap-4">
-            <div className="min-w-0">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-teal-400 flex items-center gap-1">
+          {/* Join Callout Box with Scannable QR Code */}
+          <div className="rounded-xl border border-slate-800 bg-slate-900/90 p-4 font-mono text-xs flex items-center justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-teal-400 flex items-center gap-1.5">
                 <QrCode className="h-3.5 w-3.5" />
-                <span>AKSES DARI PONSEL</span>
+                <span>SCAN DENGAN PONSEL</span>
               </span>
-              <p className="text-sm font-bold text-white mt-0.5 truncate">ngising.gwk.id</p>
-              <p className="text-[11px] text-slate-400">
-                Buka website untuk ambil antrean atau cek status
+              <p className="text-sm font-bold text-white mt-1 truncate">ngising.gwk.id</p>
+              <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">
+                Scan QR code untuk langsung masuk antrean atau pantau bilik dari HP
               </p>
             </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-slate-300 shrink-0 font-bold">
-              WEB
+
+            <div className="shrink-0 p-1.5 bg-white rounded-lg border border-slate-700 shadow-md flex items-center justify-center">
+              {qrDataUrl ? (
+                <img
+                  src={qrDataUrl}
+                  alt="QR Code ngising.gwk.id"
+                  className="h-20 w-20 sm:h-24 sm:w-24 object-contain rounded-xs"
+                />
+              ) : (
+                <div className="h-20 w-20 sm:h-24 sm:w-24 bg-slate-100 animate-pulse rounded-xs flex items-center justify-center text-[10px] text-slate-400">
+                  QR...
+                </div>
+              )}
             </div>
           </div>
         </div>
