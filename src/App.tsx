@@ -259,8 +259,9 @@ export default function App() {
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-4 border-b border-slate-200 bg-white/95 px-4 backdrop-blur-sm sm:px-8">
-          <div className="flex items-center gap-2 text-sm min-w-0">
+        <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-4 border-b border-slate-200 bg-white/95 px-4 pt-safe backdrop-blur-md sm:px-8">
+          <div className="flex items-center gap-2.5 text-sm min-w-0">
+            <img src="/app-logo.png" alt="Ngising" className="h-7 w-7 rounded-md object-contain lg:hidden shadow-2xs" />
             <span className="font-display font-extrabold text-slate-900 whitespace-nowrap lg:hidden">
               Ngising
             </span>

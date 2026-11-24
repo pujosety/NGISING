@@ -29,6 +29,21 @@ export interface AdminUserSummary extends UserAccount {
   sessionCount: number;
 }
 
+const isNativePlatform =
+  typeof window !== 'undefined' &&
+  (window.location.protocol === 'capacitor:' ||
+    (window.location.hostname === 'localhost' && window.location.port === '') ||
+    Boolean(
+      (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()
+    ));
+
+export const API_BASE_URL = isNativePlatform ? 'https://ngising.gwk.id' : '';
+export const WS_BASE_URL = isNativePlatform
+  ? 'wss://ngising.gwk.id/ws'
+  : typeof window !== 'undefined'
+    ? `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`
+    : 'wss://ngising.gwk.id/ws';
+
 type FetchJsonResult<T> =
   | { kind: 'ok'; status: number; data: T }
   | { kind: 'http_error'; status: number; data: T | null }
@@ -39,7 +54,8 @@ async function safeFetchJson<T>(
   options?: RequestInit
 ): Promise<FetchJsonResult<T>> {
   try {
-    const res = await fetch(url, options);
+    const targetUrl = url.startsWith('/') && API_BASE_URL ? `${API_BASE_URL}${url}` : url;
+    const res = await fetch(targetUrl, options);
     const contentType = res.headers.get('content-type') || '';
     const isJson = contentType.includes('application/json');
 
@@ -305,8 +321,7 @@ export function useOfficeQueue() {
 
     const connect = () => {
       if (disposed || localModeRef.current) return;
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+      const ws = new WebSocket(WS_BASE_URL);
       wsRef.current = ws;
 
       ws.onopen = () => {

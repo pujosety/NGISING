@@ -1,0 +1,28 @@
+{
+  "short_name": "Ngising",
+  "name": "Ngising — Pelacak Antrean Toilet Kantor",
+  "description": "Pantau ketersediaan toilet kantor, masuk antrean otomatis, dan kelola statistik pribadi secara real-time.",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#F8FAFC",
+  "theme_color": "#0D9488",
+  "display": "standalone",
+  "orientation": "portrait"
+}

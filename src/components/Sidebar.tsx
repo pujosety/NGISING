@@ -56,8 +56,8 @@ export function Sidebar({
     <>
       <aside className="hidden lg:flex lg:w-60 lg:shrink-0 lg:flex-col lg:border-r lg:border-slate-200 lg:bg-white">
         <div className="flex h-16 items-center justify-between border-b border-slate-200 px-5">
-          <div className="flex items-center gap-2">
-            <PoopMiniIcon className="h-6 w-6" />
+          <div className="flex items-center gap-2.5">
+            <img src="/app-logo.png" alt="Ngising Logo" className="h-8 w-8 rounded-lg object-contain shadow-xs" />
             <span className="font-display text-xl font-extrabold tracking-tight text-slate-900 whitespace-nowrap">
               Ngising
             </span>
@@ -142,7 +142,7 @@ export function Sidebar({
       {/* Mobile Bottom Navigation */}
       <nav
         aria-label="Navigasi mobile"
-        className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-around border-t border-slate-200 bg-white/95 backdrop-blur-sm px-2 py-1.5 lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-around border-t border-slate-200 bg-white/95 backdrop-blur-md px-2 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] lg:hidden shadow-lg"
       >
         {navItems.map((item) => {
           const Icon = item.icon;

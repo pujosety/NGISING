@@ -104,16 +104,21 @@ export function AuthScreen({
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
-      <header className="border-b border-slate-200 bg-white px-6 py-4">
+      <header className="border-b border-slate-200 bg-white px-6 py-3.5 pt-safe">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <div className="flex items-center gap-2">
-            <PoopMiniIcon className="h-6 w-6" />
-            <span className="font-display text-xl font-extrabold tracking-tight text-slate-900">
-              Ngising
-            </span>
+          <div className="flex items-center gap-2.5">
+            <img src="/app-logo.png" alt="Ngising Logo" className="h-9 w-9 rounded-xl object-contain shadow-xs" />
+            <div>
+              <span className="font-display text-xl font-extrabold tracking-tight text-slate-900 block leading-tight">
+                Ngising
+              </span>
+              <span className="text-[10px] font-medium text-slate-500 hidden sm:block">
+                Pelacak Antrean Toilet Kantor
+              </span>
+            </div>
           </div>
           <span className="text-xs font-semibold text-slate-500">
-            Pantau & Antre Toilet Kantor Real-Time
+            Real-Time Monitor
           </span>
         </div>
       </header>
