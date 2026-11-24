@@ -107,7 +107,7 @@ export function QueuePanel({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => onClaimToilet(myQueueEntry.need)}
-              className="min-h-[42px] flex-1 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 px-4 py-2 text-sm font-extrabold text-white shadow-md hover:from-teal-700 hover:to-emerald-700 transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5"
+              className="min-h-[44px] flex-1 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 px-4 py-2 text-sm font-extrabold text-white shadow-md hover:from-teal-700 hover:to-emerald-700 transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5"
             >
               <span>Masuk Sekarang 🎯</span>
             </motion.button>
@@ -115,7 +115,7 @@ export function QueuePanel({
               type="button"
               disabled={busy}
               onClick={onLeaveQueue}
-              className="min-h-[42px] rounded-xl border border-teal-200 bg-white px-3.5 py-2 text-xs font-bold text-teal-800 hover:bg-teal-50 transition-colors cursor-pointer whitespace-nowrap"
+              className="min-h-[44px] rounded-xl border border-teal-200 bg-white px-3.5 py-2 text-xs font-bold text-teal-800 hover:bg-teal-50 transition-colors cursor-pointer whitespace-nowrap"
             >
               Lewati
             </button>
@@ -168,9 +168,9 @@ export function QueuePanel({
             type="button"
             disabled={busy}
             onClick={onLeaveQueue}
-            className="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
           >
-            <XCircle className="h-3.5 w-3.5 text-slate-500" aria-hidden="true" />
+            <XCircle className="h-4 w-4 text-slate-500" aria-hidden="true" />
             <span>Batalkan</span>
           </button>
         </motion.div>

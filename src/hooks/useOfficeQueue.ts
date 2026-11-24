@@ -116,6 +116,8 @@ export function useOfficeQueue() {
   const [connected, setConnected] = useState(false);
   const [busy, setBusy] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [lastSyncedAt, setLastSyncedAt] = useState<number>(() => Date.now());
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [soundEnabled, setSoundEnabledState] = useState<boolean>(() => {
     try {
       return localStorage.getItem(SOUND_STORAGE_KEY) !== 'false';
@@ -135,6 +137,7 @@ export function useOfficeQueue() {
     serverOffsetRef.current = incoming.serverNow - Date.now();
     setState(incoming);
     setNow(Date.now() + serverOffsetRef.current);
+    setLastSyncedAt(Date.now());
   }, []);
 
   const activateLocalFallback = useCallback(() => {
@@ -145,6 +148,27 @@ export function useOfficeQueue() {
     setConnected(true);
     applyServerState(localGetPublicState());
   }, [applyServerState]);
+
+  const refreshState = useCallback(async (): Promise<boolean> => {
+    setIsSyncing(true);
+    try {
+      if (localModeRef.current || isLocalFallback) {
+        applyServerState(localGetPublicState());
+        return true;
+      }
+      const res = await safeFetchJson<OfficeState>('/api/state');
+      if (res.kind === 'ok') {
+        applyServerState(res.data);
+        return true;
+      } else if (res.kind === 'backend_unavailable' && !localModeRef.current) {
+        activateLocalFallback();
+        return true;
+      }
+      return false;
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [applyServerState, isLocalFallback, activateLocalFallback]);
 
   const setSoundEnabled = useCallback((enabled: boolean) => {
     setSoundEnabledState(enabled);
@@ -340,18 +364,34 @@ export function useOfficeQueue() {
 
     connect();
 
-    // Fallback HTTP poll if WebSocket is blocked/disconnected behind a proxy
+    // Auto-refresh poll (every 2.5s) to guarantee zero desync even with proxy lag
     const pollTimer = window.setInterval(() => {
-      if (disposed || localModeRef.current) return;
-      const wsOpen = wsRef.current?.readyState === WebSocket.OPEN;
-      if (!wsOpen) {
-        void safeFetchJson<OfficeState>('/api/state').then((res) => {
-          if (!disposed && res.kind === 'ok') {
-            applyServerState(res.data);
-          }
-        });
+      if (disposed) return;
+      if (typeof document !== 'undefined' && document.hidden) return;
+      void refreshState();
+    }, 2500);
+
+    // Instant resync on app resume, tab focus, or coming back online
+    const handleSyncTrigger = () => {
+      if (disposed) return;
+      if (typeof document !== 'undefined' && !document.hidden) {
+        void refreshState();
       }
-    }, 4000);
+    };
+    const handleOnline = () => {
+      if (disposed) return;
+      setConnected(true);
+      void refreshState();
+    };
+    const handleOffline = () => {
+      if (disposed) return;
+      setConnected(false);
+    };
+
+    document.addEventListener('visibilitychange', handleSyncTrigger);
+    window.addEventListener('focus', handleSyncTrigger);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
 
     return () => {
       disposed = true;
@@ -359,9 +399,13 @@ export function useOfficeQueue() {
       if (reconnectTimerRef.current !== null) {
         window.clearTimeout(reconnectTimerRef.current);
       }
+      document.removeEventListener('visibilitychange', handleSyncTrigger);
+      window.removeEventListener('focus', handleSyncTrigger);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
       wsRef.current?.close();
     };
-  }, [applyServerState, isLocalFallback]);
+  }, [applyServerState, isLocalFallback, refreshState]);
 
   // Turn chime when authenticated user OR checked-in guest becomes 'called'
   const activeActorId = user?.id ?? guest?.id ?? null;
@@ -1016,6 +1060,9 @@ export function useOfficeQueue() {
     busy,
     errorMessage,
     clearError: () => setErrorMessage(null),
+    lastSyncedAt,
+    isSyncing,
+    refreshState,
     soundEnabled,
     setSoundEnabled,
     now,

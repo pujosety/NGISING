@@ -1,9 +1,16 @@
-import { AlertCircle, BookOpenCheck, LogOut, Wifi, WifiOff } from 'lucide-react';
+import { AlertCircle, BookOpenCheck, LogOut, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 import { getDailyQuota } from '../shared/queueLogic.ts';
 import type { GuestSession, NeedType, OfficeState } from '../shared/types.ts';
 import { PoopInteractionBurst, type PoopBurstEvent } from './PoopAnimations.tsx';
 import { QueuePanel } from './QueuePanel.tsx';
 import { StallCard } from './StallCard.tsx';
+
+function formatLastSynced(timestamp: number, now: number): string {
+  const diffSec = Math.max(0, Math.floor((now - timestamp) / 1000));
+  if (diffSec < 3) return 'Baru saja';
+  if (diffSec < 60) return `${diffSec}d lalu`;
+  return `${Math.floor(diffSec / 60)}m lalu`;
+}
 
 interface GuestWorkspaceProps {
   guest: GuestSession;
@@ -11,6 +18,9 @@ interface GuestWorkspaceProps {
   connected: boolean;
   busy: boolean;
   now: number;
+  lastSyncedAt?: number;
+  isSyncing?: boolean;
+  onRefresh?: () => void;
   selectedNeed: NeedType;
   onSelectNeed: (need: NeedType) => void;
   errorMessage: string | null;
@@ -29,6 +39,9 @@ export function GuestWorkspace({
   connected,
   busy,
   now,
+  lastSyncedAt,
+  isSyncing,
+  onRefresh,
   selectedNeed,
   onSelectNeed,
   errorMessage,
@@ -68,7 +81,41 @@ export function GuestWorkspace({
           </h1>
         </div>
 
-        <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+        <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+          {/* Auto-Refresh Badge */}
+          {onRefresh && (
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+                  try {
+                    navigator.vibrate(10);
+                  } catch {
+                    // ignore
+                  }
+                }
+                onRefresh();
+              }}
+              title="Klik untuk menyinkronkan status secara instan"
+              className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-teal-200/90 bg-teal-50/70 px-2.5 py-1 text-xs font-semibold text-teal-900 hover:bg-teal-100/80 transition-all cursor-pointer shadow-2xs whitespace-nowrap active:scale-95"
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-500" />
+              </span>
+              <span className="hidden xs:inline">Auto-Refresh:</span>
+              <span className="font-mono text-[11px] font-bold text-teal-800">
+                {lastSyncedAt ? formatLastSynced(lastSyncedAt, now) : 'Aktif'}
+              </span>
+              <RefreshCw
+                className={`h-3 w-3 text-teal-700 transition-transform ${
+                  isSyncing ? 'animate-spin' : ''
+                }`}
+                aria-hidden="true"
+              />
+            </button>
+          )}
+
           <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 whitespace-nowrap">
             {connected ? (
               <>
@@ -88,10 +135,10 @@ export function GuestWorkspace({
           <button
             type="button"
             onClick={onExitGuest}
-            className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors whitespace-nowrap shrink-0"
+            className="inline-flex min-h-[36px] items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors whitespace-nowrap shrink-0 cursor-pointer shadow-2xs"
           >
             <LogOut className="h-3.5 w-3.5 text-slate-500" aria-hidden="true" />
-            <span>Keluar / Ganti Tamu</span>
+            <span>Keluar Tamu</span>
           </button>
         </div>
       </header>

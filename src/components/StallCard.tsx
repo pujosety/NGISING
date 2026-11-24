@@ -406,26 +406,36 @@ export function StallCard({
             >
               <button
                 type="button"
-                onClick={() => onSelectNeed('pup')}
-                className={`min-h-[36px] rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                onClick={() => {
+                  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+                    try { navigator.vibrate(8); } catch {}
+                  }
+                  onSelectNeed('pup');
+                }}
+                className={`min-h-[44px] rounded-xl px-4 py-2 text-xs font-bold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer active:scale-95 ${
                   selectedNeed === 'pup'
-                    ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200'
+                    ? 'bg-white text-slate-900 shadow-sm ring-2 ring-amber-400'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <span>💩</span>
+                <span className="text-sm">💩</span>
                 <span>Pup (Santai)</span>
               </button>
               <button
                 type="button"
-                onClick={() => onSelectNeed('cepat')}
-                className={`min-h-[36px] rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                onClick={() => {
+                  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+                    try { navigator.vibrate(8); } catch {}
+                  }
+                  onSelectNeed('cepat');
+                }}
+                className={`min-h-[44px] rounded-xl px-4 py-2 text-xs font-bold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer active:scale-95 ${
                   selectedNeed === 'cepat'
-                    ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200'
+                    ? 'bg-white text-slate-900 shadow-sm ring-2 ring-teal-500'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <span>⚡</span>
+                <span className="text-sm">⚡</span>
                 <span>Cepat (BAK)</span>
               </button>
             </div>

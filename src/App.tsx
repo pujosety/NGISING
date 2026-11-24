@@ -1,4 +1,4 @@
-import { AlertCircle, Award, EyeOff, Medal, Trophy, Wifi, WifiOff } from 'lucide-react';
+import { AlertCircle, Award, EyeOff, Medal, RefreshCw, Trophy, Wifi, WifiOff } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AdminPanelView } from './components/AdminPanelView.tsx';
 import { AuthScreen } from './components/AuthScreen.tsx';
@@ -40,6 +40,13 @@ function formatTimeOnly(timestamp: number): string {
   });
 }
 
+function formatLastSynced(timestamp: number, now: number): string {
+  const diffSec = Math.max(0, Math.floor((now - timestamp) / 1000));
+  if (diffSec < 3) return 'Baru saja';
+  if (diffSec < 60) return `${diffSec}d lalu`;
+  return `${Math.floor(diffSec / 60)}m lalu`;
+}
+
 export default function App() {
   const {
     state,
@@ -54,6 +61,9 @@ export default function App() {
     busy,
     errorMessage,
     clearError,
+    lastSyncedAt,
+    isSyncing,
+    refreshState,
     soundEnabled,
     setSoundEnabled,
     now,
@@ -182,6 +192,9 @@ export default function App() {
         connected={connected}
         busy={busy}
         now={now}
+        lastSyncedAt={lastSyncedAt}
+        isSyncing={isSyncing}
+        onRefresh={refreshState}
         selectedNeed={selectedNeed}
         onSelectNeed={setSelectedNeed}
         errorMessage={errorMessage}
@@ -279,19 +292,51 @@ export default function App() {
             </h1>
           </div>
 
-          <div className="flex items-center gap-4 shrink-0">
-            <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 whitespace-nowrap">
+          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+            {/* Auto-Refresh & Live Sync Status Badge / Action */}
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+                  try {
+                    navigator.vibrate(10);
+                  } catch {
+                    // ignore
+                  }
+                }
+                void refreshState();
+              }}
+              title="Klik untuk menyinkronkan status secara instan"
+              className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-teal-200/90 bg-teal-50/70 px-2.5 py-1 text-xs font-semibold text-teal-900 hover:bg-teal-100/80 transition-all cursor-pointer shadow-2xs whitespace-nowrap active:scale-95"
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-500" />
+              </span>
+              <span className="hidden xs:inline">Auto-Refresh:</span>
+              <span className="font-mono text-[11px] font-bold text-teal-800">
+                {formatLastSynced(lastSyncedAt, now)}
+              </span>
+              <RefreshCw
+                className={`h-3 w-3 text-teal-700 transition-transform ${
+                  isSyncing ? 'animate-spin' : ''
+                }`}
+                aria-hidden="true"
+              />
+            </button>
+
+            <div className="hidden md:flex items-center gap-1.5 text-xs text-slate-500 whitespace-nowrap">
               {connected ? (
                 <>
                   <Wifi className="h-3.5 w-3.5 text-emerald-600" aria-hidden="true" />
-                  <span className="tabular-nums">
-                    {state?.onlineCount ?? 1} layar aktif
+                  <span className="tabular-nums font-medium">
+                    {state?.onlineCount ?? 1} aktif
                   </span>
                 </>
               ) : (
                 <>
                   <WifiOff className="h-3.5 w-3.5 text-amber-600" aria-hidden="true" />
-                  <span>Menyambung...</span>
+                  <span className="text-amber-700 font-medium">Menyambung...</span>
                 </>
               )}
             </div>
@@ -299,8 +344,9 @@ export default function App() {
             <button
               type="button"
               onClick={() => setActiveTab('account')}
-              className="inline-flex min-h-[36px] items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 hover:bg-slate-50 transition-colors whitespace-nowrap shrink-0"
+              className="inline-flex min-h-[36px] items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 hover:bg-slate-50 hover:border-slate-300 transition-all whitespace-nowrap shrink-0 shadow-2xs cursor-pointer"
             >
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
               <span>{user.displayName}</span>
             </button>
           </div>

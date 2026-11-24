@@ -142,7 +142,7 @@ export function Sidebar({
       {/* Mobile Bottom Navigation */}
       <nav
         aria-label="Navigasi mobile"
-        className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-around border-t border-slate-200 bg-white/95 backdrop-blur-md px-2 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] lg:hidden shadow-lg"
+        className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-around border-t border-slate-200/90 bg-white/95 backdrop-blur-xl px-2 pt-1.5 pb-[max(0.6rem,env(safe-area-inset-bottom))] lg:hidden shadow-lg"
       >
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -152,12 +152,19 @@ export function Sidebar({
               key={item.id}
               type="button"
               onClick={() => onSelectTab(item.id)}
-              className={`flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg px-2 py-1 text-[11px] font-medium transition-colors ${
-                isActive ? 'text-teal-700 bg-teal-50/70' : 'text-slate-600'
+              className={`flex min-h-[46px] flex-1 flex-col items-center justify-center gap-1 rounded-xl px-2 py-1 text-[11px] font-bold transition-all cursor-pointer active:scale-95 ${
+                isActive ? 'text-teal-800 bg-teal-50/80 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <Icon className="h-4 w-4" aria-hidden="true" />
-              <span className="whitespace-nowrap">{item.shortLabel}</span>
+              <div className="relative">
+                <Icon className="h-4 w-4" aria-hidden="true" />
+                {item.id === 'dashboard' && queueCount > 0 && (
+                  <span className="absolute -top-1.5 -right-2.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-teal-600 px-1 text-[9px] font-mono font-bold text-white shadow-2xs">
+                    {queueCount}
+                  </span>
+                )}
+              </div>
+              <span className="whitespace-nowrap leading-none">{item.shortLabel}</span>
             </button>
           );
         })}
