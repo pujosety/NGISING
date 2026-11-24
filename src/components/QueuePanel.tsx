@@ -1,4 +1,4 @@
-import { BellRing, Clock, UserPlus, XCircle } from 'lucide-react';
+import { BellRing, Clock, Sparkles, UserPlus, XCircle } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   estimateWaitMinutes,
@@ -12,6 +12,7 @@ import type {
   QueueEntry,
   Stall,
 } from '../shared/types.ts';
+import { PoopMiniIcon } from './PoopAnimations.tsx';
 
 interface QueuePanelProps {
   toilet: Stall;
@@ -48,59 +49,73 @@ export function QueuePanel({
   return (
     <section
       aria-labelledby="queue-panel-heading"
-      className="flex flex-col rounded-xl border border-slate-200 bg-white p-6"
+      className="flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
     >
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h2
-            id="queue-panel-heading"
-            className="font-display text-base font-bold text-slate-900"
-          >
-            Antrean Real-Time
-          </h2>
+          <div className="flex items-center gap-2">
+            <h2
+              id="queue-panel-heading"
+              className="font-display text-lg font-extrabold text-slate-900"
+            >
+              Antrean Bilik
+            </h2>
+            <span className="flex h-2 w-2 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-500" />
+            </span>
+          </div>
           <p className="mt-0.5 text-xs text-slate-500">
             {queue.length === 0
-              ? 'Belum ada yang mengantre'
-              : `${queue.length} orang sedang menunggu`}
+              ? 'Bilik sepi, tidak ada yang mengantre'
+              : `${queue.length} pejuang toilet sedang menunggu`}
           </p>
         </div>
-        <span className="font-mono text-sm font-bold tabular-nums text-slate-700">
-          {queue.length} antre
+        <span className="inline-flex items-center gap-1 rounded-full border border-teal-200 bg-teal-50 px-3 py-1 font-mono text-xs font-bold tabular-nums text-teal-800">
+          <span>{queue.length}</span>
+          <span className="font-sans font-medium text-[11px]">antre</span>
         </span>
       </div>
 
       {/* Turn Called Banner for Current User */}
       {myQueueEntry && myQueueEntry.status === 'called' && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.96 }}
+          initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="mt-4 rounded-lg border border-teal-600 bg-teal-50 p-4"
+          className="mt-4 rounded-xl border border-teal-500 bg-gradient-to-r from-teal-50 to-emerald-50 p-4 shadow-sm"
         >
-          <p className="flex items-center gap-1.5 text-sm font-bold text-teal-900">
-            <BellRing className="h-4 w-4 text-teal-700" aria-hidden="true" />
-            <span>Giliran Kamu! {toilet.name} Sudah Kosong</span>
-          </p>
-          <p className="mt-1 text-xs text-teal-800">
-            Segera masuk sebelum batas waktu habis:{' '}
-            <span className="font-mono font-bold tabular-nums">
-              {formatDuration(Math.max(0, (myQueueEntry.expiresAt ?? now) - now))}
+          <div className="flex items-center gap-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-teal-600 text-white shadow-xs">
+              <BellRing className="h-4 w-4 animate-bounce" aria-hidden="true" />
             </span>
-          </p>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <div>
+              <p className="text-sm font-extrabold text-teal-950">
+                Giliran Kamu Tiba! Bilik Sudah Kosong
+              </p>
+              <p className="text-xs text-teal-800 font-medium">
+                Masuk sebelum timer hangus:{' '}
+                <span className="font-mono font-extrabold tabular-nums text-teal-900 bg-teal-200/60 px-1.5 py-0.5 rounded">
+                  {formatDuration(Math.max(0, (myQueueEntry.expiresAt ?? now) - now))}
+                </span>
+              </p>
+            </div>
+          </div>
+          <div className="mt-3.5 flex flex-wrap items-center gap-2">
             <motion.button
               type="button"
               disabled={busy}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
               onClick={() => onClaimToilet(myQueueEntry.need)}
-              className="min-h-[40px] flex-1 rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 transition-colors whitespace-nowrap"
+              className="min-h-[42px] flex-1 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 px-4 py-2 text-sm font-extrabold text-white shadow-md hover:from-teal-700 hover:to-emerald-700 transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5"
             >
-              Masuk Sekarang
+              <span>Masuk Sekarang 🎯</span>
             </motion.button>
             <button
               type="button"
               disabled={busy}
               onClick={onLeaveQueue}
-              className="min-h-[40px] rounded-lg border border-teal-300 bg-white px-3 py-2 text-xs font-semibold text-teal-800 hover:bg-teal-100/50 transition-colors whitespace-nowrap"
+              className="min-h-[42px] rounded-xl border border-teal-200 bg-white px-3.5 py-2 text-xs font-bold text-teal-800 hover:bg-teal-50 transition-colors cursor-pointer whitespace-nowrap"
             >
               Lewati
             </button>
@@ -114,15 +129,16 @@ export function QueuePanel({
           <motion.button
             type="button"
             disabled={busy || quotaExhausted}
+            whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => onJoinQueue(selectedNeed)}
-            className="inline-flex w-full min-h-[42px] items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+            className="inline-flex w-full min-h-[44px] items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white shadow-md hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer whitespace-nowrap"
           >
             <UserPlus className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span>
               {quotaExhausted
                 ? 'Kuota Harian 10/10 Habis'
-                : `Ambil Antrean (${selectedNeed === 'pup' ? 'Pup' : 'Cepat'})`}
+                : `Ambil Nomor Antrean (${selectedNeed === 'pup' ? 'Pup 💩' : 'Cepat ⚡'})`}
             </span>
           </motion.button>
         </div>
@@ -133,21 +149,26 @@ export function QueuePanel({
         <motion.div
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3.5"
+          className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-teal-200 bg-teal-50/60 p-3.5 shadow-xs"
         >
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-slate-900">
-              Posisi Kamu #{queue.findIndex((q) => q.id === myQueueEntry.id) + 1}
-            </p>
-            <p className="text-xs text-slate-500">
-              Keperluan: {myQueueEntry.need === 'pup' ? 'Pup (Santai)' : 'Cepat (BAK)'}
+            <div className="flex items-center gap-1.5">
+              <span className="font-mono text-xs font-bold bg-teal-600 text-white px-2 py-0.5 rounded-md">
+                #{queue.findIndex((q) => q.id === myQueueEntry.id) + 1}
+              </span>
+              <p className="text-sm font-bold text-slate-900">
+                Kamu Sedang Mengantre
+              </p>
+            </div>
+            <p className="mt-0.5 text-xs text-slate-500">
+              Keperluan: {myQueueEntry.need === 'pup' ? 'Pup (Santai) 💩' : 'Cepat (BAK) ⚡'}
             </p>
           </div>
           <button
             type="button"
             disabled={busy}
             onClick={onLeaveQueue}
-            className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors whitespace-nowrap shrink-0"
+            className="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
           >
             <XCircle className="h-3.5 w-3.5 text-slate-500" aria-hidden="true" />
             <span>Batalkan</span>
@@ -156,15 +177,17 @@ export function QueuePanel({
       )}
 
       {/* Ordered Queue List */}
-      <div className="mt-4 border-t border-slate-100 pt-4">
+      <div className="mt-4 border-t border-slate-100 pt-3">
         {queue.length === 0 ? (
-          <div className="py-6 text-center">
-            <Clock className="mx-auto h-6 w-6 text-slate-300" aria-hidden="true" />
-            <p className="mt-2 text-sm font-medium text-slate-600">
-              Antrean kosong saat ini
+          <div className="py-8 text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
+              <PoopMiniIcon className="h-6 w-6 opacity-60" />
+            </div>
+            <p className="mt-3 text-sm font-bold text-slate-700">
+              Antrean Bersih & Lengang
             </p>
-            <p className="mt-1 text-xs text-slate-500">
-              Jika toilet sedang terisi, kamu bisa ambil nomor antrean agar otomatis dipanggil saat kosong.
+            <p className="mt-1 text-xs text-slate-500 max-w-xs mx-auto">
+              Tidak ada antrean saat ini. Siapa cepat, dia yang berhak menikmati singgasana toilet!
             </p>
           </div>
         ) : (
@@ -187,6 +210,16 @@ export function QueuePanel({
                         now
                       );
 
+                // Badge colors for top queue positions
+                const rankBadgeClass =
+                  idx === 0
+                    ? 'bg-amber-400 text-amber-950 ring-1 ring-amber-500/30'
+                    : idx === 1
+                      ? 'bg-slate-200 text-slate-800'
+                      : idx === 2
+                        ? 'bg-amber-100 text-amber-800'
+                        : 'bg-slate-100 text-slate-600';
+
                 return (
                   <motion.li
                     key={entry.id}
@@ -195,45 +228,64 @@ export function QueuePanel({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, x: -16 }}
                     transition={{ type: 'spring', stiffness: 360, damping: 28 }}
-                    className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
+                    className={`flex items-center justify-between gap-3 py-3 rounded-xl px-2.5 transition-colors ${
+                      isMe ? 'bg-teal-50/70 border border-teal-200 my-1' : 'hover:bg-slate-50'
+                    }`}
                   >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span
-                      className={`font-mono text-xs font-bold tabular-nums w-6 text-center shrink-0 ${
-                        entry.status === 'called' ? 'text-teal-700' : 'text-slate-500'
-                      }`}
-                    >
-                      #{idx + 1}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-slate-900">
-                        {isMe
-                          ? `${entry.displayName} (Kamu)`
-                          : getPublicDisplayName(entry.displayName, entry.isAnonymous, entry.userId)}
-                      </p>
-                      <p className="truncate text-xs text-slate-500">
-                        {entry.department ? (
-                          <>
-                            {entry.department} <span aria-hidden="true">·</span>{' '}
-                          </>
-                        ) : null}
-                        {entry.need === 'pup' ? 'Pup' : 'Cepat'}
-                      </p>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span
+                        className={`font-mono text-xs font-extrabold tabular-nums h-6 w-6 rounded-full flex items-center justify-center shrink-0 ${rankBadgeClass}`}
+                      >
+                        {idx + 1}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                          <span>
+                            {isMe
+                              ? `${entry.displayName} (Kamu)`
+                              : getPublicDisplayName(
+                                  entry.displayName,
+                                  entry.isAnonymous,
+                                  entry.userId
+                                )}
+                          </span>
+                          {isMe && (
+                            <span className="rounded bg-teal-600 px-1.5 py-0.2 text-[10px] font-bold text-white">
+                              YOU
+                            </span>
+                          )}
+                        </p>
+                        <p className="truncate text-xs text-slate-500 flex items-center gap-1.5">
+                          {entry.department ? (
+                            <>
+                              <span>{entry.department}</span>
+                              <span>·</span>
+                            </>
+                          ) : null}
+                          <span className="font-medium text-slate-600">
+                            {entry.need === 'pup' ? 'Pup 💩' : 'Cepat ⚡'}
+                          </span>
+                        </p>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="text-right shrink-0">
-                    {entry.status === 'called' ? (
-                      <p className="text-xs font-semibold text-teal-700">Dipanggil</p>
-                    ) : (
-                      <p className="font-mono text-xs font-semibold tabular-nums text-slate-700">
-                        {formatDuration(waitMs)}
-                      </p>
-                    )}
-                    <p className="text-[11px] tabular-nums text-slate-500">
-                      {entry.status === 'called' ? 'Siap masuk' : `Est. ~${estMinutes} mnt`}
-                    </p>
-                  </div>
+                    <div className="text-right shrink-0">
+                      {entry.status === 'called' ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-teal-100 px-2 py-0.5 text-xs font-bold text-teal-800">
+                          <Sparkles className="h-3 w-3" />
+                          <span>Dipanggil</span>
+                        </span>
+                      ) : (
+                        <div>
+                          <p className="font-mono text-xs font-bold tabular-nums text-slate-800">
+                            {formatDuration(waitMs)}
+                          </p>
+                          <p className="text-[11px] tabular-nums text-slate-400">
+                            Est. ~{estMinutes} mnt
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </motion.li>
                 );
               })}

@@ -11,7 +11,7 @@ import {
 import { useState, type FormEvent } from 'react';
 import { formatDuration, getPublicDisplayName } from '../shared/queueLogic.ts';
 import type { OfficeState } from '../shared/types.ts';
-import { PoopMascot } from './PoopAnimations.tsx';
+import { PoopMascot, PoopMiniIcon } from './PoopAnimations.tsx';
 
 interface AuthScreenProps {
   officeState: OfficeState | null;
@@ -106,10 +106,13 @@ export function AuthScreen({
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
       <header className="border-b border-slate-200 bg-white px-6 py-4">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <span className="font-display text-xl font-extrabold tracking-tight text-slate-900">
-            Ngising
-          </span>
-          <span className="text-xs font-medium text-slate-500">
+          <div className="flex items-center gap-2">
+            <PoopMiniIcon className="h-6 w-6" />
+            <span className="font-display text-xl font-extrabold tracking-tight text-slate-900">
+              Ngising
+            </span>
+          </div>
+          <span className="text-xs font-semibold text-slate-500">
             Pantau & Antre Toilet Kantor Real-Time
           </span>
         </div>

@@ -151,21 +151,27 @@ export function StatsView({ history, user, now }: StatsViewProps) {
                     ? 'text-slate-600'
                     : 'text-amber-700';
 
+              const rankTitles = [
+                '👑 Raja Tahta Keramik (#1)',
+                '🥈 Pendekar Jamban (#2)',
+                '🥉 Petapa Bilik (#3)',
+              ];
+
               return (
                 <motion.div
                   key={entry.userId}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className={`rounded-xl border bg-white p-5 ${
-                    isFirst ? 'border-amber-300 ring-1 ring-amber-200' : 'border-slate-200'
+                  className={`rounded-2xl border bg-white p-5 shadow-xs ${
+                    isFirst ? 'border-amber-300 ring-2 ring-amber-200 bg-gradient-to-b from-amber-50/30 to-white' : 'border-slate-200'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className={`inline-flex items-center gap-1.5 text-xs font-bold ${rankColor}`}>
+                      <p className={`inline-flex items-center gap-1.5 text-xs font-extrabold ${rankColor}`}>
                         <RankIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
-                        <span>{isFirst ? 'Peringkat #1 Minggu Ini' : `Peringkat #${idx + 1}`}</span>
+                        <span>{rankTitles[idx] || `Peringkat #${idx + 1}`}</span>
                       </p>
                       <h3 className="mt-1.5 font-display text-base font-bold text-slate-900">
                         {entry.userId === user.id ? `${user.displayName} (Kamu)` : entry.displayName}
@@ -174,7 +180,7 @@ export function StatsView({ history, user, now }: StatsViewProps) {
                         <p className="text-xs text-slate-500">{entry.department}</p>
                       ) : null}
                     </div>
-                    {isFirst && <PoopMascot mood="called" size={44} />}
+                    {isFirst && <PoopMascot mood="called" size={48} interactive={true} />}
                   </div>
 
                   <div className="mt-4 flex items-baseline justify-between border-t border-slate-100 pt-3">

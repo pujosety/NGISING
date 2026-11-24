@@ -6,6 +6,7 @@ import { GuestWorkspace } from './components/GuestWorkspace.tsx';
 import { HistoryView } from './components/HistoryView.tsx';
 import {
   PoopInteractionBurst,
+  PoopMascot,
   type PoopBurstEvent,
   type PoopBurstKind,
 } from './components/PoopAnimations.tsx';
@@ -22,6 +23,7 @@ import {
   getDailyQuota,
 } from './shared/queueLogic.ts';
 import type { NeedType } from './shared/types.ts';
+import { soundEffects } from './utils/soundEffects.ts';
 
 const TAB_TITLES: Record<WorkspaceTab, string> = {
   dashboard: 'Dashboard Saya',
@@ -98,7 +100,10 @@ export default function App() {
   const handleOccupy = useCallback(
     async (need: NeedType) => {
       const ok = await occupy(need);
-      if (ok) triggerBurst('occupy');
+      if (ok) {
+        soundEffects.playPlop();
+        triggerBurst('occupy');
+      }
     },
     [occupy, triggerBurst]
   );
@@ -106,7 +111,10 @@ export default function App() {
   const handleRelease = useCallback(
     async (force = false) => {
       const ok = await release(force);
-      if (ok) triggerBurst('release');
+      if (ok) {
+        soundEffects.playFlush();
+        triggerBurst('release');
+      }
     },
     [release, triggerBurst]
   );
@@ -114,14 +122,20 @@ export default function App() {
   const handleJoinQueue = useCallback(
     async (need: NeedType) => {
       const ok = await joinQueue(need);
-      if (ok) triggerBurst('queue');
+      if (ok) {
+        soundEffects.playPop();
+        triggerBurst('queue');
+      }
     },
     [joinQueue, triggerBurst]
   );
 
   const handleLeaveQueue = useCallback(async () => {
     const ok = await leaveQueue();
-    if (ok) triggerBurst('leave');
+    if (ok) {
+      soundEffects.playPop();
+      triggerBurst('leave');
+    }
   }, [leaveQueue, triggerBurst]);
 
   const isAdmin = user?.role === 'admin';
@@ -235,7 +249,11 @@ export default function App() {
         onSelectTab={setActiveTab}
         user={user}
         soundEnabled={soundEnabled}
-        onToggleSound={() => setSoundEnabled(!soundEnabled)}
+        onToggleSound={() => {
+          const next = !soundEnabled;
+          soundEffects.enabled = next;
+          setSoundEnabled(next);
+        }}
         onLogout={logout}
         queueCount={queue.length}
       />
@@ -311,69 +329,81 @@ export default function App() {
             <div className="h-64 animate-pulse rounded-xl border border-slate-200 bg-white" />
           ) : safeActiveTab === 'dashboard' ? (
             <div className="space-y-6">
-              {/* Personal Welcome Header */}
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <h2 className="font-display text-2xl font-bold tracking-tight text-slate-900">
-                    Dashboard {user.displayName}
-                  </h2>
-                  <p className="mt-0.5 text-sm text-slate-500">
-                    {isAdmin ? 'Admin Kantor' : user.department || 'Karyawan Kantor'}
-                    {user.isAnonymous ? (
-                      <span className="inline-flex items-center gap-1 ml-1.5">
-                        <span aria-hidden="true">·</span>
-                        <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />
-                        <span>Mode Samaran Aktif</span>
+              {/* Fun Mascot Welcome Banner */}
+              <div className="relative overflow-hidden rounded-2xl border border-amber-200/80 bg-gradient-to-r from-amber-50 via-orange-50/40 to-teal-50/40 p-5 sm:p-6 shadow-xs">
+                <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4 relative z-10">
+                  <div>
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-100/80 px-2.5 py-0.5 text-[11px] font-bold text-amber-900">
+                      <span>✨ Pelacak Bilik Kantor Real-Time</span>
+                    </span>
+                    <h2 className="mt-2 font-display text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+                      Halo, {user.displayName}! 👋
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-600 max-w-lg leading-relaxed">
+                      Siap menunaikan panggilan alam? Pantau bilik, amankan nomor antrean, dan nikmati waktu hening tanpa digedor kawan kantor!
+                    </p>
+                    <div className="mt-3 flex items-center gap-3 text-xs font-medium text-slate-500">
+                      <span className="flex items-center gap-1 font-semibold text-slate-700">
+                        <span>🏢</span> {isAdmin ? 'Admin Operasional' : user.department || 'Karyawan'}
                       </span>
-                    ) : null}
-                  </p>
+                      {user.isAnonymous && (
+                        <span className="inline-flex items-center gap-1 rounded bg-slate-200/70 px-1.5 py-0.5 text-[11px] text-slate-700 font-semibold">
+                          <EyeOff className="h-3 w-3" />
+                          <span>Mode Samaran</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col items-center justify-center shrink-0">
+                    <PoopMascot mood="ready" size={68} interactive={true} />
+                    <span className="mt-1 text-[10px] font-bold text-amber-800 bg-amber-100/90 border border-amber-300/80 px-2 py-0.5 rounded-full shadow-2xs">
+                      Pencet Si Plop! 💩
+                    </span>
+                  </div>
                 </div>
+
+                {/* Decorative background shape */}
+                <div className="absolute -right-8 -bottom-8 w-36 h-36 bg-amber-200/20 rounded-full blur-2xl pointer-events-none" />
               </div>
 
               {/* Personal 4-Column KPI Strip */}
               <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-                <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
-                  <p className="text-xs font-medium text-slate-500">Status Saya</p>
-                  <p className={`mt-1.5 font-display text-xl font-bold ${myPersonalStatusColor}`}>
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xs hover:border-slate-300 transition-all">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Status Saya</span>
+                  <p className={`mt-1 font-display text-xl font-extrabold ${myPersonalStatusColor}`}>
                     {myPersonalStatusLabel}
                   </p>
-                </div>
-
-                <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
-                  <p className="text-xs font-medium text-slate-500">Kuota Ngising Hari Ini</p>
-                  <p
-                    className={`mt-1.5 font-mono text-2xl font-bold tabular-nums ${
-                      myDailyQuota && myDailyQuota.remaining <= 0
-                        ? 'text-red-600'
-                        : 'text-slate-900'
-                    }`}
-                  >
-                    {myDailyQuota?.used ?? 0}
-                    <span className="text-base font-normal text-slate-500">
-                      {' '}
-                      / {myDailyQuota?.limit ?? 10}
-                    </span>
+                  <p className="mt-0.5 text-xs text-slate-400">
+                    {userAlreadyOccupying ? 'Sedang di dalam bilik' : myQueueIndex !== -1 ? `Antrean ke-${myQueueIndex + 1}` : 'Bebas / Santai'}
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
-                  <p className="text-xs font-medium text-slate-500">Sisa Kuota Hari Ini</p>
-                  <p
-                    className={`mt-1.5 font-mono text-2xl font-bold tabular-nums ${
-                      myDailyQuota && myDailyQuota.remaining <= 0
-                        ? 'text-red-600'
-                        : 'text-teal-700'
-                    }`}
-                  >
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xs hover:border-slate-300 transition-all">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Sesi Terpakai</span>
+                  <p className={`mt-1 font-mono text-2xl font-extrabold tabular-nums ${myDailyQuota && myDailyQuota.remaining <= 0 ? 'text-red-600' : 'text-slate-900'}`}>
+                    {myDailyQuota?.used ?? 0}
+                    <span className="text-sm font-normal text-slate-400"> / {myDailyQuota?.limit ?? 10}</span>
+                  </p>
+                  <p className="mt-0.5 text-xs text-slate-400">Hari ini</p>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xs hover:border-slate-300 transition-all">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Sisa Kuota Hari Ini</span>
+                  <p className={`mt-1 font-mono text-2xl font-extrabold tabular-nums ${myDailyQuota && myDailyQuota.remaining <= 0 ? 'text-red-600' : 'text-teal-700'}`}>
                     {myDailyQuota?.remaining ?? 10}x
                   </p>
+                  <p className="mt-0.5 text-xs text-teal-600 font-medium">Batas aman harian</p>
                 </div>
 
-                <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
-                  <p className="text-xs font-medium text-slate-500">Antrean Toilet</p>
-                  <p className="mt-1.5 font-mono text-2xl font-bold tabular-nums text-slate-900">
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xs hover:border-slate-300 transition-all">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Antrean Toilet</span>
+                  <p className="mt-1 font-mono text-2xl font-extrabold tabular-nums text-slate-900">
                     {queue.length}
-                    <span className="ml-1 text-sm font-normal text-slate-500">orang</span>
+                    <span className="ml-1 text-sm font-normal text-slate-400">orang</span>
+                  </p>
+                  <p className="mt-0.5 text-xs text-slate-400">
+                    {queue.length === 0 ? 'Bilik langsung kosong' : 'Menunggu giliran'}
                   </p>
                 </div>
               </div>

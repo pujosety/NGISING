@@ -9,6 +9,7 @@ import {
   VolumeX,
 } from 'lucide-react';
 import type { UserAccount } from '../shared/types.ts';
+import { PoopMiniIcon } from './PoopAnimations.tsx';
 
 export type WorkspaceTab = 'dashboard' | 'history' | 'stats' | 'account' | 'admin';
 
@@ -55,8 +56,14 @@ export function Sidebar({
     <>
       <aside className="hidden lg:flex lg:w-60 lg:shrink-0 lg:flex-col lg:border-r lg:border-slate-200 lg:bg-white">
         <div className="flex h-16 items-center justify-between border-b border-slate-200 px-5">
-          <span className="font-display text-xl font-extrabold tracking-tight text-slate-900 whitespace-nowrap">
-            Ngising
+          <div className="flex items-center gap-2">
+            <PoopMiniIcon className="h-6 w-6" />
+            <span className="font-display text-xl font-extrabold tracking-tight text-slate-900 whitespace-nowrap">
+              Ngising
+            </span>
+          </div>
+          <span className="text-[10px] font-extrabold rounded-full bg-teal-100 text-teal-800 px-2 py-0.5 tracking-wide">
+            LIVE
           </span>
         </div>
 
