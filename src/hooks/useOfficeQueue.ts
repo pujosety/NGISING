@@ -21,6 +21,8 @@ import {
   subscribeLocalChanges,
 } from '../utils/localOfficeFallback.ts';
 
+import { soundEffects } from '../utils/soundEffects.ts';
+
 const TOKEN_STORAGE_KEY = 'ngising_auth_token_v1';
 const GUEST_TOKEN_STORAGE_KEY = 'ngising_guest_token_v1';
 const SOUND_STORAGE_KEY = 'ngising_sound_v1';
@@ -75,28 +77,7 @@ async function safeFetchJson<T>(
 }
 
 function playTurnAlertSound(): void {
-  try {
-    const AudioCtx =
-      window.AudioContext ||
-      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx();
-    const now = ctx.currentTime;
-
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(587.33, now);
-    osc.frequency.setValueAtTime(880, now + 0.12);
-    gain.gain.setValueAtTime(0.08, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.45);
-  } catch {
-    // Ignore browser autoplay restrictions
-  }
+  soundEffects.playTurnAlert();
 }
 
 function readStoredValue(key: string): string | null {

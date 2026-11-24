@@ -24,9 +24,20 @@ class SoundEngine {
     return this.ctx;
   }
 
+  private triggerVibrate(pattern: number | number[]) {
+    try {
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        navigator.vibrate(pattern);
+      }
+    } catch {
+      // Ignore vibration error
+    }
+  }
+
   // Cute cartoon water drop / plop sound
   playPlop() {
     if (!this.enabled) return;
+    this.triggerVibrate(35);
     try {
       const ctx = this.getContext();
       if (!ctx) return;
@@ -55,6 +66,7 @@ class SoundEngine {
   // Refreshing water flush / whoosh sweep sound
   playFlush() {
     if (!this.enabled) return;
+    this.triggerVibrate([60, 40, 80]);
     try {
       const ctx = this.getContext();
       if (!ctx) return;
@@ -110,6 +122,7 @@ class SoundEngine {
   // Celebratory bell chime (Giliran kamu!)
   playTurnAlert() {
     if (!this.enabled) return;
+    this.triggerVibrate([200, 100, 200, 100, 400]);
     try {
       const ctx = this.getContext();
       if (!ctx) return;
@@ -141,6 +154,7 @@ class SoundEngine {
   // Playful pop for button clicks & toggles
   playPop() {
     if (!this.enabled) return;
+    this.triggerVibrate(20);
     try {
       const ctx = this.getContext();
       if (!ctx) return;
