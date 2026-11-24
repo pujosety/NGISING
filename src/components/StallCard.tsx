@@ -365,7 +365,7 @@ export function StallCard({
             <div
               role="group"
               aria-label="Pilih keperluan toilet"
-              className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 p-1"
+              className="relative inline-flex items-center rounded-2xl bg-slate-100/90 p-1.5 shadow-inner"
             >
               <button
                 type="button"
@@ -375,15 +375,21 @@ export function StallCard({
                   }
                   onSelectNeed('pup');
                 }}
-                className={`min-h-[44px] rounded-xl px-4 py-2 text-xs font-bold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer active:scale-95 ${
-                  selectedNeed === 'pup'
-                    ? 'bg-white text-slate-900 shadow-sm ring-2 ring-amber-400'
-                    : 'text-slate-600 hover:text-slate-900'
+                className={`relative z-10 min-h-[44px] rounded-xl px-4 py-2 text-xs font-bold transition-colors whitespace-nowrap flex items-center gap-2 cursor-pointer select-none active:scale-95 ${
+                  selectedNeed === 'pup' ? 'text-amber-950 font-extrabold' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <span className="text-sm">💩</span>
-                <span>Pup (Santai)</span>
+                {selectedNeed === 'pup' && (
+                  <motion.div
+                    layoutId="need-slider-pill"
+                    transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+                    className="absolute inset-0 rounded-xl bg-white shadow-sm ring-2 ring-amber-400"
+                  />
+                )}
+                <span className="relative z-10 text-base">💩</span>
+                <span className="relative z-10">Pup (Santai)</span>
               </button>
+
               <button
                 type="button"
                 onClick={() => {
@@ -392,14 +398,19 @@ export function StallCard({
                   }
                   onSelectNeed('cepat');
                 }}
-                className={`min-h-[44px] rounded-xl px-4 py-2 text-xs font-bold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer active:scale-95 ${
-                  selectedNeed === 'cepat'
-                    ? 'bg-white text-slate-900 shadow-sm ring-2 ring-teal-500'
-                    : 'text-slate-600 hover:text-slate-900'
+                className={`relative z-10 min-h-[44px] rounded-xl px-4 py-2 text-xs font-bold transition-colors whitespace-nowrap flex items-center gap-2 cursor-pointer select-none active:scale-95 ${
+                  selectedNeed === 'cepat' ? 'text-teal-950 font-extrabold' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <span className="text-sm">⚡</span>
-                <span>Cepat (BAK)</span>
+                {selectedNeed === 'cepat' && (
+                  <motion.div
+                    layoutId="need-slider-pill"
+                    transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+                    className="absolute inset-0 rounded-xl bg-white shadow-sm ring-2 ring-teal-500"
+                  />
+                )}
+                <span className="relative z-10 text-base">⚡</span>
+                <span className="relative z-10">Cepat (BAK)</span>
               </button>
             </div>
           </div>

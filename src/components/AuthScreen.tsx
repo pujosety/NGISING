@@ -5,6 +5,7 @@ import {
   Clock,
   Lock,
   LogIn,
+  Tv,
   UserPlus,
   Wrench,
 } from 'lucide-react';
@@ -20,6 +21,7 @@ interface AuthScreenProps {
   isLocalFallback?: boolean;
   now: number;
   onClearError: () => void;
+  onOpenDisplay?: () => void;
   onLogin: (identifier: string, password: string) => Promise<boolean>;
   onRegister: (params: {
     displayName: string;
@@ -38,6 +40,7 @@ export function AuthScreen({
   isLocalFallback = false,
   now,
   onClearError,
+  onOpenDisplay,
   onLogin,
   onRegister,
   onGuestCheckIn,
@@ -117,9 +120,21 @@ export function AuthScreen({
               </span>
             </div>
           </div>
-          <span className="text-xs font-semibold text-slate-500">
-            Real-Time Monitor
-          </span>
+          <div className="flex items-center gap-3">
+            {onOpenDisplay && (
+              <button
+                type="button"
+                onClick={onOpenDisplay}
+                className="inline-flex min-h-[36px] items-center gap-1.5 rounded-xl border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-bold text-teal-800 hover:bg-teal-100 transition-colors shadow-2xs cursor-pointer"
+              >
+                <Tv className="h-3.5 w-3.5 text-teal-700" />
+                <span>Layar Monitor (TV)</span>
+              </button>
+            )}
+            <span className="hidden sm:inline text-xs font-semibold text-slate-500">
+              Real-Time Monitor
+            </span>
+          </div>
         </div>
       </header>
 

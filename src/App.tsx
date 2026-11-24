@@ -2,6 +2,7 @@ import { AlertCircle, Award, EyeOff, Medal, RefreshCw, Trophy, Wifi, WifiOff } f
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AdminPanelView } from './components/AdminPanelView.tsx';
 import { AuthScreen } from './components/AuthScreen.tsx';
+import { DisplayMonitorView } from './components/DisplayMonitorView.tsx';
 import { GuestWorkspace } from './components/GuestWorkspace.tsx';
 import { HistoryView } from './components/HistoryView.tsx';
 import {
@@ -27,6 +28,7 @@ import { soundEffects } from './utils/soundEffects.ts';
 
 const TAB_TITLES: Record<WorkspaceTab, string> = {
   dashboard: 'Dashboard Saya',
+  display: 'Layar Monitor (TV)',
   history: 'Riwayat & Log',
   stats: 'Statistik',
   account: 'Akun Saya',
@@ -92,7 +94,17 @@ export default function App() {
     adminResetDemo,
   } = useOfficeQueue();
 
-  const [activeTab, setActiveTab] = useState<WorkspaceTab>('dashboard');
+  const [activeTab, setActiveTab] = useState<WorkspaceTab>(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('view') === 'tv' || params.get('display') === '1' || params.get('kiosk') === '1') {
+        return 'display';
+      }
+    } catch {
+      // ignore
+    }
+    return 'dashboard';
+  });
   const [selectedNeed, setSelectedNeed] = useState<NeedType>('pup');
   const [burstEvent, setBurstEvent] = useState<PoopBurstEvent | null>(null);
   const burstTimerRef = useRef<number | null>(null);
@@ -209,6 +221,28 @@ export default function App() {
     );
   }
 
+  if (activeTab === 'display' && !user) {
+    return (
+      <div className="min-h-screen bg-slate-950 p-4 sm:p-8 flex flex-col">
+        <div className="mb-4 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => setActiveTab('dashboard')}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-white/20 transition-all cursor-pointer shadow-lg active:scale-95"
+          >
+            ← Kembali ke Halaman Masuk
+          </button>
+        </div>
+        <DisplayMonitorView
+          officeState={state}
+          now={now}
+          connected={connected}
+          lastSyncedAt={lastSyncedAt}
+        />
+      </div>
+    );
+  }
+
   if (!user) {
     return (
       <AuthScreen
@@ -218,6 +252,7 @@ export default function App() {
         isLocalFallback={isLocalFallback}
         now={now}
         onClearError={clearError}
+        onOpenDisplay={() => setActiveTab('display')}
         onLogin={login}
         onRegister={register}
         onGuestCheckIn={checkInGuest}
@@ -606,6 +641,13 @@ export default function App() {
                 </section>
               </div>
             </div>
+          ) : safeActiveTab === 'display' ? (
+            <DisplayMonitorView
+              officeState={state}
+              now={now}
+              connected={connected}
+              lastSyncedAt={lastSyncedAt}
+            />
           ) : safeActiveTab === 'history' ? (
             <HistoryView history={history} currentUserId={user.id} />
           ) : safeActiveTab === 'stats' ? (
