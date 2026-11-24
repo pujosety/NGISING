@@ -1,6 +1,5 @@
 import {
   ArrowLeft,
-  Clock,
   DoorClosed,
   DoorOpen,
   Expand,
@@ -66,7 +65,7 @@ export function DisplayMonitorView({
       margin: 1,
       width: 140,
       color: {
-        dark: '#241407',
+        dark: '#000000',
         light: '#ffffff',
       },
       errorCorrectionLevel: 'M',
@@ -124,39 +123,40 @@ export function DisplayMonitorView({
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex h-screen w-screen flex-col justify-between p-4 sm:p-6 lg:p-8 select-none font-sans overflow-hidden bg-[#120c08] text-[#f7efe6]">
-      {/* Dynamic ambient background orbs */}
-      <div className="pointer-events-none absolute -top-32 -left-32 h-[34rem] w-[34rem] rounded-full bg-[radial-gradient(circle,#ad7c2b,transparent_70%)] opacity-25 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-36 -right-36 h-[38rem] w-[38rem] rounded-full bg-[radial-gradient(circle,#6f4717,transparent_70%)] opacity-30 blur-3xl" />
+    <div className="fixed inset-0 z-50 flex h-screen w-screen flex-col justify-between p-4 sm:p-6 lg:p-8 select-none font-sans overflow-hidden bg-[#0c0c0e] text-white">
+      {/* Persona 5 Angular Slashes in Background */}
+      <div className="pointer-events-none absolute -top-40 -left-20 h-96 w-[120vw] bg-[#e60012] opacity-20 -rotate-12 transform origin-top-left" />
+      <div className="pointer-events-none absolute -bottom-40 -right-20 h-96 w-[120vw] bg-[#e60012] opacity-15 rotate-12 transform origin-bottom-right" />
+      <div className="p5-halftone-pattern pointer-events-none absolute inset-0 opacity-10" />
 
-      {/* Top Bar: Clean Header */}
-      <header className="relative z-10 flex shrink-0 items-center justify-between gap-4 border-b border-[#c99f57]/20 pb-3 sm:pb-4">
+      {/* Top Bar: Persona 5 Header */}
+      <header className="relative z-10 flex shrink-0 items-center justify-between gap-4 border-b-2 border-white pb-3 sm:pb-4">
         <div className="flex items-center gap-3">
           {onExit && (
             <button
               type="button"
               onClick={onExit}
-              className="glass-pill flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold text-[#dbc08b] hover:border-[#c99f57] hover:text-white transition-colors cursor-pointer"
+              className="p5-btn-black flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-black uppercase text-white cursor-pointer"
             >
               <ArrowLeft className="h-4 w-4" />
-              <span>Kembali</span>
+              <span>KEMBALI</span>
             </button>
           )}
 
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#8c5d1d] to-[#3e2610] border border-[#c99f57]/40 text-[#dbc08b] shadow-lg">
-              <Tv className="h-5 w-5" aria-hidden="true" />
+            <div className="flex h-11 w-11 items-center justify-center bg-[#e60012] border-2 border-white text-white shadow-[3px_3px_0px_#000000]">
+              <Tv className="h-6 w-6" aria-hidden="true" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-display text-base sm:text-xl font-black tracking-tight text-white uppercase">
-                  MONITOR BILIK UTAMA
+                <h1 className="font-display text-base sm:text-xl font-black uppercase tracking-tight text-white">
+                  BATTLE MONITOR // BILIK UTAMA
                 </h1>
-                <span className="rounded-full bg-[#ad7c2b]/30 px-2.5 py-0.5 font-mono text-[10px] font-black tracking-wider text-[#e8d9b5] border border-[#c99f57]/40 animate-pulse">
-                  LIVE
+                <span className="p5-badge bg-[#e60012] px-2.5 py-0.5 font-mono text-[10px] font-black tracking-wider text-white border border-white">
+                  <span className="transform skew-x-[6deg] inline-block">LIVE P5</span>
                 </span>
               </div>
-              <p className="text-xs text-[#dbc08b]/80 font-mono">
+              <p className="text-xs text-slate-300 font-mono font-bold uppercase">
                 {toilet?.location || 'TOILET KANTOR LANTAI 2'} · {toilet?.name || 'BILIK UTAMA'}
               </p>
             </div>
@@ -165,12 +165,12 @@ export function DisplayMonitorView({
 
         {/* Clock & Fullscreen Control */}
         <div className="flex items-center gap-3">
-          <div className="glass-card border border-[#c99f57]/30 px-4 py-1.5 rounded-2xl text-right shadow-md">
+          <div className="border-2 border-white bg-black px-4 py-1.5 text-right shadow-[3px_3px_0px_#e60012]">
             <span className="font-mono text-xl sm:text-3xl font-black tracking-widest text-white tabular-nums">
               {timeString}
             </span>
-            <span className="ml-1 text-[11px] font-mono font-bold text-[#dbc08b]">WIB</span>
-            <p className="text-[10px] font-mono text-[#dbc08b]/70 uppercase tracking-wider">
+            <span className="ml-1 text-[11px] font-mono font-black text-[#e60012]">WIB</span>
+            <p className="text-[10px] font-mono text-slate-400 uppercase tracking-wider font-bold">
               {dateString}
             </p>
           </div>
@@ -179,7 +179,7 @@ export function DisplayMonitorView({
             type="button"
             onClick={toggleFullscreen}
             title={isFullscreen ? 'Keluar Layar Penuh' : 'Layar Penuh (Fullscreen)'}
-            className="glass-pill flex h-11 w-11 items-center justify-center rounded-2xl text-[#dbc08b] hover:border-[#c99f57] hover:text-white transition-all cursor-pointer active:scale-95 shadow-md"
+            className="p5-btn-white flex h-11 w-11 items-center justify-center text-black cursor-pointer active:scale-95 shadow-[3px_3px_0px_#000000]"
           >
             {isFullscreen ? (
               <Minimize className="h-5 w-5" />
@@ -192,63 +192,63 @@ export function DisplayMonitorView({
 
       {/* Main Grid: Left Status + Right Queue (Fills Remaining Screen Height) */}
       <main className="relative z-10 my-3 sm:my-4 grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-12 flex-1 min-h-0 items-stretch">
-        {/* Left Column (7 cols): Massive High-Legibility Status Card */}
+        {/* Left Column (7 cols): Massive High-Legibility Persona Status Card */}
         <div className="lg:col-span-7 flex flex-col min-h-0">
           <div
-            className={`flex flex-1 flex-col justify-between rounded-3xl p-6 sm:p-8 lg:p-10 transition-colors glass-card overflow-hidden ${
+            className={`flex flex-1 flex-col justify-between p-6 sm:p-8 lg:p-10 border-4 border-black shadow-[8px_8px_0px_#000000] overflow-hidden ${
               isMaintenance
-                ? 'border-slate-700 bg-slate-900/80 text-slate-300'
+                ? 'bg-[#151518] text-white'
                 : isOccupied
                   ? isOvertime
-                    ? 'border-rose-500/80 bg-rose-950/40 text-rose-100 ring-2 ring-rose-500/40'
-                    : 'border-[#c99f57]/80 bg-[#3e2610]/50 text-amber-100 ring-2 ring-[#ad7c2b]/30'
+                    ? 'bg-[#e60012] text-white border-white animate-pulse'
+                    : 'bg-[#e60012] text-white border-white'
                   : isReserved
-                    ? 'border-teal-500/80 bg-teal-950/40 text-teal-100'
-                    : 'border-emerald-500/80 bg-emerald-950/30 text-emerald-100'
+                    ? 'bg-black text-white border-teal-400'
+                    : 'bg-white text-black border-black'
             }`}
           >
             {/* Top Indicator Header */}
-            <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-4 shrink-0">
+            <div className="flex items-center justify-between gap-4 border-b-2 border-current pb-4 shrink-0">
               <div className="flex items-center gap-2">
                 {isMaintenance ? (
-                  <Wrench className="h-5 w-5 text-amber-400" />
+                  <Wrench className="h-5 w-5" />
                 ) : isOccupied ? (
-                  <DoorClosed className="h-5 w-5 text-rose-400" />
+                  <DoorClosed className="h-5 w-5" />
                 ) : (
-                  <DoorOpen className="h-5 w-5 text-emerald-400" />
+                  <DoorOpen className="h-5 w-5" />
                 )}
-                <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#dbc08b]">
+                <span className="font-mono text-xs font-black uppercase tracking-wider">
                   STATUS BILIK TOILET
                 </span>
               </div>
 
               <div className="flex items-center gap-2 font-mono text-xs font-black uppercase">
                 <span
-                  className={`h-3 w-3 rounded-full ${
+                  className={`h-3 w-3 border border-current ${
                     isMaintenance
                       ? 'bg-amber-400'
                       : isOccupied
-                        ? 'bg-rose-500 animate-ping'
+                        ? 'bg-white animate-ping'
                         : isReserved
                           ? 'bg-teal-400 animate-ping'
-                          : 'bg-emerald-400 animate-pulse'
+                          : 'bg-[#e60012] animate-pulse'
                   }`}
                 />
-                <span className="text-white text-sm font-extrabold">
+                <span className="text-sm font-black">
                   {isMaintenance
                     ? 'MAINTENANCE'
                     : isOccupied
                       ? isOvertime
-                        ? 'OVERTIME'
-                        : 'IN USE'
+                        ? 'OVERTIME (LEWAT 15 MENIT)'
+                        : 'IN USE (TERISI)'
                       : isReserved
-                        ? 'CALLED'
-                        : 'VACANT'}
+                        ? 'RESERVED (DIPANGGIL)'
+                        : 'VACANT (KOSONG)'}
                 </span>
               </div>
             </div>
 
-            {/* Middle: Massive Visual Status with Animated SVG */}
+            {/* Middle: Massive Visual Status with Animated Comic SVG */}
             <div className="my-auto py-4 flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6">
               <div className="flex-1 text-center sm:text-left min-w-0">
                 {isMaintenance ? (
@@ -256,51 +256,51 @@ export function DisplayMonitorView({
                     <h2 className="font-mono text-4xl sm:text-6xl lg:text-7xl font-black uppercase tracking-tight text-amber-400">
                       PERBAIKAN
                     </h2>
-                    <p className="mt-3 text-sm sm:text-base text-[#dbc08b]/80 font-mono">
+                    <p className="mt-3 text-sm sm:text-base text-slate-300 font-mono font-bold uppercase">
                       Bilik sementara disterilkan dan dibersihkan.
                     </p>
                   </div>
                 ) : isOccupied ? (
                   <div>
-                    <div className="inline-block rounded-xl bg-rose-500/20 px-3.5 py-1.5 font-mono text-xs font-bold uppercase tracking-wider text-rose-200 border border-rose-500/40 mb-3">
-                      {toilet?.occupant?.need === 'pup' ? 'BAB / Pup 💩' : 'BAK / Cepat ⚡'}
+                    <div className="inline-block bg-black text-white px-3.5 py-1 font-mono text-xs font-black uppercase tracking-wider border-2 border-white mb-3 shadow-[2px_2px_0px_#000000]">
+                      {toilet?.occupant?.need === 'pup' ? 'BAB / PUP 💩' : 'BAK / CEPAT ⚡'}
                     </div>
-                    <h2 className="font-mono text-6xl sm:text-7xl lg:text-8xl font-black tracking-tight text-white tabular-nums drop-shadow-lg">
+                    <h2 className="font-mono text-6xl sm:text-7xl lg:text-8xl font-black tracking-tight text-white tabular-nums drop-shadow-[4px_4px_0px_#000000]">
                       {formatDuration(elapsedMs)}
                     </h2>
-                    <p className="mt-4 font-mono text-base sm:text-2xl font-bold text-white truncate">
-                      Sedang Dipakai:{' '}
-                      <span className="text-[#dbc08b]">
+                    <p className="mt-4 font-mono text-base sm:text-2xl font-black text-white uppercase truncate">
+                      PENGHUNI:{' '}
+                      <span className="underline decoration-4">
                         {toilet?.occupant
                           ? getPublicDisplayName(
                               toilet.occupant.displayName,
                               toilet.occupant.isAnonymous,
                               toilet.occupant.userId
                             )
-                          : 'Seseorang'}
+                          : 'SESEORANG'}
                       </span>
                     </p>
                     {toilet?.occupant?.department && (
-                      <p className="text-[#dbc08b]/70 text-xs sm:text-sm font-mono mt-1">
-                        Divisi: {toilet.occupant.department}
+                      <p className="text-white/90 text-xs sm:text-sm font-mono mt-1 font-bold uppercase">
+                        DIVISI: {toilet.occupant.department}
                       </p>
                     )}
                     {isOvertime && (
-                      <div className="mt-4 inline-flex items-center gap-2 rounded-xl border border-rose-500/50 bg-rose-950/60 px-3.5 py-1.5 font-mono text-xs font-bold text-rose-300">
-                        <span>DURASI MELEBIHI 15 MENIT · MOHON KERJASAMA</span>
+                      <div className="mt-4 inline-flex items-center gap-2 border-2 border-white bg-black px-3.5 py-1.5 font-mono text-xs font-black text-[#ff4d4d] shadow-[3px_3px_0px_#000000]">
+                        <span>DURASI MELEBIHI 15 MENIT · MOHON KERJASAMA!</span>
                       </div>
                     )}
                   </div>
                 ) : isReserved ? (
                   <div>
-                    <div className="inline-block rounded-xl bg-teal-500/20 px-3.5 py-1.5 font-mono text-xs font-bold uppercase tracking-wider text-teal-300 border border-teal-500/40 mb-3">
-                      GILIRAN DIPANGGIL
+                    <div className="inline-block bg-[#e60012] text-white px-3.5 py-1 font-mono text-xs font-black uppercase tracking-wider border-2 border-white mb-3">
+                      GILIRAN DIPANGGIL!
                     </div>
-                    <h2 className="font-mono text-6xl sm:text-7xl lg:text-8xl font-black tracking-tight text-teal-300 tabular-nums drop-shadow-lg">
+                    <h2 className="font-mono text-6xl sm:text-7xl lg:text-8xl font-black tracking-tight text-teal-300 tabular-nums drop-shadow-[4px_4px_0px_#000000]">
                       {formatDuration(reserveRemainingMs)}
                     </h2>
-                    <p className="mt-4 font-mono text-base sm:text-2xl font-bold text-white truncate">
-                      Panggilan:{' '}
+                    <p className="mt-4 font-mono text-base sm:text-2xl font-black text-white uppercase truncate">
+                      TARGET:{' '}
                       <span className="text-teal-300">
                         {toilet?.reservedFor
                           ? getPublicDisplayName(
@@ -308,112 +308,104 @@ export function DisplayMonitorView({
                               false,
                               toilet.reservedFor.userId
                             )
-                          : 'Pemenang Antrean'}
+                          : 'PEMENANG ANTREAN'}
                       </span>
                     </p>
-                    <p className="mt-1 text-xs sm:text-sm text-teal-200/80 font-mono">
-                      Segera masuk sebelum kuota waktu reservasi hangus!
+                    <p className="mt-1 text-xs sm:text-sm text-teal-200 font-mono font-bold uppercase">
+                      Segera masuk sebelum waktu reservasi hangus!
                     </p>
                   </div>
                 ) : (
                   <div>
-                    <h2 className="font-mono text-6xl sm:text-7xl lg:text-9xl font-black uppercase tracking-tight text-emerald-400 drop-shadow-lg">
-                      KOSONG
+                    <h2 className="font-mono text-6xl sm:text-7xl lg:text-9xl font-black uppercase tracking-tight text-black drop-shadow-[4px_4px_0px_#e60012]">
+                      KOSONG!
                     </h2>
-                    <p className="mt-4 font-mono text-lg sm:text-2xl font-bold text-white">
-                      Bilik toilet siap digunakan sekarang.
+                    <p className="mt-4 font-mono text-lg sm:text-2xl font-black uppercase text-black">
+                      Bilik toilet siap diserbu sekarang.
                     </p>
-                    <p className="mt-1 text-xs sm:text-sm text-[#dbc08b]/80 font-mono">
-                      Silakan masuk dan tekan &quot;Masuk Toilet&quot; di ponsel Anda.
+                    <p className="mt-1 text-xs sm:text-sm text-slate-800 font-mono font-bold uppercase">
+                      Silakan masuk dan tekan &quot;Masuk Toilet&quot; di HP Anda.
                     </p>
                   </div>
                 )}
               </div>
 
-              {/* Animated Cute SVG Mascot Visual */}
+              {/* Persona Comic SVG Poop Visual */}
               <div className="shrink-0 flex items-center justify-center p-3">
                 <motion.svg
                   animate={{
                     y: isOccupied ? [0, -4, 0] : [0, -8, 0],
-                    rotate: isOccupied ? [-1, 1, -1] : [-3, 3, -3],
+                    rotate: isOccupied ? [-2, 2, -2] : [-4, 4, -4],
                   }}
                   transition={{
                     repeat: Infinity,
-                    duration: isOccupied ? 2.5 : 4,
+                    duration: isOccupied ? 2 : 3.5,
                     ease: 'easeInOut',
                   }}
                   viewBox="0 0 120 120"
-                  className="h-28 w-28 sm:h-36 sm:w-36 lg:h-44 lg:w-44 drop-shadow-2xl"
+                  className="h-28 w-28 sm:h-36 sm:w-36 lg:h-44 lg:w-44 drop-shadow-[6px_6px_0px_#000000]"
                 >
                   <defs>
-                    <linearGradient id="poopGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#c99f57" />
-                      <stop offset="50%" stopColor="#8c5d1d" />
-                      <stop offset="100%" stopColor="#3e2610" />
-                    </linearGradient>
-                    <filter id="glow">
-                      <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="#c99f57" floodOpacity="0.4" />
+                    <filter id="p5shadow">
+                      <feDropShadow dx="3" dy="3" stdDeviation="0" floodColor="#000000" floodOpacity="1" />
                     </filter>
                   </defs>
 
-                  {/* Poop Body Shapes */}
-                  <g filter="url(#glow)">
+                  {/* Poop Body Shapes with comic black outline */}
+                  <g stroke="#000000" strokeWidth="3.5" strokeLinejoin="round" strokeLinecap="round">
                     {/* Bottom tier */}
                     <path
                       d="M 22 96 C 20 80, 100 80, 98 96 C 96 108, 24 108, 22 96 Z"
-                      fill="url(#poopGrad)"
+                      fill={isOccupied ? '#e60012' : '#ffffff'}
                     />
                     {/* Middle tier */}
                     <path
                       d="M 30 76 C 26 62, 94 62, 90 76 C 88 88, 32 88, 30 76 Z"
-                      fill="url(#poopGrad)"
+                      fill={isOccupied ? '#e60012' : '#ffffff'}
                     />
                     {/* Upper swirl */}
                     <path
                       d="M 40 56 C 36 40, 84 40, 80 56 C 76 66, 44 66, 40 56 Z"
-                      fill="url(#poopGrad)"
+                      fill={isOccupied ? '#e60012' : '#ffffff'}
                     />
                     {/* Top curly swirl */}
                     <path
                       d="M 50 38 C 45 22, 68 18, 62 30 C 58 38, 52 38, 50 38 Z"
-                      fill="url(#poopGrad)"
+                      fill={isOccupied ? '#e60012' : '#ffffff'}
                     />
                   </g>
 
-                  {/* Cute Eyes */}
+                  {/* Persona Style Comic Eyes */}
                   {isOccupied ? (
-                    // Straining / Focusing Eyes
+                    // Straining Eyes
                     <>
-                      <circle cx="48" cy="68" r="4.5" fill="#ffffff" />
-                      <circle cx="49" cy="68" r="2.5" fill="#17110c" />
-                      <circle cx="72" cy="68" r="4.5" fill="#ffffff" />
-                      <circle cx="71" cy="68" r="2.5" fill="#17110c" />
-                      {/* Sweat drop */}
+                      <circle cx="48" cy="68" r="5" fill="#ffffff" stroke="#000000" strokeWidth="2.5" />
+                      <circle cx="49" cy="68" r="2.5" fill="#000000" />
+                      <circle cx="72" cy="68" r="5" fill="#ffffff" stroke="#000000" strokeWidth="2.5" />
+                      <circle cx="71" cy="68" r="2.5" fill="#000000" />
+                      {/* Comic sweat drop */}
                       <motion.path
                         animate={{ opacity: [0.3, 1, 0.3], y: [0, 3, 0] }}
-                        transition={{ repeat: Infinity, duration: 1.5 }}
-                        d="M 84 56 C 82 52, 88 52, 86 56 C 85 58, 83 58, 84 56 Z"
-                        fill="#67e8f9"
+                        transition={{ repeat: Infinity, duration: 1.2 }}
+                        d="M 84 54 C 82 50, 88 50, 86 54 C 85 56, 83 56, 84 54 Z"
+                        fill="#ffffff"
+                        stroke="#000000"
+                        strokeWidth="2"
                       />
                     </>
                   ) : (
-                    // Happy / Cheerful Eyes
+                    // Happy Persona Eyes
                     <>
-                      <circle cx="46" cy="66" r="6" fill="#ffffff" />
-                      <circle cx="47.5" cy="65" r="3.5" fill="#17110c" />
-                      <circle cx="49" cy="63.5" r="1.5" fill="#ffffff" />
+                      <circle cx="46" cy="66" r="6" fill="#000000" />
+                      <circle cx="48" cy="64" r="2" fill="#ffffff" />
 
-                      <circle cx="74" cy="66" r="6" fill="#ffffff" />
-                      <circle cx="72.5" cy="65" r="3.5" fill="#17110c" />
-                      <circle cx="74" cy="63.5" r="1.5" fill="#ffffff" />
+                      <circle cx="74" cy="66" r="6" fill="#000000" />
+                      <circle cx="76" cy="64" r="2" fill="#ffffff" />
 
-                      {/* Blushing cheeks */}
-                      <ellipse cx="38" cy="74" rx="5" ry="3" fill="#f43f5e" opacity="0.6" />
-                      <ellipse cx="82" cy="74" rx="5" ry="3" fill="#f43f5e" opacity="0.6" />
-                      {/* Big Smile */}
+                      {/* Smile */}
                       <path
-                        d="M 50 75 Q 60 85 70 75"
-                        stroke="#17110c"
+                        d="M 50 76 Q 60 88 70 76"
+                        stroke="#000000"
                         strokeWidth="3.5"
                         strokeLinecap="round"
                         fill="none"
@@ -425,35 +417,35 @@ export function DisplayMonitorView({
             </div>
 
             {/* Bottom Meta Bar inside Status Card */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-3 text-xs font-mono text-[#dbc08b]/80 shrink-0">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t-2 border-current pt-3 text-xs font-mono font-black uppercase shrink-0">
               <span>{toilet?.name || 'Bilik Utama'}</span>
-              <span>Kapasitas: 1 Orang</span>
+              <span>KAPASITAS: 1 ORANG // PHANTOM SYSTEM</span>
             </div>
           </div>
         </div>
 
-        {/* Right Column (5 cols): Clean Tabular Queue List */}
+        {/* Right Column (5 cols): Persona 5 Queue List */}
         <div className="lg:col-span-5 flex flex-col gap-4 min-h-0">
           {/* Queue Box */}
-          <div className="flex flex-1 flex-col rounded-3xl p-5 glass-card min-h-0">
-            <div className="flex items-center justify-between border-b border-[#c99f57]/15 pb-3 shrink-0">
+          <div className="p5-card flex flex-1 flex-col p-5 min-h-0 relative overflow-hidden">
+            <div className="flex items-center justify-between border-b-2 border-black pb-3 shrink-0">
               <div className="flex items-center gap-2">
-                <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#dbc08b]">
+                <span className="font-mono text-xs font-black uppercase tracking-wider text-white">
                   ANTREAN BERIKUTNYA
                 </span>
-                <span className="rounded-lg bg-[#ad7c2b]/30 px-2 py-0.5 font-mono text-xs font-black text-white border border-[#c99f57]/30">
-                  {queue.length}
+                <span className="p5-badge bg-[#e60012] px-2 py-0.5 font-mono text-xs font-black text-white border border-white">
+                  <span className="transform skew-x-[6deg] inline-block">{queue.length}</span>
                 </span>
               </div>
-              <span className="font-mono text-[11px] text-[#dbc08b]/70">ESTIMASI</span>
+              <span className="font-mono text-[11px] font-black text-slate-400">ESTIMASI</span>
             </div>
 
-            <div className="mt-3 flex-1 space-y-2 overflow-y-auto pr-1">
+            <div className="mt-3 flex-1 space-y-2.5 overflow-y-auto pr-1">
               {queue.length === 0 ? (
-                <div className="flex h-full min-h-[140px] flex-col items-center justify-center text-center text-[#dbc08b]/60 font-mono text-xs">
-                  <p className="font-bold text-white text-sm">TIDAK ADA ANTREAN</p>
-                  <p className="mt-1 text-[11px] text-[#dbc08b]/70">
-                    Bilik saat ini bebas antrean. Silakan langsung masuk!
+                <div className="flex h-full min-h-[140px] flex-col items-center justify-center text-center font-mono text-xs">
+                  <p className="font-black text-white text-sm uppercase">TIDAK ADA ANTREAN</p>
+                  <p className="mt-1 text-[11px] text-slate-400 font-bold uppercase">
+                    Bilik saat ini bebas antrean. Silakan langsung serbu!
                   </p>
                 </div>
               ) : (
@@ -469,28 +461,28 @@ export function DisplayMonitorView({
                   return (
                     <div
                       key={entry.id}
-                      className="flex items-center justify-between gap-3 rounded-xl border border-[#c99f57]/20 bg-[#241407]/60 px-3 py-2 font-mono text-xs"
+                      className="flex items-center justify-between gap-3 border-2 border-black bg-black p-2.5 font-mono text-xs shadow-[2px_2px_0px_#000000]"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <span
-                          className={`flex h-6 w-6 items-center justify-center rounded-lg font-bold text-xs shrink-0 ${
+                          className={`flex h-6 w-6 items-center justify-center border-2 font-black text-xs shrink-0 ${
                             idx === 0
-                              ? 'bg-amber-400 text-slate-950 font-black'
-                              : 'bg-[#3e2610] text-[#dbc08b] border border-[#c99f57]/30'
+                              ? 'bg-[#e60012] text-white border-white'
+                              : 'bg-white text-black border-black'
                           }`}
                         >
                           {idx + 1}
                         </span>
                         <div className="min-w-0">
-                          <p className="truncate font-bold text-white">
+                          <p className="truncate font-black text-white uppercase">
                             {getPublicDisplayName(
                               entry.displayName,
                               entry.isAnonymous,
                               entry.userId
                             )}
                           </p>
-                          <p className="text-[10px] text-[#dbc08b]/70">
-                            {entry.need === 'pup' ? 'BAB (Santai)' : 'BAK (Cepat)'}
+                          <p className="text-[10px] font-bold text-slate-400 uppercase">
+                            {entry.need === 'pup' ? 'BAB (SANTAI) 💩' : 'BAK (CEPAT) ⚡'}
                             {entry.department ? ` · ${entry.department}` : ''}
                           </p>
                         </div>
@@ -499,10 +491,10 @@ export function DisplayMonitorView({
                       <div className="text-right shrink-0">
                         <span
                           className={`font-black ${
-                            entry.status === 'called' ? 'text-teal-400' : 'text-white'
+                            entry.status === 'called' ? 'text-[#ff4d4d]' : 'text-white'
                           }`}
                         >
-                          {entry.status === 'called' ? 'DIPANGGIL' : `~${estMin} mnt`}
+                          {entry.status === 'called' ? 'DIPANGGIL' : `~${estMin} MNT`}
                         </span>
                       </div>
                     </div>
@@ -513,27 +505,27 @@ export function DisplayMonitorView({
           </div>
 
           {/* Join Callout Box with Scannable QR Code */}
-          <div className="rounded-2xl p-4 font-mono text-xs flex items-center justify-between gap-4 glass-card border border-[#c99f57]/30 shrink-0">
+          <div className="border-2 border-white bg-black p-4 font-mono text-xs flex items-center justify-between gap-4 shadow-[4px_4px_0px_#e60012] shrink-0">
             <div className="min-w-0 flex-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#dbc08b] flex items-center gap-1.5">
+              <span className="text-[10px] font-black uppercase tracking-wider text-[#e60012] flex items-center gap-1.5">
                 <QrCode className="h-3.5 w-3.5" />
                 <span>SCAN DENGAN PONSEL</span>
               </span>
-              <p className="text-sm font-black text-white mt-1 truncate">ngising.gwk.id</p>
-              <p className="text-[11px] text-[#dbc08b]/80 mt-0.5 leading-relaxed">
+              <p className="text-base font-black text-white mt-1 truncate uppercase">ngising.gwk.id</p>
+              <p className="text-[11px] text-slate-300 mt-0.5 leading-relaxed font-bold">
                 Scan QR code untuk langsung masuk antrean atau pantau bilik dari HP
               </p>
             </div>
 
-            <div className="shrink-0 p-1.5 bg-white rounded-xl border border-[#c99f57]/40 shadow-lg flex items-center justify-center">
+            <div className="shrink-0 p-1 bg-white border-2 border-black shadow-[3px_3px_0px_#000000] flex items-center justify-center">
               {qrDataUrl ? (
                 <img
                   src={qrDataUrl}
                   alt="QR Code ngising.gwk.id"
-                  className="h-20 w-20 sm:h-22 sm:w-22 object-contain rounded-lg"
+                  className="h-20 w-20 sm:h-22 sm:w-22 object-contain"
                 />
               ) : (
-                <div className="h-20 w-20 sm:h-22 sm:w-22 bg-slate-100 animate-pulse rounded-lg flex items-center justify-center text-[10px] text-slate-400">
+                <div className="h-20 w-20 sm:h-22 sm:w-22 bg-slate-100 animate-pulse flex items-center justify-center text-[10px] text-slate-400 font-black">
                   QR...
                 </div>
               )}
@@ -542,20 +534,25 @@ export function DisplayMonitorView({
         </div>
       </main>
 
-      {/* Motivational Running Quote Ticker + Diagnostic Footer */}
-      <footer className="relative z-10 shrink-0 flex flex-wrap items-center justify-between gap-3 border-t border-[#c99f57]/20 pt-3 font-mono text-[11px]">
-        {/* Animated Funny Motivational Quote */}
+      {/* Motivational Running Quote Ticker + Diagnostic Footer in Persona 5 Comic Style */}
+      <footer className="relative z-10 shrink-0 flex flex-wrap items-center justify-between gap-3 border-t-2 border-white pt-3 font-mono text-[11px]">
+        {/* Animated Funny Motivational Quote in Comic Dialogue Balloon */}
         <div className="flex items-center gap-2 min-w-0 flex-1">
-          <Sparkles className="h-4 w-4 text-[#dbc08b] shrink-0 animate-spin" />
-          <div className="overflow-hidden h-5 flex items-center min-w-0">
+          <div className="p5-badge bg-[#e60012] text-white px-2 py-0.5 text-[10px] font-black shrink-0 border border-white">
+            <span className="transform skew-x-[6deg] inline-flex items-center gap-1">
+              <Sparkles className="h-3 w-3" />
+              <span>KATA MUTIARA</span>
+            </span>
+          </div>
+          <div className="overflow-hidden h-6 flex items-center min-w-0 bg-black border border-white px-3 py-1 shadow-[2px_2px_0px_#000000] flex-1">
             <AnimatePresence mode="wait">
               <motion.p
                 key={quoteIndex}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.4 }}
-                className="font-sans italic font-bold text-[#dbc08b] truncate text-xs"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+                className="font-sans italic font-black text-white truncate text-xs"
               >
                 {MOTIVATIONAL_QUOTES[quoteIndex]}
               </motion.p>
@@ -563,16 +560,16 @@ export function DisplayMonitorView({
           </div>
         </div>
 
-        <div className="flex items-center gap-3 text-[#dbc08b]/80 shrink-0">
+        <div className="flex items-center gap-3 text-slate-400 font-bold uppercase shrink-0">
           <div className="flex items-center gap-1.5">
             {connected ? (
-              <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
-                <Wifi className="h-3 w-3" />
+              <span className="flex items-center gap-1.5 text-emerald-400 font-black">
+                <Wifi className="h-3.5 w-3.5" />
                 <span>LIVE SYNC</span>
               </span>
             ) : (
-              <span className="flex items-center gap-1.5 text-rose-400 font-bold">
-                <WifiOff className="h-3 w-3" />
+              <span className="flex items-center gap-1.5 text-[#e60012] font-black">
+                <WifiOff className="h-3.5 w-3.5" />
                 <span>TERPUTUS</span>
               </span>
             )}
@@ -580,7 +577,7 @@ export function DisplayMonitorView({
             <span>{officeState?.onlineCount ?? 1} USER</span>
           </div>
           <span>·</span>
-          <span>NGISING SMART OFFICE</span>
+          <span>PHANTOM NGISING SYSTEM</span>
         </div>
       </footer>
     </div>

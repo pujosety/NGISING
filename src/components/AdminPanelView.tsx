@@ -165,13 +165,13 @@ export function AdminPanelView({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-white">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="font-display text-xl font-bold tracking-tight text-slate-900">
-            Admin Panel Kantor
+          <h2 className="font-display text-xl sm:text-2xl font-black uppercase tracking-tight text-white">
+            ADMIN PANEL // COMMAND CENTER
           </h2>
-          <p className="mt-0.5 text-sm text-slate-500">
+          <p className="mt-0.5 text-xs sm:text-sm font-bold text-slate-400 uppercase">
             Kendali penuh operasional toilet, moderasi antrean live, akun karyawan, dan log audit.
           </p>
         </div>
@@ -180,43 +180,43 @@ export function AdminPanelView({
       {noticeMessage && (
         <div
           role="status"
-          className="flex items-center justify-between gap-4 rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-900"
+          className="flex items-center justify-between gap-4 border-2 border-white bg-[#e60012] p-4 text-sm font-black text-white shadow-[4px_4px_0px_#000000] uppercase"
         >
           <span>{noticeMessage}</span>
           <button
             type="button"
             onClick={() => setNoticeMessage(null)}
-            className="text-xs font-semibold text-teal-800 hover:underline whitespace-nowrap"
+            className="p5-btn-black text-xs px-2.5 py-1 text-white cursor-pointer"
           >
-            Tutup
+            TUTUP
           </button>
         </div>
       )}
 
       {/* 4-Column Admin KPI Strip */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
-          <p className="text-xs font-medium text-slate-500">Status Toilet</p>
-          <p className={`mt-1.5 font-display text-xl font-bold ${statusColor}`}>
+        <div className="p5-card p-4 sm:p-5">
+          <p className="text-xs font-black uppercase tracking-wider text-slate-400">Status Toilet</p>
+          <p className={`mt-1.5 font-display text-xl font-black uppercase ${statusColor}`}>
             {statusText}
           </p>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
-          <p className="text-xs font-medium text-slate-500">Antrean Aktif</p>
-          <p className="mt-1.5 font-mono text-2xl font-bold tabular-nums text-slate-900">
+        <div className="p5-card p-4 sm:p-5">
+          <p className="text-xs font-black uppercase tracking-wider text-slate-400">Antrean Aktif</p>
+          <p className="mt-1.5 font-mono text-2xl font-black tabular-nums text-white">
             {queue.length}
-            <span className="ml-1 text-sm font-normal text-slate-500">orang</span>
+            <span className="ml-1 text-sm font-bold text-slate-400 uppercase"> ORANG</span>
           </p>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
-          <p className="text-xs font-medium text-slate-500">Total Akun Terdaftar</p>
-          <p className="mt-1.5 font-mono text-2xl font-bold tabular-nums text-slate-900">
+        <div className="p5-card p-4 sm:p-5">
+          <p className="text-xs font-black uppercase tracking-wider text-slate-400">Total Akun</p>
+          <p className="mt-1.5 font-mono text-2xl font-black tabular-nums text-white">
             {users.length}
           </p>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
-          <p className="text-xs font-medium text-slate-500">Sesi Tercatat</p>
-          <p className="mt-1.5 font-mono text-2xl font-bold tabular-nums text-slate-900">
+        <div className="p5-card p-4 sm:p-5">
+          <p className="text-xs font-black uppercase tracking-wider text-[#e60012]">Sesi Tercatat</p>
+          <p className="mt-1.5 font-mono text-2xl font-black tabular-nums text-[#ff4d4d]">
             {history.length}
           </p>
         </div>
@@ -226,21 +226,21 @@ export function AdminPanelView({
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-start">
         <section
           aria-labelledby="admin-toilet-heading"
-          className="rounded-xl border border-slate-200 bg-white p-6 space-y-5 lg:col-span-6"
+          className="p5-card p-6 space-y-5 lg:col-span-6"
         >
           <div>
-            <h3 id="admin-toilet-heading" className="font-display text-base font-bold text-slate-900">
-              Kendali Toilet Kantor
+            <h3 id="admin-toilet-heading" className="font-display text-base font-black uppercase text-white">
+              KENDALI TOILET KANTOR
             </h3>
-            <p className="mt-0.5 text-xs text-slate-500">
-              Ubah identitas toilet, aktifkan mode perawatan, atau kosongkan paksa bila penghuni lupa klik keluar.
+            <p className="mt-0.5 text-xs font-bold text-slate-400 uppercase">
+              Ubah identitas toilet, aktifkan mode perawatan, atau kosongkan paksa.
             </p>
           </div>
 
-          <form onSubmit={handleSaveToilet} className="space-y-3 border-t border-slate-100 pt-4">
+          <form onSubmit={handleSaveToilet} className="space-y-3 border-t-2 border-black pt-4">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <label htmlFor="admin-toilet-name" className="block text-xs font-medium text-slate-700">
+                <label htmlFor="admin-toilet-name" className="block text-xs font-black uppercase text-white">
                   Nama Toilet
                 </label>
                 <input
@@ -248,11 +248,11 @@ export function AdminPanelView({
                   type="text"
                   value={toiletName}
                   onChange={(e) => setToiletName(e.target.value)}
-                  className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                  className="mt-1.5 w-full border-2 border-white bg-black px-3 py-2 text-sm font-bold text-white shadow-[2px_2px_0px_#000000] focus:border-[#e60012] focus:outline-none"
                 />
               </div>
               <div>
-                <label htmlFor="admin-toilet-loc" className="block text-xs font-medium text-slate-700">
+                <label htmlFor="admin-toilet-loc" className="block text-xs font-black uppercase text-white">
                   Lokasi
                 </label>
                 <input
@@ -260,24 +260,24 @@ export function AdminPanelView({
                   type="text"
                   value={toiletLocation}
                   onChange={(e) => setToiletLocation(e.target.value)}
-                  className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                  className="mt-1.5 w-full border-2 border-white bg-black px-3 py-2 text-sm font-bold text-white shadow-[2px_2px_0px_#000000] focus:border-[#e60012] focus:outline-none"
                 />
               </div>
             </div>
             <button
               type="submit"
               disabled={busy}
-              className="inline-flex min-h-[38px] items-center gap-2 rounded-lg bg-teal-700 px-4 py-2 text-xs font-semibold text-white hover:bg-teal-800 disabled:opacity-60 transition-colors"
+              className="p5-btn-red inline-flex min-h-[40px] items-center gap-2 px-4 py-2 text-xs font-black uppercase disabled:opacity-60 cursor-pointer"
             >
               <Check className="h-3.5 w-3.5" aria-hidden="true" />
-              <span>{toiletSaved ? 'Info Toilet Tersimpan' : 'Simpan Info Toilet'}</span>
+              <span>{toiletSaved ? 'INFO TERSIMPAN' : 'SIMPAN INFO TOILET'}</span>
             </button>
           </form>
 
-          <div className="flex items-center justify-between gap-4 border-t border-slate-100 pt-4">
+          <div className="flex items-center justify-between gap-4 border-t-2 border-black pt-4">
             <div>
-              <p className="text-sm font-semibold text-slate-900">Mode Perawatan</p>
-              <p className="text-xs text-slate-500">
+              <p className="text-sm font-black uppercase text-white">Mode Perawatan</p>
+              <p className="text-xs font-bold text-slate-400">
                 Nonaktifkan toilet sementara saat pembersihan atau perbaikan.
               </p>
             </div>
@@ -285,21 +285,19 @@ export function AdminPanelView({
               type="button"
               disabled={busy || isOccupied}
               onClick={onToggleMaintenance}
-              className={`inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border px-3.5 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap shrink-0 disabled:opacity-50 ${
-                isMaintenance
-                  ? 'border-teal-600 bg-teal-50 text-teal-800 hover:bg-teal-100'
-                  : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+              className={`p5-btn-black inline-flex min-h-[38px] items-center gap-1.5 px-3.5 py-1.5 text-xs font-black uppercase whitespace-nowrap shrink-0 disabled:opacity-50 cursor-pointer ${
+                isMaintenance ? 'text-[#ff4d4d]' : 'text-white'
               }`}
             >
               <Wrench className="h-3.5 w-3.5" aria-hidden="true" />
-              <span>{isMaintenance ? 'Aktifkan Toilet' : 'Aktifkan Perawatan'}</span>
+              <span>{isMaintenance ? 'AKTIFKAN TOILET' : 'AKTIFKAN PERAWATAN'}</span>
             </button>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 pt-4">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-t-2 border-black pt-4">
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-slate-900">Paksa Kosongkan Toilet</p>
-              <p className="text-xs text-slate-500">
+              <p className="text-sm font-black uppercase text-white">Paksa Kosongkan Toilet</p>
+              <p className="text-xs font-bold text-slate-400">
                 {isOccupied && toilet.occupant
                   ? `Saat ini dipakai ${toilet.occupant.displayName} (${formatDuration(Math.max(0, now - toilet.occupant.startedAt))}).`
                   : 'Toilet sedang tidak terisi.'}
@@ -311,9 +309,9 @@ export function AdminPanelView({
                 type="button"
                 disabled={busy || !isOccupied}
                 onClick={() => setConfirmForceRelease(true)}
-                className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:opacity-40 transition-colors whitespace-nowrap shrink-0"
+                className="p5-btn-black inline-flex min-h-[38px] items-center gap-1.5 px-3.5 py-1.5 text-xs font-black uppercase text-[#ff4d4d] disabled:opacity-40 whitespace-nowrap shrink-0 cursor-pointer"
               >
-                <span>Paksa Kosongkan</span>
+                <span>PAKSA KOSONGKAN</span>
               </button>
             ) : (
               <div className="flex items-center gap-2 shrink-0">
@@ -324,16 +322,16 @@ export function AdminPanelView({
                     setConfirmForceRelease(false);
                     await onForceRelease();
                   }}
-                  className="min-h-[36px] rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700 transition-colors"
+                  className="p5-btn-red min-h-[36px] px-3 py-1.5 text-xs font-black uppercase cursor-pointer"
                 >
-                  Konfirmasi
+                  KONFIRMASI
                 </button>
                 <button
                   type="button"
                   onClick={() => setConfirmForceRelease(false)}
-                  className="min-h-[36px] rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                  className="p5-btn-black min-h-[36px] px-3 py-1.5 text-xs font-black uppercase text-white cursor-pointer"
                 >
-                  Batal
+                  BATAL
                 </button>
               </div>
             )}
@@ -343,7 +341,7 @@ export function AdminPanelView({
         {/* Queue Moderation */}
         <section
           aria-labelledby="admin-queue-heading"
-          className="rounded-xl border border-slate-200 bg-white p-6 space-y-4 lg:col-span-6"
+          className="p5-card p-6 space-y-4 lg:col-span-6"
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>

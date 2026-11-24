@@ -47,22 +47,22 @@ export function SettingsView({
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
-        <h2 className="font-display text-2xl font-black text-white">
-          Akun Saya
+        <h2 className="font-display text-2xl font-black uppercase tracking-tight text-white">
+          PENGATURAN // AKUN SAYA
         </h2>
-        <p className="mt-0.5 text-xs sm:text-sm text-[#dbc08b]/80">
-          Kelola nama tampilan dan privasi akun Ngising milikmu.
+        <p className="mt-0.5 text-xs sm:text-sm font-bold text-slate-400 uppercase">
+          Kelola nama panggilan dan privasi akun Phantom Ngising.
         </p>
       </div>
 
-      <section className="glass-card rounded-3xl p-6 sm:p-7 border border-[#c99f57]/20">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+      <section className="p5-card p-6 sm:p-7">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-black pb-4">
           <div>
-            <h3 className="font-display text-lg font-bold text-white">
-              Profil Akun Saya
+            <h3 className="font-display text-lg font-black uppercase text-white">
+              PROFIL SAYA
             </h3>
-            <p className="mt-0.5 text-xs text-[#dbc08b]/80">
-              Peran: <span className="font-bold text-white">{user.role === 'admin' ? '👑 Admin Kantor' : 'Karyawan'}</span>
+            <p className="mt-0.5 text-xs font-bold text-slate-400 uppercase">
+              Peran: <span className="text-[#e60012] font-black">{user.role === 'admin' ? '👑 ADMIN KANTOR' : 'KARYAWAN'}</span>
               {user.department ? (
                 <>
                   {' '}<span aria-hidden="true">·</span> {user.department}
@@ -74,10 +74,10 @@ export function SettingsView({
             <button
               type="button"
               onClick={onOpenAdminPanel}
-              className="glass-pill inline-flex min-h-[36px] items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold text-[#dbc08b] hover:text-white cursor-pointer"
+              className="p5-btn-white inline-flex min-h-[36px] items-center gap-1.5 px-3 py-1.5 text-xs font-black uppercase cursor-pointer"
             >
               <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
-              <span>Buka Admin Panel</span>
+              <span>BUKA ADMIN PANEL</span>
             </button>
           )}
         </div>
@@ -86,66 +86,66 @@ export function SettingsView({
           <div>
             <label
               htmlFor="settings-name"
-              className="block text-xs font-bold text-[#e8d9b5] mb-1.5"
+              className="block text-xs font-black uppercase tracking-wider text-white mb-1.5"
             >
-              Nama Tampilan di Antrean
+              NAMA TAMPILAN DI ANTREAN
             </label>
             <input
               id="settings-name"
               type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              className="w-full min-h-[44px] rounded-xl border border-[#c99f57]/30 bg-[#241407]/60 py-2.5 px-3.5 text-sm text-white placeholder:text-[#dbc08b]/40 focus:border-[#dbc08b] focus:outline-none focus:ring-2 focus:ring-[#ad7c2b]/30 shadow-inner"
+              className="w-full min-h-[46px] border-2 border-white bg-black py-2.5 px-3.5 text-sm font-bold text-white placeholder:text-slate-500 focus:border-[#e60012] focus:outline-none shadow-[3px_3px_0px_#000000]"
             />
           </div>
 
-          <label className="flex items-start gap-3 rounded-2xl border border-[#c99f57]/20 bg-[#241407]/40 p-4 cursor-pointer">
+          <label className="flex items-start gap-3 border-2 border-black bg-black p-4 cursor-pointer shadow-[3px_3px_0px_#000000]">
             <input
               type="checkbox"
               checked={isAnonymous}
               onChange={(e) => setIsAnonymous(e.target.checked)}
-              className="mt-0.5 h-4 w-4 rounded accent-[#ad7c2b]"
+              className="mt-0.5 h-4 w-4 rounded accent-[#e60012]"
             />
             <div className="text-xs">
-              <span className="font-bold text-white flex items-center gap-1.5">
-                <EyeOff className="h-3.5 w-3.5 text-[#dbc08b]" />
-                <span>Mode Anonim (Samarkan Nama)</span>
+              <span className="font-black uppercase text-white flex items-center gap-1.5">
+                <EyeOff className="h-3.5 w-3.5 text-[#e60012]" />
+                <span>MODE ANONIM (SAMARKAN NAMA)</span>
               </span>
-              <p className="mt-1 text-[#dbc08b]/70">
+              <p className="mt-1 text-slate-400 font-bold">
                 Nama kamu akan disamarkan sebagai &quot;Karyawan&quot; di daftar antrean dan layar TV publik.
               </p>
             </div>
           </label>
 
           {formError && (
-            <p className="text-xs font-bold text-rose-300 bg-rose-950/60 p-2.5 rounded-xl border border-rose-500/40">
+            <p className="text-xs font-black uppercase text-white bg-[#e60012] p-3 border-2 border-black shadow-[3px_3px_0px_#000000]">
               {formError}
             </p>
           )}
 
           {savedNotice && (
-            <p className="flex items-center gap-1.5 text-xs font-bold text-emerald-300 bg-emerald-950/60 p-2.5 rounded-xl border border-emerald-500/40">
-              <Check className="h-4 w-4" />
-              <span>Profil berhasil disimpan!</span>
+            <p className="flex items-center gap-1.5 text-xs font-black uppercase text-black bg-white p-3 border-2 border-black shadow-[3px_3px_0px_#e60012]">
+              <Check className="h-4 w-4 text-[#e60012]" />
+              <span>PROFIL BERHASIL DISIMPAN!</span>
             </p>
           )}
 
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-3">
             <button
               type="submit"
               disabled={busy}
-              className="btn-3d-poop inline-flex min-h-[44px] items-center justify-center rounded-xl px-5 py-2.5 text-xs font-black text-white cursor-pointer disabled:opacity-50"
+              className="p5-btn-red inline-flex min-h-[46px] items-center justify-center px-5 py-2.5 text-xs font-black uppercase cursor-pointer disabled:opacity-50"
             >
-              Simpan Perubahan
+              SIMPAN PERUBAHAN
             </button>
 
             <button
               type="button"
               onClick={onLogout}
-              className="glass-pill inline-flex min-h-[44px] items-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-bold text-[#dbc08b] hover:bg-rose-950/60 hover:text-rose-200 cursor-pointer"
+              className="p5-btn-black inline-flex min-h-[46px] items-center gap-1.5 px-4 py-2.5 text-xs font-black uppercase text-white hover:text-[#ff4d4d] cursor-pointer"
             >
               <LogOut className="h-4 w-4" />
-              <span>Keluar dari Akun</span>
+              <span>LOGOUT / KELUAR</span>
             </button>
           </div>
         </form>

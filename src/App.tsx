@@ -187,10 +187,13 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 text-slate-600">
-        <div className="space-y-2 text-center">
-          <p className="font-display text-lg font-bold text-slate-900">Ngising</p>
-          <p className="text-sm text-slate-500">Memuat status toilet kantor...</p>
+      <div className="flex min-h-screen items-center justify-center bg-[#0c0c0e] text-white">
+        <div className="p5-card p-8 text-center max-w-sm w-full mx-4 border-2 border-white shadow-[6px_6px_0px_#e60012]">
+          <div className="p5-badge inline-block bg-[#e60012] text-white px-3 py-1 text-xs font-black uppercase mb-3">
+            <span className="transform skew-x-[6deg] inline-block">SYSTEM INITIALIZING</span>
+          </div>
+          <p className="font-display text-2xl font-black uppercase tracking-tight text-white">NGISING P5</p>
+          <p className="text-xs font-bold text-slate-400 mt-1 uppercase">Memuat status bilik kantor...</p>
         </div>
       </div>
     );
@@ -223,21 +226,13 @@ export default function App() {
 
   if (activeTab === 'display' && !user) {
     return (
-      <div className="min-h-screen bg-slate-950 p-4 sm:p-8 flex flex-col">
-        <div className="mb-4 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => setActiveTab('dashboard')}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-white/20 transition-all cursor-pointer shadow-lg active:scale-95"
-          >
-            ← Kembali ke Halaman Masuk
-          </button>
-        </div>
+      <div className="fixed inset-0 z-50 flex h-screen w-screen flex-col bg-[#0c0c0e] text-white overflow-hidden select-none">
         <DisplayMonitorView
           officeState={state}
           now={now}
           connected={connected}
           lastSyncedAt={lastSyncedAt}
+          onExit={() => setActiveTab('dashboard')}
         />
       </div>
     );
@@ -304,7 +299,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex min-h-screen text-[#f7efe6]">
+    <div className="flex min-h-screen bg-[#0c0c0e] text-white">
       <PoopInteractionBurst event={burstEvent} />
       <Sidebar
         activeTab={safeActiveTab}
@@ -321,22 +316,22 @@ export default function App() {
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-4 border-b border-[#c99f57]/20 glass-panel px-4 pt-safe sm:px-8">
+        <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-4 border-b-2 border-white bg-black px-4 pt-safe sm:px-8 shadow-[0_4px_0px_#000000]">
           <div className="flex items-center gap-2.5 text-sm min-w-0">
-            <img src="/app-logo.png" alt="Ngising" className="h-7 w-7 rounded-md object-contain lg:hidden drop-shadow-md" />
-            <span className="font-display font-extrabold text-white whitespace-nowrap lg:hidden">
-              Ngising
+            <img src="/app-logo.png" alt="Ngising" className="h-7 w-7 rounded object-contain lg:hidden border border-white" />
+            <span className="font-display font-black text-white uppercase whitespace-nowrap lg:hidden">
+              NGISING P5
             </span>
-            <span className="text-[#c99f57]/40 lg:hidden" aria-hidden="true">
+            <span className="text-slate-600 lg:hidden" aria-hidden="true">
               /
             </span>
-            <span className="hidden text-[#dbc08b] lg:inline whitespace-nowrap">
+            <span className="hidden text-slate-400 font-bold uppercase lg:inline whitespace-nowrap">
               {user.displayName}
             </span>
-            <span className="hidden text-[#c99f57]/40 lg:inline" aria-hidden="true">
+            <span className="hidden text-slate-600 lg:inline" aria-hidden="true">
               /
             </span>
-            <h1 className="font-display font-bold text-white truncate">
+            <h1 className="font-display font-black uppercase text-white truncate">
               {TAB_TITLES[safeActiveTab]}
             </h1>
           </div>
@@ -356,36 +351,38 @@ export default function App() {
                 void refreshState();
               }}
               title="Klik untuk menyinkronkan status secara instan"
-              className="glass-pill inline-flex min-h-[36px] items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-[#e8d9b5] hover:border-[#c99f57] hover:text-white transition-all cursor-pointer whitespace-nowrap active:scale-95"
+              className="p5-badge inline-flex min-h-[36px] items-center gap-1.5 px-3 py-1 text-xs font-black uppercase text-white bg-black border border-white shadow-[2px_2px_0px_#000000] hover:bg-[#e60012] transition-colors cursor-pointer whitespace-nowrap active:scale-95"
             >
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ad7c2b] opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#dbc08b]" />
+              <span className="inline-flex items-center gap-1.5 transform skew-x-[6deg]">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#e60012] opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#e60012]" />
+                </span>
+                <span className="hidden xs:inline">SYNC:</span>
+                <span className="font-mono text-[11px] font-black text-white">
+                  {formatLastSynced(lastSyncedAt, now)}
+                </span>
+                <RefreshCw
+                  className={`h-3 w-3 text-white transition-transform ${
+                    isSyncing ? 'animate-spin' : ''
+                  }`}
+                  aria-hidden="true"
+                />
               </span>
-              <span className="hidden xs:inline">Auto-Refresh:</span>
-              <span className="font-mono text-[11px] font-bold text-[#dbc08b]">
-                {formatLastSynced(lastSyncedAt, now)}
-              </span>
-              <RefreshCw
-                className={`h-3 w-3 text-[#dbc08b] transition-transform ${
-                  isSyncing ? 'animate-spin' : ''
-                }`}
-                aria-hidden="true"
-              />
             </button>
 
-            <div className="hidden md:flex items-center gap-1.5 text-xs text-[#dbc08b]/80 whitespace-nowrap">
+            <div className="hidden md:flex items-center gap-1.5 text-xs text-slate-300 font-bold uppercase whitespace-nowrap">
               {connected ? (
                 <>
                   <Wifi className="h-3.5 w-3.5 text-emerald-400" aria-hidden="true" />
-                  <span className="tabular-nums font-mono font-bold">
-                    {state?.onlineCount ?? 1} online
+                  <span className="tabular-nums font-mono font-black">
+                    {state?.onlineCount ?? 1} ONLINE
                   </span>
                 </>
               ) : (
                 <>
-                  <WifiOff className="h-3.5 w-3.5 text-amber-400" aria-hidden="true" />
-                  <span className="text-amber-300 font-medium">Menyambung...</span>
+                  <WifiOff className="h-3.5 w-3.5 text-[#e60012]" aria-hidden="true" />
+                  <span className="text-[#ff4d4d] font-black">CONNECTING...</span>
                 </>
               )}
             </div>
@@ -393,10 +390,12 @@ export default function App() {
             <button
               type="button"
               onClick={() => setActiveTab('account')}
-              className="glass-pill inline-flex min-h-[36px] items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-bold text-[#f5eedb] hover:border-[#c99f57] transition-all whitespace-nowrap shrink-0 cursor-pointer"
+              className="p5-badge inline-flex min-h-[36px] items-center gap-2 px-3 py-1.5 text-xs font-black uppercase text-black bg-white border border-black shadow-[2px_2px_0px_#e60012] hover:bg-slate-200 transition-all whitespace-nowrap shrink-0 cursor-pointer"
             >
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>{user.displayName}</span>
+              <span className="inline-flex items-center gap-1.5 transform skew-x-[6deg]">
+                <span className="h-2 w-2 rounded-full bg-[#e60012] animate-pulse" />
+                <span>{user.displayName}</span>
+              </span>
             </button>
           </div>
         </header>
@@ -405,69 +404,75 @@ export default function App() {
           {errorMessage && (
             <div
               role="alert"
-              className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-rose-500/40 bg-rose-950/60 px-4 py-3 text-sm text-rose-200 shadow-lg"
+              className="mb-6 flex items-center justify-between gap-4 border-2 border-white bg-[#e60012] p-4 text-sm font-black text-white shadow-[4px_4px_0px_#000000] uppercase"
             >
-              <span className="flex items-center gap-2 font-medium">
-                <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" aria-hidden="true" />
+              <span className="flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
                 <span>{errorMessage}</span>
               </span>
               <button
                 type="button"
                 onClick={clearError}
-                className="text-xs font-bold text-rose-300 hover:underline whitespace-nowrap shrink-0 cursor-pointer"
+                className="p5-btn-black text-xs px-2.5 py-1 text-white cursor-pointer"
               >
-                Tutup
+                TUTUP
               </button>
             </div>
           )}
 
           {!toilet ? (
-            <div className="h-64 animate-pulse rounded-2xl border border-[#c99f57]/20 glass-card" />
+            <div className="h-64 animate-pulse border-2 border-white bg-black shadow-[4px_4px_0px_#000000]" />
           ) : safeActiveTab === 'dashboard' ? (
             <div className="space-y-4">
-              {/* Compact Quick Status Bar Glass */}
-              <div className="glass-card flex flex-wrap items-center justify-between gap-3 rounded-2xl px-4 py-3 border border-[#c99f57]/25">
+              {/* Compact Quick Status Bar in Persona 5 panel */}
+              <div className="p5-panel flex flex-wrap items-center justify-between gap-3 p-3.5 sm:p-4 bg-black border-2 border-white shadow-[4px_4px_0px_#000000]">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div
-                    className={`h-2.5 w-2.5 rounded-full shrink-0 ${
+                    className={`h-3 w-3 border border-white shrink-0 ${
                       userAlreadyOccupying
-                        ? 'bg-rose-500 animate-pulse'
+                        ? 'bg-[#e60012] animate-pulse'
                         : myQueueIndex !== -1
-                          ? 'bg-[#ad7c2b] animate-pulse'
+                          ? 'bg-amber-400 animate-pulse'
                           : 'bg-emerald-400'
                     }`}
                   />
-                  <span className="text-xs font-bold text-white truncate">
+                  <span className="text-xs sm:text-sm font-black uppercase text-white truncate">
                     {userAlreadyOccupying
-                      ? 'Kamu sedang di dalam bilik'
+                      ? 'KAMU SEDANG DI DALAM BILIK'
                       : myQueueIndex !== -1
-                        ? `Kamu di nomor antrean #${myQueueIndex + 1}`
-                        : `Halo, ${user.displayName}!`}
+                        ? `KAMU DI NOMOR ANTREAN #${myQueueIndex + 1}`
+                        : `HALO, ${user.displayName}!`}
                   </span>
                   {user.isAnonymous && (
-                    <span className="inline-flex items-center gap-1 rounded bg-[#3e2610] px-1.5 py-0.5 text-[10px] text-[#dbc08b] font-bold border border-[#c99f57]/30">
-                      <EyeOff className="h-2.5 w-2.5" />
-                      <span>Anonim</span>
+                    <span className="p5-badge inline-flex items-center gap-1 bg-[#1e1e24] px-2 py-0.5 text-[10px] text-white font-black border border-white">
+                      <span className="inline-flex items-center gap-1 transform skew-x-[6deg]">
+                        <EyeOff className="h-2.5 w-2.5" />
+                        <span>ANONIM</span>
+                      </span>
                     </span>
                   )}
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                  <span className="glass-pill inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold text-[#e8d9b5]">
-                    <span className="text-[11px] text-[#dbc08b]/80">Kuota Sisa:</span>
-                    <span
-                      className={`font-mono font-bold ${
-                        myDailyQuota && myDailyQuota.remaining <= 0
-                          ? 'text-rose-400'
-                          : 'text-white'
-                      }`}
-                    >
-                      {myDailyQuota?.remaining ?? 10}/10
+                  <span className="p5-badge inline-flex items-center gap-1.5 px-3 py-1 text-xs font-black uppercase text-white bg-black border border-white shadow-[2px_2px_0px_#000000]">
+                    <span className="inline-flex items-center gap-1 transform skew-x-[6deg]">
+                      <span className="text-[11px] text-slate-400">KUOTA SISA:</span>
+                      <span
+                        className={`font-mono font-black ${
+                          myDailyQuota && myDailyQuota.remaining <= 0
+                            ? 'text-[#ff4d4d]'
+                            : 'text-white'
+                        }`}
+                      >
+                        {myDailyQuota?.remaining ?? 10}/10
+                      </span>
                     </span>
                   </span>
-                  <span className="inline-flex items-center gap-1 rounded-lg bg-teal-50 px-2.5 py-1 text-xs font-bold text-teal-800">
-                    <span className="text-[11px] font-normal text-teal-600">Antre:</span>
-                    <span className="font-mono">{queue.length}</span>
+                  <span className="p5-badge inline-flex items-center gap-1.5 px-3 py-1 text-xs font-black uppercase text-black bg-white border border-black shadow-[2px_2px_0px_#e60012]">
+                    <span className="inline-flex items-center gap-1 transform skew-x-[6deg]">
+                      <span className="text-[11px] font-bold text-slate-800">ANTRE:</span>
+                      <span className="font-mono font-black">{queue.length}</span>
+                    </span>
                   </span>
                 </div>
               </div>
@@ -509,109 +514,109 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Personal Recent Sessions + Weekly Leaderboard Preview */}
+              {/* Personal Recent Sessions + Weekly Leaderboard Preview in Persona 5 cards */}
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-start">
                 <section
                   aria-labelledby="personal-recent-heading"
-                  className="glass-card overflow-hidden rounded-2xl border border-[#c99f57]/20 lg:col-span-7"
+                  className="p5-card overflow-hidden p-0 lg:col-span-7"
                 >
-                <div className="flex items-center justify-between border-b border-[#c99f57]/15 px-5 py-4">
-                  <div>
-                    <h3
-                      id="personal-recent-heading"
-                      className="font-display text-base font-bold text-white"
+                  <div className="flex items-center justify-between border-b-2 border-black bg-black px-5 py-4">
+                    <div>
+                      <h3
+                        id="personal-recent-heading"
+                        className="font-display text-base font-black uppercase tracking-tight text-white"
+                      >
+                        AKTIVITAS TERAKHIR SAYA
+                      </h3>
+                      <p className="mt-0.5 text-xs font-bold text-slate-400">
+                        Catatan pribadi khusus untuk akun {user.displayName}.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('history')}
+                      className="text-xs font-black uppercase text-[#e60012] hover:text-white transition-colors cursor-pointer"
                     >
-                      Aktivitas Terakhir Saya
-                    </h3>
-                    <p className="mt-0.5 text-xs text-[#f3e4c0]/80">
-                      Catatan pribadi khusus untuk akun {user.displayName}.
-                    </p>
+                      LIHAT SEMUA →
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('history')}
-                    className="text-xs font-bold text-[#f3e4c0] hover:text-white hover:underline whitespace-nowrap cursor-pointer"
-                  >
-                    Lihat Semua
-                  </button>
-                </div>
 
-                {!personalStats || personalStats.recentSessions.length === 0 ? (
-                  <div className="px-6 py-8 text-center text-sm text-[#f3e4c0]/70">
-                    Belum ada catatan sesi pribadimu hari ini.
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse text-left text-sm">
-                      <thead>
-                        <tr className="border-b border-[#e0b666]/20 bg-[#1f1106]/80 text-xs font-bold text-[#f3e4c0]">
-                          <th className="px-5 py-2.5">Keperluan</th>
-                          <th className="px-5 py-2.5 text-right">Mulai</th>
-                          <th className="px-5 py-2.5 text-right">Selesai</th>
-                          <th className="px-5 py-2.5 text-right">Durasi</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-[#e0b666]/10">
-                        {personalStats.recentSessions.map((item) => (
-                          <tr key={item.id} className="hover:bg-[#3b220d]/40 transition-colors">
-                            <td className="px-5 py-3">
-                              <span
-                                className={`text-xs font-bold ${
-                                  item.need === 'pup' ? 'text-[#f3e4c0]' : 'text-teal-300'
-                                }`}
-                              >
-                                {item.need === 'pup' ? '💩 Pup (Santai)' : '⚡ Cepat (BAK)'}
-                              </span>
-                            </td>
-                            <td className="px-5 py-3 text-right font-mono text-xs tabular-nums text-white/90">
-                              {formatTimeOnly(item.startedAt)}
-                            </td>
-                            <td className="px-5 py-3 text-right font-mono text-xs tabular-nums text-white/90">
-                              {formatTimeOnly(item.endedAt)}
-                            </td>
-                            <td className="px-5 py-3 text-right font-mono text-xs font-bold tabular-nums text-white">
-                              {formatDuration(item.durationMs)}
-                            </td>
+                  {!personalStats || personalStats.recentSessions.length === 0 ? (
+                    <div className="px-6 py-8 text-center text-sm font-bold text-slate-400 uppercase">
+                      Belum ada catatan sesi pribadimu hari ini.
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse text-left text-sm">
+                        <thead>
+                          <tr className="border-b-2 border-black bg-[#1e1e24] text-xs font-black uppercase text-white">
+                            <th className="px-5 py-3">KEPERLUAN</th>
+                            <th className="px-5 py-3 text-right">MULAI</th>
+                            <th className="px-5 py-3 text-right">SELESAI</th>
+                            <th className="px-5 py-3 text-right">DURASI</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </section>
+                        </thead>
+                        <tbody className="divide-y divide-black/40">
+                          {personalStats.recentSessions.map((item) => (
+                            <tr key={item.id} className="hover:bg-black/30 transition-colors">
+                              <td className="px-5 py-3.5">
+                                <span
+                                  className={`text-xs font-black uppercase ${
+                                    item.need === 'pup' ? 'text-[#ff4d4d]' : 'text-amber-300'
+                                  }`}
+                                >
+                                  {item.need === 'pup' ? '💩 PUP (SANTAI)' : '⚡ CEPAT (BAK)'}
+                                </span>
+                              </td>
+                              <td className="px-5 py-3.5 text-right font-mono text-xs tabular-nums text-white">
+                                {formatTimeOnly(item.startedAt)}
+                              </td>
+                              <td className="px-5 py-3.5 text-right font-mono text-xs tabular-nums text-white">
+                                {formatTimeOnly(item.endedAt)}
+                              </td>
+                              <td className="px-5 py-3.5 text-right font-mono text-xs font-black tabular-nums text-white">
+                                {formatDuration(item.durationMs)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </section>
 
-                {/* Top 3 Leaderboard Mingguan Preview */}
+                {/* Top 3 Leaderboard Mingguan Preview in Persona 5 card */}
                 <section
                   aria-labelledby="dashboard-weekly-heading"
-                  className="glass-card overflow-hidden rounded-2xl border border-[#c99f57]/20 lg:col-span-5"
+                  className="p5-card overflow-hidden p-0 lg:col-span-5"
                 >
-                  <div className="flex items-center justify-between border-b border-[#c99f57]/15 px-5 py-4">
+                  <div className="flex items-center justify-between border-b-2 border-black bg-black px-5 py-4">
                     <div>
                       <h3
                         id="dashboard-weekly-heading"
-                        className="font-display text-base font-bold text-white"
+                        className="font-display text-base font-black uppercase tracking-tight text-white"
                       >
-                        Leaderboard Mingguan
+                        LEADERBOARD MINGGUAN
                       </h3>
-                      <p className="mt-0.5 text-xs text-[#f3e4c0]/80">
+                      <p className="mt-0.5 text-xs font-bold text-slate-400 uppercase">
                         {weeklySummary?.weekRangeLabel ?? '7 hari terakhir'}
                       </p>
                     </div>
                     <button
                       type="button"
                       onClick={() => setActiveTab('stats')}
-                      className="text-xs font-bold text-[#f3e4c0] hover:text-white hover:underline whitespace-nowrap cursor-pointer"
+                      className="text-xs font-black uppercase text-[#e60012] hover:text-white transition-colors cursor-pointer"
                     >
-                      Lihat Lengkap
+                      LIHAT LENGKAP →
                     </button>
                   </div>
 
                   {!weeklySummary || weeklySummary.entries.length === 0 ? (
-                    <div className="px-6 py-8 text-center text-sm text-[#f3e4c0]/70">
+                    <div className="px-6 py-8 text-center text-sm font-bold text-slate-400 uppercase">
                       Belum ada sesi minggu ini.
                     </div>
                   ) : (
-                    <ol className="divide-y divide-[#e0b666]/10">
+                    <ol className="divide-y divide-black/40">
                       {weeklySummary.entries.slice(0, 3).map((entry, idx) => {
                         const RankIcon = idx === 0 ? Trophy : idx === 1 ? Medal : Award;
                         const rankColor =
@@ -619,31 +624,31 @@ export default function App() {
                             ? 'text-amber-400'
                             : idx === 1
                               ? 'text-slate-200'
-                              : 'text-[#e0b666]';
+                              : 'text-amber-600';
                         return (
                           <li
                             key={entry.userId}
-                            className="flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-[#3b220d]/40 transition-colors"
+                            className="flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-black/30 transition-colors"
                           >
                             <div className="flex items-center gap-3 min-w-0">
                               <RankIcon className={`h-4 w-4 shrink-0 ${rankColor}`} aria-hidden="true" />
                               <div className="min-w-0">
-                                <p className="truncate text-sm font-bold text-white">
+                                <p className="truncate text-sm font-black uppercase text-white">
                                   {entry.userId === user.id
-                                    ? `${user.displayName} (Kamu)`
+                                    ? `${user.displayName} (KAMU)`
                                     : entry.displayName}
                                 </p>
-                                <p className="text-xs text-[#f3e4c0]/80 tabular-nums">
-                                  {entry.pupSessions} Pup <span aria-hidden="true">·</span>{' '}
-                                  {entry.cepatSessions} Cepat
+                                <p className="text-xs font-bold text-slate-400 tabular-nums uppercase">
+                                  {entry.pupSessions} PUP <span aria-hidden="true">·</span>{' '}
+                                  {entry.cepatSessions} CEPAT
                                 </p>
                               </div>
                             </div>
                             <div className="text-right shrink-0">
                               <p className="font-mono text-sm font-black tabular-nums text-white">
-                                {entry.totalSessions}x
+                                {entry.totalSessions}X
                               </p>
-                              <p className="font-mono text-[11px] tabular-nums text-[#f3e4c0]">
+                              <p className="font-mono text-[11px] font-bold tabular-nums text-[#ff4d4d]">
                                 {formatDuration(entry.totalDurationMs)}
                               </p>
                             </div>

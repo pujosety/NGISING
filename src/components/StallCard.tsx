@@ -6,7 +6,6 @@ import {
   Sparkles,
   Wrench,
 } from 'lucide-react';
-import { motion } from 'motion/react';
 import { useState } from 'react';
 import {
   DAILY_SESSION_LIMIT,
@@ -41,32 +40,32 @@ function getNgedenLevel(elapsedMs: number): {
   const min = elapsedMs / 60_000;
   if (min < 3) {
     return {
-      label: 'Level 1: Santai & Pemanasan ☕',
-      badge: 'Santuy',
-      color: 'text-emerald-300 bg-emerald-950/40 border-emerald-500/30',
+      label: 'LV 1: SANTAI & PEMANASAN ☕',
+      badge: 'SANTUY',
+      color: 'bg-black border-2 border-white text-white',
       icon: Sparkles,
     };
   }
   if (min < 7) {
     return {
-      label: 'Level 2: Mode Fokus Berjuang 🧘',
-      badge: 'Fokus',
-      color: 'text-amber-300 bg-amber-950/40 border-amber-500/30',
+      label: 'LV 2: MODE FOKUS BERJUANG 🧘',
+      badge: 'FOKUS',
+      color: 'bg-[#1e1e24] border-2 border-amber-400 text-amber-300',
       icon: Flame,
     };
   }
   if (min < 12) {
     return {
-      label: 'Level 3: Pertarungan Sengit 🌋',
-      badge: 'Genting',
-      color: 'text-orange-300 bg-orange-950/50 border-orange-500/40',
+      label: 'LV 3: PERTARUNGAN SENGIT 🌋',
+      badge: 'GENTING',
+      color: 'bg-[#220608] border-2 border-[#e60012] text-[#ff4d4d]',
       icon: Flame,
     };
   }
   return {
-    label: 'Level 4: Legenda Bertapa di Bilik 🧘‍♂️💨',
-    badge: 'Moksa',
-    color: 'text-rose-300 bg-rose-950/60 border-rose-500/50 animate-pulse',
+    label: 'LV 4: LEGENDA BERTAPA DI BILIK 🧘‍♂️💨',
+    badge: 'MOKSA',
+    color: 'bg-[#e60012] border-2 border-white text-white font-black animate-pulse',
     icon: Flame,
   };
 }
@@ -127,138 +126,137 @@ export function StallCard({
     <section
       data-testid="single-toilet-card"
       aria-labelledby="toilet-card-heading"
-      className={`relative overflow-hidden rounded-3xl p-6 sm:p-7 transition-all duration-300 glass-card ${
-        isReservedForMe
-          ? 'border-teal-500/60 ring-2 ring-teal-500/30'
-          : isOccupiedByMe
-            ? 'border-[#c99f57]/80 ring-2 ring-[#ad7c2b]/40'
-            : isOccupied
-              ? 'border-[#c99f57]/30'
-              : 'border-[#c99f57]/20 hover:border-[#c99f57]/50'
-      }`}
+      className="p5-card relative overflow-hidden p-5 sm:p-7"
     >
-      {/* Visual Door Header with Status Lamp */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      {/* Background Halftone accent */}
+      <div className="p5-halftone-pattern absolute -right-12 -top-12 h-44 w-44 opacity-15 pointer-events-none" />
+
+      {/* Header with Comic Slanted Status Badge */}
+      <div className="flex flex-wrap items-start justify-between gap-4 relative z-10">
         <div>
           <div className="flex items-center gap-2">
-            <span className="glass-pill inline-flex items-center gap-1.5 rounded-full px-3 py-0.5 text-[11px] font-bold text-[#dbc08b]">
-              {isOccupied ? (
-                <DoorClosed className="h-3 w-3 text-rose-400" />
-              ) : (
-                <DoorOpen className="h-3 w-3 text-emerald-400" />
-              )}
-              <span>Bilik Utama</span>
+            <span className="p5-badge inline-flex items-center gap-1.5 px-3 py-0.5 text-xs font-black uppercase text-white bg-black border border-white">
+              <span className="inline-flex items-center gap-1.5 transform skew-x-[6deg]">
+                {isOccupied ? (
+                  <DoorClosed className="h-3.5 w-3.5 text-[#e60012]" />
+                ) : (
+                  <DoorOpen className="h-3.5 w-3.5 text-emerald-400" />
+                )}
+                <span>BILIK UTAMA</span>
+              </span>
             </span>
-            <span className="text-xs text-[#c99f57]/40">·</span>
-            <span className="text-xs text-[#dbc08b]/80">{toilet.location}</span>
+            <span className="text-xs font-bold text-slate-500">·</span>
+            <span className="text-xs font-black text-slate-300 uppercase tracking-wider">{toilet.location}</span>
           </div>
 
           <h2
             id="toilet-card-heading"
-            className="mt-1.5 font-display text-2xl font-black tracking-tight text-white"
+            className="mt-2 font-display text-2xl sm:text-3xl font-black uppercase tracking-tight text-white"
           >
             {toilet.name}
           </h2>
         </div>
 
-        {/* 3D Glass Status Plaque */}
+        {/* Persona 5 Status Plaque */}
         <div
-          className={`inline-flex items-center gap-2 rounded-2xl border px-3.5 py-1.5 text-xs font-bold shadow-md ${
+          className={`p5-badge inline-flex items-center gap-2 px-4 py-2 text-xs font-black uppercase tracking-wider ${
             isMaintenance
-              ? 'border-slate-600 bg-slate-900/80 text-slate-300'
+              ? 'bg-[#1e1e24] text-slate-300 border-2 border-slate-500'
               : isOccupied
                 ? isOvertime
-                  ? 'border-rose-500/60 bg-rose-950/70 text-rose-200 ring-1 ring-rose-500/40'
-                  : 'border-rose-500/40 bg-rose-950/50 text-rose-200'
+                  ? 'bg-[#e60012] text-white border-2 border-white shadow-[3px_3px_0px_#000000] animate-pulse'
+                  : 'bg-[#e60012] text-white border-2 border-white shadow-[3px_3px_0px_#000000]'
                 : isReserved
-                  ? 'border-teal-400/60 bg-teal-950/60 text-teal-200 animate-pulse'
-                  : 'border-emerald-500/40 bg-emerald-950/50 text-emerald-200'
+                  ? 'bg-black text-teal-300 border-2 border-teal-400 shadow-[3px_3px_0px_#e60012]'
+                  : 'bg-white text-black border-2 border-black shadow-[3px_3px_0px_#e60012]'
           }`}
         >
-          <span className="relative flex h-2 w-2">
-            <span
-              className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                isMaintenance
-                  ? 'bg-slate-400'
-                  : isOccupied
-                    ? 'bg-rose-400 animate-ping'
-                    : isReserved
-                      ? 'bg-teal-400 animate-ping'
-                      : 'bg-emerald-400 animate-ping'
-              }`}
-            />
-            <span
-              className={`relative inline-flex rounded-full h-2 w-2 ${
-                isMaintenance
-                  ? 'bg-slate-400'
-                  : isOccupied
-                    ? 'bg-rose-500'
-                    : isReserved
-                      ? 'bg-teal-400'
-                      : 'bg-emerald-400'
-              }`}
-            />
-          </span>
-          <span>
-            {isMaintenance
-              ? 'Sedang Dibersihkan'
-              : isOccupied
-                ? isOvertime
-                  ? 'Sedang Ngeden Lama 💨'
-                  : 'Sedang Digunakan 🚫'
-                : isReserved
-                  ? isReservedForMe
-                    ? 'Giliran Kamu! Masuk! ✨'
-                    : 'Dipanggil #1'
-                  : 'Kosong · Siap Masuk 🚽'}
+          <span className="inline-flex items-center gap-2 transform skew-x-[6deg]">
+            <span className="relative flex h-2.5 w-2.5">
+              <span
+                className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                  isMaintenance
+                    ? 'bg-slate-400'
+                    : isOccupied
+                      ? 'bg-white animate-ping'
+                      : isReserved
+                        ? 'bg-teal-400 animate-ping'
+                        : 'bg-[#e60012] animate-ping'
+                }`}
+              />
+              <span
+                className={`relative inline-flex rounded-full h-2.5 w-2.5 ${
+                  isMaintenance
+                    ? 'bg-slate-400'
+                    : isOccupied
+                      ? 'bg-white'
+                      : isReserved
+                        ? 'bg-teal-400'
+                        : 'bg-[#e60012]'
+                }`}
+              />
+            </span>
+            <span>
+              {isMaintenance
+                ? 'MAINTENANCE'
+                : isOccupied
+                  ? isOvertime
+                    ? 'NGEDEN LAMA 💨'
+                    : 'SEDANG DIGUNAKAN 🚫'
+                  : isReserved
+                    ? isReservedForMe
+                      ? 'GILIRAN KAMU! ✨'
+                      : 'DIPANGGIL #1'
+                    : 'SIAP MASUK 🚽'}
+            </span>
           </span>
         </div>
       </div>
 
-      {/* Main Occupant / Timer Box in Glass */}
-      <div className="mt-5 rounded-2xl border border-[#c99f57]/20 bg-[#241407]/60 p-4 sm:p-5 backdrop-blur-md">
+      {/* Main Occupant / Timer Box in Persona Comic Box */}
+      <div className="mt-5 border-2 border-black bg-black p-4 sm:p-5 shadow-[4px_4px_0px_#000000] relative z-10">
         {isOccupied && toilet.occupant ? (
           <div className="space-y-4">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3.5 min-w-0">
                 <PoopMascot mood={mascotMood} size={58} interactive={true} />
                 <div className="min-w-0">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-[#dbc08b]">
-                    Penghuni Bilik Saat Ini
+                  <p className="text-[11px] font-black uppercase tracking-wider text-[#e60012]">
+                    TARGET / PENGHUNI BILIK
                   </p>
-                  <p className="mt-0.5 truncate text-lg sm:text-xl font-black text-white">
+                  <p className="mt-0.5 truncate text-lg sm:text-xl font-black text-white uppercase">
                     {isOccupiedByMe
-                      ? `${toilet.occupant.displayName} (Kamu)`
+                      ? `${toilet.occupant.displayName} (KAMU)`
                       : getPublicDisplayName(
                           toilet.occupant.displayName,
                           toilet.occupant.isAnonymous,
                           toilet.occupant.userId
                         )}
                   </p>
-                  <p className="mt-0.5 text-xs text-[#dbc08b]/80">
+                  <p className="mt-0.5 text-xs text-slate-300 font-bold">
                     {toilet.occupant.department ? (
                       <>
-                        <span className="font-semibold text-white">
+                        <span className="text-white">
                           {toilet.occupant.department}
                         </span>{' '}
                         ·{' '}
                       </>
                     ) : null}
-                    <span className="font-bold text-[#e8d9b5]">
-                      {toilet.occupant.need === 'pup' ? 'Misi Pup 💩' : 'Misi Cepat (BAK) ⚡'}
+                    <span className="text-[#e60012]">
+                      {toilet.occupant.need === 'pup' ? 'MISI PUP 💩' : 'MISI CEPAT (BAK) ⚡'}
                     </span>
                   </p>
                 </div>
               </div>
 
-              {/* Running Duration Timer in Glass 3D */}
-              <div className="glass-card rounded-2xl border border-[#c99f57]/30 px-4 py-2.5 text-left sm:text-right shrink-0">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#dbc08b]/70 block">
-                  Durasi Berjalan
+              {/* Running Duration Timer */}
+              <div className="border-2 border-white bg-[#151518] px-4 py-2.5 text-left sm:text-right shrink-0 shadow-[3px_3px_0px_#e60012]">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
+                  DURASI BERJALAN
                 </span>
                 <p
                   className={`font-mono text-3xl sm:text-4xl font-black tabular-nums tracking-tight ${
-                    isOvertime ? 'text-rose-400 animate-pulse' : 'text-white'
+                    isOvertime ? 'text-[#ff4d4d] animate-pulse' : 'text-white'
                   }`}
                 >
                   {formatDuration(elapsedMs)}
@@ -266,15 +264,15 @@ export function StallCard({
               </div>
             </div>
 
-            {/* Fun Ngeden Level Meter */}
+            {/* Persona Ngeden Tension Meter */}
             <div
-              className={`flex items-center justify-between rounded-xl border px-3 py-2 text-xs font-bold ${ngedenLevel.color}`}
+              className={`flex items-center justify-between p-2.5 text-xs font-black uppercase shadow-[2px_2px_0px_#000000] ${ngedenLevel.color}`}
             >
               <div className="flex items-center gap-2">
                 <ngedenLevel.icon className="h-4 w-4 shrink-0" />
                 <span>{ngedenLevel.label}</span>
               </div>
-              <span className="text-[10px] uppercase tracking-wider font-black opacity-90">
+              <span className="text-[11px] uppercase tracking-wider font-black px-2 py-0.5 bg-black text-white border border-white">
                 {ngedenLevel.badge}
               </span>
             </div>
@@ -284,27 +282,27 @@ export function StallCard({
             <div className="flex items-center gap-3.5 min-w-0">
               <PoopMascot mood={mascotMood} size={58} interactive={true} />
               <div className="min-w-0">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-teal-400">
-                  Dipanggil dari antrean #1
+                <p className="text-[11px] font-black uppercase tracking-wider text-teal-400">
+                  DIPANGGIL DARI ANTREAN #1
                 </p>
-                <p className="mt-0.5 truncate text-lg sm:text-xl font-black text-white">
+                <p className="mt-0.5 truncate text-lg sm:text-xl font-black text-white uppercase">
                   {isReservedForMe
-                    ? `${toilet.reservedFor.displayName} (Kamu)`
+                    ? `${toilet.reservedFor.displayName} (KAMU)`
                     : getPublicDisplayName(
                         toilet.reservedFor.displayName,
                         toilet.reservedFor.isAnonymous,
                         toilet.reservedFor.userId
                       )}
                 </p>
-                <p className="mt-0.5 text-xs text-teal-200/80">
-                  Batas waktu reservasi sedang berjalan
+                <p className="mt-0.5 text-xs text-teal-300 font-bold">
+                  Batas waktu reservasi sedang berjalan!
                 </p>
               </div>
             </div>
 
-            <div className="glass-card rounded-2xl border border-teal-500/40 px-4 py-2.5 text-left sm:text-right shrink-0">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-teal-400 block">
-                Batas Waktu Masuk
+            <div className="border-2 border-teal-400 bg-[#151518] px-4 py-2.5 text-left sm:text-right shrink-0 shadow-[3px_3px_0px_#000000]">
+              <span className="text-[10px] font-black uppercase tracking-wider text-teal-400 block">
+                BATAS WAKTU MASUK
               </span>
               <p className="font-mono text-3xl sm:text-4xl font-black tabular-nums tracking-tight text-teal-300">
                 {formatDuration(reserveRemainingMs)}
@@ -315,10 +313,10 @@ export function StallCard({
           <div className="flex items-center gap-3.5 py-2">
             <PoopMascot mood={mascotMood} size={54} interactive={true} />
             <div>
-              <p className="font-display text-base font-bold text-white">
-                Toilet Sedang Disterilkan
+              <p className="font-display text-base font-black uppercase text-white">
+                TOILET SEDANG DISTERILKAN
               </p>
-              <p className="mt-0.5 text-xs text-[#dbc08b]/70">
+              <p className="mt-0.5 text-xs text-slate-400 font-bold">
                 Bilik sedang dibersihkan oleh tim operasional kantor.
               </p>
             </div>
@@ -328,22 +326,22 @@ export function StallCard({
             <div className="flex items-center gap-3.5 min-w-0">
               <PoopMascot mood={mascotMood} size={58} interactive={true} />
               <div className="min-w-0">
-                <p className="font-display text-lg sm:text-xl font-black text-white">
-                  Toilet Bersih & Siap Digunakan!
+                <p className="font-display text-lg sm:text-xl font-black uppercase text-white">
+                  TOILET BERSIH & SIAP MASUK!
                 </p>
-                <p className="mt-0.5 text-xs text-[#dbc08b]/80">
+                <p className="mt-0.5 text-xs text-slate-300 font-bold">
                   {quotaExhausted
                     ? 'Kuota ngising harian kamu (10/10) sudah habis hari ini.'
-                    : 'Pilih keperluan di bawah, lalu klik masuk untuk menyalakan timer!'}
+                    : 'Pilih misi di bawah, lalu serbu bilik untuk menyalakan timer!'}
                 </p>
               </div>
             </div>
 
-            <div className="glass-card rounded-2xl border border-emerald-500/40 px-4 py-2 text-left sm:text-right shrink-0">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 block">
-                Status
+            <div className="border-2 border-white bg-[#e60012] px-4 py-2 text-left sm:text-right shrink-0 shadow-[3px_3px_0px_#000000]">
+              <span className="text-[10px] font-black uppercase tracking-wider text-white block">
+                STATUS
               </span>
-              <p className="font-mono text-2xl font-black tabular-nums text-emerald-300">
+              <p className="font-mono text-2xl font-black tabular-nums text-white">
                 READY 🚽
               </p>
             </div>
@@ -351,15 +349,17 @@ export function StallCard({
         )}
       </div>
 
-      {/* Need Selector + 3D Action Buttons */}
-      <div className="mt-5 border-t border-[#c99f57]/15 pt-4 space-y-3.5">
+      {/* Need Selector & Persona Battle Commands */}
+      <div className="mt-5 border-t-2 border-black pt-4 space-y-3.5 relative z-10">
         {!isOccupiedByMe && !isMaintenance && !quotaExhausted && (
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <span className="text-xs font-bold text-[#e8d9b5]">Keperluanmu:</span>
+            <span className="text-xs font-black uppercase tracking-wider text-white">PILIH MISI:</span>
+            
+            {/* Persona 5 Styled Need Switcher */}
             <div
               role="group"
               aria-label="Pilih keperluan toilet"
-              className="relative inline-flex items-center rounded-2xl bg-[#241407]/80 p-1.5 border border-[#c99f57]/20 shadow-inner"
+              className="inline-flex items-center gap-2 bg-black border-2 border-white p-1.5 shadow-[3px_3px_0px_#000000]"
             >
               <button
                 type="button"
@@ -369,19 +369,16 @@ export function StallCard({
                   }
                   onSelectNeed('pup');
                 }}
-                className={`relative z-10 min-h-[44px] rounded-xl px-4 py-2 text-xs font-bold transition-colors whitespace-nowrap flex items-center gap-2 cursor-pointer select-none active:scale-95 ${
-                  selectedNeed === 'pup' ? 'text-white font-extrabold' : 'text-[#dbc08b]/70 hover:text-white'
+                className={`p5-badge min-h-[42px] px-4 py-2 text-xs font-black uppercase transition-all cursor-pointer select-none active:scale-95 ${
+                  selectedNeed === 'pup'
+                    ? 'bg-[#e60012] text-white border-2 border-white shadow-[2px_2px_0px_#000000]'
+                    : 'bg-transparent text-slate-400 hover:text-white'
                 }`}
               >
-                {selectedNeed === 'pup' && (
-                  <motion.div
-                    layoutId="need-slider-pill-glass"
-                    transition={{ type: 'spring', stiffness: 450, damping: 32 }}
-                    className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#8c5d1d] to-[#ad7c2b] shadow-md border border-[#c99f57]/60"
-                  />
-                )}
-                <span className="relative z-10 text-base">💩</span>
-                <span className="relative z-10">Pup (Santai)</span>
+                <span className="inline-flex items-center gap-2 transform skew-x-[6deg]">
+                  <span className="text-base">💩</span>
+                  <span>PUP (SANTAI)</span>
+                </span>
               </button>
 
               <button
@@ -392,19 +389,16 @@ export function StallCard({
                   }
                   onSelectNeed('cepat');
                 }}
-                className={`relative z-10 min-h-[44px] rounded-xl px-4 py-2 text-xs font-bold transition-colors whitespace-nowrap flex items-center gap-2 cursor-pointer select-none active:scale-95 ${
-                  selectedNeed === 'cepat' ? 'text-white font-extrabold' : 'text-[#dbc08b]/70 hover:text-white'
+                className={`p5-badge min-h-[42px] px-4 py-2 text-xs font-black uppercase transition-all cursor-pointer select-none active:scale-95 ${
+                  selectedNeed === 'cepat'
+                    ? 'bg-white text-black border-2 border-black shadow-[2px_2px_0px_#e60012]'
+                    : 'bg-transparent text-slate-400 hover:text-white'
                 }`}
               >
-                {selectedNeed === 'cepat' && (
-                  <motion.div
-                    layoutId="need-slider-pill-glass"
-                    transition={{ type: 'spring', stiffness: 450, damping: 32 }}
-                    className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#0d9488] to-[#14b8a6] shadow-md border border-teal-400/60"
-                  />
-                )}
-                <span className="relative z-10 text-base">⚡</span>
-                <span className="relative z-10">Cepat (BAK)</span>
+                <span className="inline-flex items-center gap-2 transform skew-x-[6deg]">
+                  <span className="text-base">⚡</span>
+                  <span>CEPAT (BAK)</span>
+                </span>
               </button>
             </div>
           </div>
@@ -414,28 +408,28 @@ export function StallCard({
           <button
             type="button"
             disabled
-            className="w-full min-h-[48px] rounded-xl border border-slate-700 bg-slate-900/60 px-4 py-2.5 text-sm font-bold text-slate-400 cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full min-h-[48px] border-2 border-slate-600 bg-black px-4 py-2.5 text-sm font-black text-slate-500 cursor-not-allowed flex items-center justify-center gap-2 uppercase"
           >
             <Wrench className="h-4 w-4" />
-            <span>Sedang Dalam Perawatan</span>
+            <span>SEDANG DALAM PERAWATAN</span>
           </button>
         ) : isOccupiedByMe ? (
           <button
             type="button"
             disabled={busy}
             onClick={() => onRelease(false)}
-            className="btn-3d-poop w-full min-h-[48px] rounded-xl px-4 py-2.5 text-sm font-black text-white cursor-pointer flex items-center justify-center gap-2"
+            className="p5-btn-black w-full min-h-[50px] px-4 py-2.5 text-sm font-black text-[#e60012] cursor-pointer flex items-center justify-center gap-2 uppercase"
           >
             <LogOut className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span>Plung! Selesai & Keluar Toilet (Lega!) 🌊</span>
+            <span>MISSION COMPLETE · KELUAR TOILET 🌊</span>
           </button>
         ) : quotaExhausted ? (
           <button
             type="button"
             disabled
-            className="w-full min-h-[48px] rounded-xl border border-rose-500/40 bg-rose-950/60 px-4 py-2.5 text-sm font-bold text-rose-300 cursor-not-allowed"
+            className="w-full min-h-[48px] border-2 border-[#e60012] bg-black px-4 py-2.5 text-sm font-black text-[#ff4d4d] cursor-not-allowed uppercase"
           >
-            Kuota Harian 10/10 Habis — Lanjut Besok Ya Bro!
+            KUOTA HARIAN 10/10 HABIS · LANJUT BESOK YA!
           </button>
         ) : isOccupied ? (
           <div className="space-y-2.5">
@@ -444,13 +438,13 @@ export function StallCard({
                 type="button"
                 disabled={busy}
                 onClick={() => onJoinQueue(selectedNeed)}
-                className="btn-3d-poop w-full min-h-[48px] rounded-xl px-4 py-2.5 text-sm font-black text-white cursor-pointer flex items-center justify-center gap-2"
+                className="p5-btn-red w-full min-h-[50px] px-4 py-2.5 text-sm font-black cursor-pointer flex items-center justify-center gap-2 uppercase"
               >
-                <span>Masuk Antrean ({selectedNeed === 'pup' ? 'Pup 💩' : 'Cepat ⚡'})</span>
+                <span>MASUK ANTREAN ({selectedNeed === 'pup' ? 'PUP 💩' : 'CEPAT ⚡'})</span>
               </button>
             ) : (
-              <div className="glass-pill w-full min-h-[48px] rounded-xl px-4 py-2.5 text-sm font-bold text-[#dbc08b] flex items-center justify-center text-center">
-                Kamu Sudah Masuk di Antrean ⏳
+              <div className="w-full min-h-[48px] border-2 border-white bg-black px-4 py-2.5 text-sm font-black text-white flex items-center justify-center text-center uppercase shadow-[3px_3px_0px_#000000]">
+                KAMU SUDAH MASUK ANTREAN ⏳
               </div>
             )}
 
@@ -459,9 +453,9 @@ export function StallCard({
                 <button
                   type="button"
                   onClick={() => setConfirmForce(true)}
-                  className="w-full py-1 text-center text-xs font-bold text-[#dbc08b]/70 hover:text-rose-400 transition-colors cursor-pointer"
+                  className="w-full py-1 text-center text-xs font-black uppercase text-slate-400 hover:text-[#e60012] transition-colors cursor-pointer"
                 >
-                  Paksa Kosongkan Bilik (Admin)
+                  [ADMIN: PAKSA KOSONGKAN BILIK]
                 </button>
               ) : (
                 <div className="flex items-center justify-between gap-2 pt-1">
@@ -472,21 +466,21 @@ export function StallCard({
                       setConfirmForce(false);
                       onRelease(true);
                     }}
-                    className="btn-3d-red flex-1 min-h-[40px] rounded-xl px-3 py-1.5 text-xs font-bold text-white cursor-pointer"
+                    className="p5-btn-red flex-1 min-h-[42px] px-3 py-1.5 text-xs font-black cursor-pointer uppercase"
                   >
-                    Konfirmasi Kosongkan
+                    KONFIRMASI KOSONGKAN
                   </button>
                   <button
                     type="button"
                     onClick={() => setConfirmForce(false)}
-                    className="glass-pill min-h-[40px] rounded-xl px-3 py-1.5 text-xs font-bold text-[#e8d9b5] hover:text-white cursor-pointer"
+                    className="p5-btn-black min-h-[42px] px-3 py-1.5 text-xs font-black text-white cursor-pointer uppercase"
                   >
-                    Batal
+                    BATAL
                   </button>
                 </div>
               )
             ) : isOvertime ? (
-              <p className="py-1 text-center text-xs text-[#dbc08b]/70">
+              <p className="py-1 text-center text-xs text-slate-400 font-bold">
                 Melebihi 15 menit — Admin dapat mengosongkan bila penghuni lupa keluar.
               </p>
             ) : null}
@@ -496,9 +490,9 @@ export function StallCard({
             type="button"
             disabled={busy}
             onClick={() => onOccupy(toilet.reservedFor?.need ?? selectedNeed)}
-            className="btn-3d-teal w-full min-h-[48px] rounded-xl px-4 py-2.5 text-sm font-black text-white cursor-pointer flex items-center justify-center gap-2"
+            className="p5-btn-white w-full min-h-[50px] px-4 py-2.5 text-sm font-black cursor-pointer flex items-center justify-center gap-2 uppercase"
           >
-            <span>Masuk Toilet Sekarang! (Giliranmu) 🎯</span>
+            <span>ALL-OUT ATTACK · MASUK SEKARANG! 🎯</span>
           </button>
         ) : isReserved ? (
           <div className="space-y-2">
@@ -507,13 +501,13 @@ export function StallCard({
                 type="button"
                 disabled={busy}
                 onClick={() => onJoinQueue(selectedNeed)}
-                className="btn-3d-poop w-full min-h-[48px] rounded-xl px-4 py-2.5 text-sm font-black text-white cursor-pointer"
+                className="p5-btn-red w-full min-h-[50px] px-4 py-2.5 text-sm font-black cursor-pointer uppercase"
               >
-                Masuk Antrean Berikutnya
+                MASUK ANTREAN BERIKUTNYA
               </button>
             ) : (
-              <div className="glass-pill w-full min-h-[48px] rounded-xl px-4 py-2.5 text-sm font-bold text-[#dbc08b] flex items-center justify-center text-center">
-                Dipesan untuk Antrean #1
+              <div className="w-full min-h-[48px] border-2 border-white bg-black px-4 py-2.5 text-sm font-black text-white flex items-center justify-center text-center uppercase shadow-[3px_3px_0px_#000000]">
+                DIPESAN UNTUK ANTREAN #1
               </div>
             )}
           </div>
@@ -522,9 +516,9 @@ export function StallCard({
             type="button"
             disabled={busy}
             onClick={() => onOccupy(selectedNeed)}
-            className="btn-3d-poop w-full min-h-[48px] rounded-xl px-4 py-2.5 text-sm font-black text-white cursor-pointer flex items-center justify-center gap-2"
+            className="p5-btn-red w-full min-h-[50px] px-4 py-2.5 text-sm font-black cursor-pointer flex items-center justify-center gap-2 uppercase"
           >
-            <span>Masuk Toilet Sekarang ({selectedNeed === 'pup' ? 'Pup 💩' : 'Cepat ⚡'})</span>
+            <span>ALL-OUT IN · MASUK TOILET ({selectedNeed === 'pup' ? 'PUP 💩' : 'CEPAT ⚡'})</span>
           </button>
         )}
       </div>
